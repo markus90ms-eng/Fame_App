@@ -53,8 +53,12 @@ Es gibt 99 Stufen, jede ist ein Edelstein: von **Stufe 1 Malachit** (ab 1 €) �
 - **Sound:** Jeder neue Stein beim Schieben gibt einen Kristall-Ton (je höher, desto heller). Bei einer neuen Seltenheitsklasse kommen Klassen-Sound, Farbwechsel und Funken dazu.
 - **Seltenheitsklassen** (nur Farben und Effekte, nicht sichtbar benannt): Stufe 1–25 grau, 26–50 blau, 51–70 gelb, 71–82 lila, ab 83 orange.
 - **Echte Lichtbrechung:** Facettierte Steine verfolgen das Licht im Stein. Es wird beim Eintritt gebrochen, an den Facetten mehrfach gespiegelt und beim Austritt in Regenbogenfarben aufgespalten (Feuer). Jede Steinart hat ihre echte Brechzahl (Diamant 2,42, Saphir 1,77, Smaragd 1,58 …). Technik: `js/refraction.js` mit three-mesh-bvh.
+- **Schliffe:** Jeder facettierte Stein hat seinen typischen Schliff (Liste `CUTS` in `js/gems.js`). Es gibt 12 Schliffarten:
+  - **Brillant-Familie:** Round, Oval, Cushion, Cushion square, Marquise, Pear, Princess, Radiant, Radiant square. Der Rundbrillant wird in die jeweilige Umrissform gebracht, die Facetten bleiben erhalten.
+  - **Treppenschliffe:** Emerald, Emerald square (Asscher), Octagon, mit gestuften Facetten entlang des Umrisses.
+  - Die Legenden haben die Form des echten Steins.
+- **Sprüche:** Jede der 99 Cards hat einen eigenen Spruch passend zum Stein (`SAYINGS` in `js/gems.js`, bei den Legenden direkt in der Liste).
 - **3D-Darstellung je Stein:**
-  - Facettierte Steine in ihrer Farbe: rund, oval oder Treppenschliff (z. B. Smaragd, Aquamarin, Turmaline).
   - Cabochons mit gezeichnetem Muster: Malachit-Bänder, Lapislazuli mit Goldflecken, Türkis-Adern, Dendriten, Opal-Farbspiel, Labradorit-Schimmer, Mondstein-Schein, Sternsaphir und Sternrubin mit Stern.
   - Besondere Steine: Bicolor (Fluorit, Andalusit, Bicolor-Turmalin), Alexandrit mit Farbwechsel, Paraíba mit Neon-Leuchten, Rutilquarz mit goldenen Nadeln. Der Diamant ist ein Brillantschliff mit 57 Facetten. Die Legenden haben ihre echten Schliffe: Birne, Oval, Kissen, Smaragdschliff.
 - **Fame-Card im Design des Steins:**

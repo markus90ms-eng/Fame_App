@@ -2,7 +2,7 @@
 // Facettierte Steine (auch alle Diamanten) mit Lichtbrechung aus refraction.js, Cabochons mit Mustern.
 
 import * as THREE from '../vendor/three.module.min.js';
-import { brilliantGeometry, starTexture } from './diamond3d.js';
+import { brilliantGeometry, facetGeometry, starTexture } from './diamond3d.js';
 import { refractionMaterial } from './refraction.js';
 
 // ---- Zufall mit festem Startwert, damit jeder Stein immer gleich aussieht ---------------
@@ -19,41 +19,55 @@ function seeded(str) {
 
 // ---- Schliffe -------------------------------------------------------------------------------
 
-// Treppenschliff (Smaragdschliff): achteckig, gestreckt, mit Stufen in Krone und Pavillon.
-function stepGeometry(ratio = 1.25) {
-  const profile = [
-    [0, -0.72], [0.34, -0.6], [0.66, -0.36], [0.88, -0.14], [1, -0.02],
-    [1, 0.03], [0.9, 0.15], [0.78, 0.25], [0.64, 0.32], [0, 0.32],
-  ].map(([x, y]) => new THREE.Vector2(x, y));
-  const geo = new THREE.LatheGeometry(profile, 8);
-  geo.rotateY(Math.PI / 8);
-  geo.scale(ratio * 0.95, 1, 0.95);
-  const flat = geo.toNonIndexed();
-  flat.computeVertexNormals();
-  return flat;
-}
+// ---- Umrisse -------------------------------------------------------------------------------
 
-// Umriss-Formen: Faktor für den Radius je Winkel. Der runde Brillant wird damit zur Birne,
-// zum Oval oder zum Kissen umgeformt – Facetten und Proportionen bleiben erhalten.
-function outline(kind) {
-  if (kind === 'oval') return (a) => 1 / Math.sqrt((Math.cos(a) / 1.3) ** 2 + (Math.sin(a) / 0.9) ** 2);
-  if (kind === 'cushion') return (a) => 0.92 * (Math.abs(Math.cos(a)) ** 4 + Math.abs(Math.sin(a)) ** 4) ** -0.25;
-  if (kind === 'pear') {
-    // Tropfen: links rund, rechts spitz. Radius je Winkel aus einer abgetasteten Kurve.
-    const bins = new Float32Array(360);
-    for (let i = 0; i < 2000; i++) {
-      const t = (i / 2000) * Math.PI * 2;
-      const x = 1.35 * Math.cos(t) - 0.28;
-      const z = 0.95 * Math.sin(t) * Math.abs(Math.sin(t / 2)) ** 0.9;
-      const k = Math.floor(((Math.atan2(z, x) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2) * 360) % 360;
-      bins[k] = Math.max(bins[k], Math.hypot(x, z));
+// Umriss als Liste von Punkten -> Radius je Winkel (360 Stufen), für das Umformen des Brillanten.
+function radiusTable(points) {
+  const bins = new Float32Array(360);
+  const n = points.length;
+  for (let i = 0; i < n; i++) {
+    const [x1, z1] = points[i], [x2, z2] = points[(i + 1) % n];
+    for (let k = 0; k <= 20; k++) {             // Kanten verdichten
+      const x = x1 + (x2 - x1) * (k / 20), z = z1 + (z2 - z1) * (k / 20);
+      const bin = Math.floor(((Math.atan2(z, x) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2) * 360) % 360;
+      bins[bin] = Math.max(bins[bin], Math.hypot(x, z));
     }
-    for (let k = 0; k < 360; k++) if (!bins[k]) bins[k] = bins[(k + 359) % 360];
-    return (a) => bins[Math.floor(((a + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2) * 360) % 360];
   }
-  return null;
+  for (let k = 0; k < 720; k++) if (!bins[k % 360]) bins[k % 360] = bins[(k + 359) % 360];
+  return (a) => bins[Math.floor(((a + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2) * 360) % 360];
 }
 
+// Geschlossene Kurve abtasten
+const curve = (fn, steps = 720) => Array.from({ length: steps }, (_, i) => fn((i / steps) * Math.PI * 2));
+
+// Rechteck mit abgeschrägten Ecken (Emerald, Asscher, Radiant), halbe Breite w, halbe Tiefe d
+const cutRect = (w, d, c) => [[w, -d + c], [w, d - c], [w - c, d], [-w + c, d], [-w, d - c], [-w, -d + c], [-w + c, -d], [w - c, -d]];
+
+const OUTLINES = {
+  oval: () => curve((t) => [1.3 * Math.cos(t), 0.9 * Math.sin(t)]),
+  // Kissen: Superellipse, eckig mit runden Ecken
+  cushion: () => curve((t) => [1.18 * Math.sign(Math.cos(t)) * Math.abs(Math.cos(t)) ** 0.5, 0.95 * Math.sign(Math.sin(t)) * Math.abs(Math.sin(t)) ** 0.5]),
+  cushionSquare: () => curve((t) => [1.02 * Math.sign(Math.cos(t)) * Math.abs(Math.cos(t)) ** 0.5, 1.02 * Math.sign(Math.sin(t)) * Math.abs(Math.sin(t)) ** 0.5]),
+  // Marquise: Schiffchen mit zwei Spitzen
+  marquise: () => curve((t) => [1.45 * Math.cos(t), 0.62 * Math.sin(t) * Math.abs(Math.sin(t)) ** 0.35]),
+  // Birne: links rund, rechts spitz
+  pear: () => curve((t) => [1.35 * Math.cos(t) - 0.28, 0.95 * Math.sin(t) * Math.abs(Math.sin(t / 2)) ** 0.9]),
+  princess: () => cutRect(0.9, 0.9, 0.001),
+  radiant: () => cutRect(1.22, 0.9, 0.22),
+  radiantSquare: () => cutRect(0.95, 0.95, 0.26),
+};
+
+// Treppenschliff-Umrisse
+const STEP_OUTLINES = {
+  emerald: (ratio = 1.4) => cutRect(0.92 * ratio, 0.92, 0.2),
+  asscher: () => cutRect(0.95, 0.95, 0.3),
+  octagon: () => curve((t) => [Math.cos(t), Math.sin(t)], 8).map(([x, z]) => {
+    const a = Math.atan2(z, x) + Math.PI / 8;
+    return [Math.cos(a), Math.sin(a)];
+  }),
+};
+
+// Brillant auf einen Umriss umformen: jeder Punkt wird je nach Winkel nach außen/innen geschoben.
 function reshape(geo, fn) {
   const pos = geo.attributes.position;
   for (let i = 0; i < pos.count; i++) {
@@ -63,6 +77,30 @@ function reshape(geo, fn) {
   }
   geo.computeVertexNormals();
   return geo;
+}
+
+// Treppenschliff aus einem Umriss: gestufte Ringe in Krone und Pavillon, flache Tafel oben.
+function stepCut(outlinePts, { steps = 3 } = {}) {
+  const crown = steps === 4
+    ? [[1, 0.03], [0.93, 0.1], [0.86, 0.17], [0.78, 0.23], [0.7, 0.28]]
+    : [[1, 0.03], [0.91, 0.12], [0.81, 0.21], [0.71, 0.28]];
+  const pav = [[1, -0.03], [0.84, -0.2], [0.66, -0.37], [0.46, -0.53], [0.24, -0.66]];
+  const ring = (k, y) => outlinePts.map(([x, z]) => new THREE.Vector3(x * k, y, z * k));
+  const rings = [...crown.reverse().map(([k, y]) => ring(k, y)), ...pav.map(([k, y]) => ring(k, y))];
+  const top = new THREE.Vector3(0, crown[0][1], 0);
+  const culet = new THREE.Vector3(0, -0.74, 0);
+  const n = outlinePts.length;
+  const t = [];
+  for (let i = 0; i < n; i++) t.push(top, rings[0][i], rings[0][(i + 1) % n]);
+  for (let r = 0; r < rings.length - 1; r++) {
+    for (let i = 0; i < n; i++) {
+      const a = rings[r][i], b = rings[r][(i + 1) % n], c = rings[r + 1][i], d = rings[r + 1][(i + 1) % n];
+      t.push(a, c, b, b, c, d);
+    }
+  }
+  const last = rings[rings.length - 1];
+  for (let i = 0; i < n; i++) t.push(last[i], culet, last[(i + 1) % n]);
+  return facetGeometry(t, new THREE.Vector3(0, -0.2, 0));
 }
 
 // Cabochon: glatte Wölbung mit flachem Boden. UVs als Draufsicht, damit Muster natürlich liegen.
@@ -83,10 +121,9 @@ function cabochonGeometry(oval = 1.2) {
 
 function cutGeometry(spec) {
   if (spec.cut === 'cabochon') return cabochonGeometry();
-  if (spec.cut === 'step') return stepGeometry(spec.ratio ?? 1.3);
+  if (STEP_OUTLINES[spec.cut]) return stepCut(STEP_OUTLINES[spec.cut](spec.ratio), { steps: spec.cut === 'asscher' ? 4 : 3 });
   const geo = brilliantGeometry();
-  const fn = outline(spec.cut);
-  return fn ? reshape(geo, fn) : geo;
+  return OUTLINES[spec.cut] ? reshape(geo, radiusTable(OUTLINES[spec.cut]())) : geo;
 }
 
 // ---- Gezeichnete Muster (Canvas-Texturen) -----------------------------------------------

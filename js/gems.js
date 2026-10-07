@@ -1,7 +1,8 @@
 // Die 89 Edelsteine von Fame – Stufe 1 (Malachit) bis Stufe 89 (Diamant).
 //
-// cut:  brilliant (rund), oval, pear (Tropfen/Birne), cushion (Kissen), step (Treppen-/Smaragdschliff,
-//       ratio = Länge zu Breite), cabochon (gewölbt, ohne Facetten)
+// cut:  Brillant-Familie: round, oval, cushion, cushionSquare, marquise, pear, princess, radiant,
+//       radiantSquare – Treppenschliffe: emerald (ratio = Länge zu Breite), asscher, octagon –
+//       cabochon (gewölbt, ohne Facetten). Typischer Schliff je Stein: siehe CUTS unten.
 // look: clear (durchsichtig), milk (milchig), opaque (undurchsichtig mit Muster),
 //       opal (Farbspiel), labra (Farbschimmer), moon (bläulicher Schimmer), star (Sternstein),
 //       diamond (der Diamant)
@@ -99,20 +100,127 @@ export const GEM_LIST = [
   G('Rubin', '#d40f3a', 'oval', 'clear', { flavor: 'Rot wie der Teppich, auf dem du stehst.' }),
   G('Alexandrit', '#2f8a6a', 'brilliant', 'clear', { c2: '#a02e6a', shift: true, flavor: 'Wechselt die Farbe. Nicht den Charakter.' }),
   G('Paraíba-Turmalin', '#1ee2e0', 'oval', 'clear', { glow: true, flavor: 'Leuchtet heller als jede Clubnacht.' }),
-  G('Diamant', '#ffffff', 'brilliant', 'diamond', { flavor: 'Erst Fame, dann die anderen.' }),
+  G('Diamant', '#ffffff', 'round', 'diamond', { flavor: 'Erst Fame, dann die anderen.' }),
 
   // Die Legenden: berühmte Diamanten ab 300.000 € bis 1 Mio. €
   G('Orangefarbener Diamant', '#ff8a1c', 'pear', 'diamond', { legend: true, flavor: 'Feuer in Tropfenform.' }),
   G('The Unique Pink', '#ff7fb6', 'pear', 'diamond', { legend: true, flavor: 'Einzigartig. Wie der Name sagt.' }),
   G('De Beers Millennium Jewel 4', '#4f8fff', 'oval', 'diamond', { legend: true, flavor: 'Blau wie die Tiefe des Ozeans.' }),
-  G('Fancy Intense Pink', '#ff5fa2', 'cushion', 'diamond', { legend: true, flavor: 'Intensiv. Wie dein Auftritt.' }),
+  G('Fancy Intense Pink', '#ff5fa2', 'radiant', 'diamond', { legend: true, flavor: 'Intensiv. Wie dein Auftritt.' }),
   G('Blue Moon of Josephine', '#5aa2ff', 'cushion', 'diamond', { legend: true, flavor: 'Einmal im blauen Mond.' }),
-  G('Pink Legacy', '#ff6fa8', 'step', 'diamond', { legend: true, ratio: 1.3, flavor: 'Ein Vermächtnis in Rosa.' }),
-  G('Oppenheimer Blue', '#3f7dff', 'step', 'diamond', { legend: true, ratio: 1.22, flavor: 'Das tiefste Blau der Welt.' }),
+  G('Pink Legacy', '#ff6fa8', 'emerald', 'diamond', { legend: true, ratio: 1.3, flavor: 'Ein Vermächtnis in Rosa.' }),
+  G('Oppenheimer Blue', '#3f7dff', 'emerald', 'diamond', { legend: true, ratio: 1.22, flavor: 'Das tiefste Blau der Welt.' }),
   G('The Constellation', '#ffffff', 'cushion', 'diamond', { legend: true, flavor: 'Ein ganzes Sternbild in deiner Hand.' }),
-  G('Lesedi La Rona', '#ffffff', 'step', 'diamond', { legend: true, ratio: 1.0, flavor: '„Unser Licht“ – jetzt deins.' }),
+  G('Lesedi La Rona', '#ffffff', 'asscher', 'diamond', { legend: true, flavor: '„Unser Licht“ – jetzt deins.' }),
   G('The Pink Star', '#ff4f9a', 'oval', 'diamond', { legend: true, flavor: 'Der Stern über allen.' }),
 ];
+
+// Typischer Schliff je Stein (für alle facettierten Steine außer den Legenden)
+const CUTS = {
+  'Rauchquarz': 'cushion', 'Weißtopas': 'round', 'Bergkristall': 'radiant', 'Rutilquarz': 'cushion',
+  'Swiss-Blue-Topas': 'cushionSquare', 'Sky-Blue-Topas': 'oval', 'Prasiolith': 'octagon', 'Amethyst': 'oval',
+  'London-Blue-Topas': 'emerald', 'Granat': 'round', 'Citrin': 'cushionSquare', 'Naturblauer Topas': 'marquise',
+  'Blautopas': 'princess', 'Skapolith': 'oval', 'Diopsid': 'round', 'Champagner-Topas': 'emerald',
+  'Fluorit': 'octagon', 'Kyanit': 'emerald', 'Chromdiopsid': 'cushionSquare', 'Goldberyll': 'emerald',
+  'Iolith': 'cushion', 'Achroit': 'asscher', 'Beryll': 'emerald', 'Rhodolith': 'cushion',
+  'Kunzit': 'radiant', 'Andalusit': 'oval', 'Titanit': 'round', 'Morganit': 'pear', 'Peridot': 'oval',
+  'Siberit': 'emerald', 'Apatit': 'radiantSquare', 'Rubellit': 'cushion', 'Bicolor-Turmalin': 'emerald',
+  'Turmalin': 'radiant', 'Verdelith': 'emerald', 'Goldtopas': 'pear', 'Hessonit': 'oval', 'Zirkon': 'round',
+  'Aquamarin': 'emerald', 'Pyrop': 'round', 'Spessartin': 'cushionSquare', 'Indigolith': 'emerald',
+  'Feueropal': 'oval', 'Chrysoberyll': 'cushion', 'Imperial-Topas': 'pear', 'Chromturmalin': 'octagon',
+  'Spinell': 'cushion', 'Gelber Saphir': 'radiant', 'Tansanit': 'cushionSquare', 'Tsavorit': 'round',
+  'Jeremejewit': 'oval', 'Grüner Saphir': 'asscher', 'Padparadscha-Saphir': 'cushion', 'Demantoid': 'round',
+  'Violetter Saphir': 'marquise', 'Saphir': 'oval', 'Rosa Saphir': 'pear', 'Smaragd': 'emerald',
+  'Rubin': 'cushion', 'Alexandrit': 'cushion', 'Paraíba-Turmalin': 'pear',
+};
+
+// Ein eigener Spruch für jede Card
+const SAYINGS = {
+  'Malachit': 'Grün gestreift, wie die ersten Scheine.',
+  'Larimar': 'Ein Stück Karibik für die Tasche.',
+  'Mondstein': 'Leuchtet auch, wenn das Licht ausgeht.',
+  'Chalzedon': 'Ruhig im Ton, sicher im Auftritt.',
+  'Lapislazuli': 'Blau wie Königsmäntel – mit Gold drin.',
+  'Dendritenachat': 'Ein ganzer Wald im Stein. Du bist der höchste Baum.',
+  'Rauchquarz': 'Rauch ohne Feuer? Nicht bei dir.',
+  'Chrysopras': 'Apfelgrün und frisch auf der Liste.',
+  'Sonnenstein': 'Hier geht die Sonne für dich auf.',
+  'Weißtopas': 'Klar wie deine Ansage.',
+  'Rosenquarz': 'Für die, die Herz zeigen.',
+  'Spektrolith': 'Alle Farben, eine Haltung.',
+  'Bergkristall': 'Klarheit von ganz oben.',
+  'Rutilquarz': 'Goldfäden im Glas – so sieht Stil aus.',
+  'Labradorit': 'Schimmert erst, wenn man genau hinsieht.',
+  'Fibrolith': 'Selten gesehen, sofort gemerkt.',
+  'Swiss-Blue-Topas': 'Kühl wie ein Bergsee in den Alpen.',
+  'Sky-Blue-Topas': 'Blauer Himmel, keine Grenze.',
+  'Prasiolith': 'Grün wie der erste Neid der anderen.',
+  'Amethyst': 'Violett war schon immer Königsfarbe.',
+  'London-Blue-Topas': 'Dunkelblau wie Londoner Nächte.',
+  'Granat': 'Tiefrot. Treu. Unverwechselbar.',
+  'Citrin': 'Sonnengelb und gut gelaunt.',
+  'Naturblauer Topas': 'Natürlich blau. Natürlich du.',
+  'Blautopas': 'Ein Blau, das hängen bleibt.',
+  'Skapolith': 'Den kennt kaum einer. Genau deshalb.',
+  'Diopsid': 'Dunkles Grün mit Tiefgang.',
+  'Champagner-Topas': 'Champagner, der nie schal wird.',
+  'Fluorit': 'Zwei Farben, ein Statement.',
+  'Kyanit': 'Blau mit Ecken und Kanten.',
+  'Chromdiopsid': 'Sattes Grün aus dem sibirischen Eis.',
+  'Koroit-Boulder-Opal': 'Ein Feuerwerk im Gestein.',
+  'Goldberyll': 'Gold, das nicht protzen muss.',
+  'Iolith': 'Der Kompass der Wikinger – jetzt deiner.',
+  'Achroit': 'Farblos? Nein, kompromisslos.',
+  'Beryll': 'Aus der Familie der Smaragde. Du gehörst dazu.',
+  'Welo-Opal': 'Regenbogen zum Mitnehmen.',
+  'Sugilith': 'Violett, so selten wie Ruhe im Club.',
+  'Rhodolith': 'Rosenrot mit Granat-Seele.',
+  'Türkis': 'Seit den Pharaonen ein Zeichen von Macht.',
+  'Kunzit': 'Zartrosa und trotzdem laut.',
+  'Andalusit': 'Wechselt den Blick, nicht den Stil.',
+  'Titanit': 'Mehr Feuer als ein Diamant.',
+  'Morganit': 'Pfirsich, Rosé und ein Hauch Luxus.',
+  'Peridot': 'Aus Vulkanen geboren.',
+  'Rhodonit': 'Rosa mit schwarzen Linien – wie ein Tattoo.',
+  'Siberit': 'Sibirisches Rot, heiß im Herzen.',
+  'Apatit': 'Neonblau, das niemand übersieht.',
+  'Sternsaphir': 'Du trägst einen Stern. Wortwörtlich.',
+  'Rubellit': 'Rot wie ein Abend, den keiner vergisst.',
+  'Yowah-Boulder-Opal': 'Das Outback hat seine Farben versteckt. Bei dir.',
+  'Bicolor-Turmalin': 'Zwei Seiten, beide stark.',
+  'Turmalin': 'Der Stein, der jede Farbe kann.',
+  'Verdelith': 'Grün, das Eindruck macht.',
+  'Goldtopas': 'Goldener Moment, festgehalten.',
+  'Boulder-Opal': 'Feuer im Fels.',
+  'Hessonit': 'Zimt, Honig und ein Hauch Orient.',
+  'Zirkon': 'Älter als die Berge. Funkelt wie neu.',
+  'Aquamarin': 'Meerwasser, in Stein gefasst.',
+  'Opal': 'Jeder Blick ein neues Farbspiel.',
+  'Pyrop': 'Feuerrot – der Name sagt es schon.',
+  'Spessartin': 'Mandarine mit Strahlkraft.',
+  'Indigolith': 'Tiefblau und selten wie Stille.',
+  'Feueropal': 'Brennt, ohne zu verglühen.',
+  'Crystal Opal': 'Klar wie Glas, bunt wie ein Festival.',
+  'White Opal': 'Weiß, aber niemals farblos.',
+  'Chrysoberyll': 'Goldgrün und härter als die meisten.',
+  'Imperial-Topas': 'Für Zaren gemacht. Jetzt für dich.',
+  'Chromturmalin': 'Smaragdgrün, aber mit eigenem Kopf.',
+  'Sternrubin': 'Ein Stern in Rot. Mehr Fame geht kaum.',
+  'Spinell': 'Lange für einen Rubin gehalten. Jetzt selbst ein Star.',
+  'Black Crystal Opal': 'Dunkelheit voller Farben.',
+  'Gelber Saphir': 'Sonnenlicht mit Saphir-Härte.',
+  'Tansanit': 'Nur an einem Ort der Welt gefunden.',
+  'Semi Black Opal': 'Halb Nacht, ganz Feuerwerk.',
+  'Tsavorit': 'Grüner als jeder Neid.',
+  'Jeremejewit': 'So selten, dass kaum einer den Namen kennt.',
+  'Black Opal': 'Der König der Opale.',
+  'Grüner Saphir': 'Grün, mit der Härte eines Saphirs.',
+  'Padparadscha-Saphir': 'Lotusblüte im Sonnenuntergang.',
+  'Demantoid': 'Funkelt feuriger als ein Diamant.',
+  'Violetter Saphir': 'Violett, edel, unaufgeregt.',
+  'Saphir': 'Blau wie ein Kronjuwel.',
+  'Rosa Saphir': 'Rosa mit Rückgrat.',
+};
 
 // Brechzahl und Farbaufspaltung ("Feuer") je Steinart – bestimmen, wie das Licht im Stein läuft.
 const OPTICS = [
@@ -129,7 +237,9 @@ const OPTICS = [
   [/Smaragd|Aquamarin|Beryll|Morganit/, 1.58, 0.007],
 ];
 for (const g of GEM_LIST) {
+  if (SAYINGS[g.name]) g.flavor = SAYINGS[g.name];
   if (g.cut === 'cabochon') continue;
+  if (CUTS[g.name]) g.cut = CUTS[g.name];
   const o = OPTICS.find(([re]) => re.test(g.name));
   g.ior = o ? o[1] : 1.55;
   g.disp = o ? o[2] : 0.007;
