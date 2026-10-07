@@ -755,6 +755,9 @@ function card() {
   const clsColor = CLASSES[tier.cls].color;
   const insta = state.user?.insta || '';
   const hidden = c.revealed === false;
+  // Aufstieg in eine neue Farbklasse mit dieser Card? (Vergleich mit der Card davor)
+  const prevCard = acc.cards.length > 1 ? acc.cards[acc.cards.length - 2] : null;
+  const classUp = !!prevCard && classFor(prevCard.total || 0) < tier.cls;
   return {
     html: `<section class="screen screen--dark screen--card lvl-${tier.level} cls-${tier.cls}${hidden ? ' is-hidden' : ' is-open'}" style="--rar:${clsColor}">
       <div class="loot-bg" aria-hidden="true">
@@ -806,6 +809,11 @@ function card() {
         </div>
       </div>
       <div class="screen-foot card-actions">
+        <button class="frame-nudge" type="button" data-framenudge hidden>
+          <span class="frame-nudge-ring" aria-hidden="true"></span>
+          <span class="frame-nudge-text"><b>Neue Klasse: ${CLASSES[tier.cls].name}!</b>Hol dir deinen neuen Profilbild-Rahmen</span>
+          <span class="frame-nudge-go" aria-hidden="true">→</span>
+        </button>
         <div class="quick-share">
           <button class="qs qs--ig" type="button" data-share="ig">${icons.insta}<span>Story</span></button>
           <button class="qs qs--tt" type="button" data-share="tt">${icons.tiktok}<span>TikTok</span></button>
@@ -921,6 +929,7 @@ function card() {
           if (isNew) timers.push(setTimeout(() => toast(`Neu in deiner Sammlung: ${collectedStages().size} von ${GEM_COUNT} Edelsteinen`), 1400));
           saveAccount();
           flip.setAttribute('aria-label', tier.name);
+          if (needsFrame()) timers.push(setTimeout(showFrameNudge, 1800));
         }, dur * 1000));
       };
       flip.addEventListener('click', open);
@@ -998,17 +1007,31 @@ function card() {
       const avSave = el.querySelector('[data-avsave]');
       const avCls = classFor(acc.total);
       let avCanvas = null;
+
+      // Erinnerung an den neuen Rahmen: bei einem Klassenaufstieg, oder solange der zuletzt
+      // erstellte Rahmen aus einer niedrigeren Klasse stammt. Verschwindet, sobald der neue gespeichert ist.
+      const nudgeBtn = el.querySelector('[data-framenudge]');
+      const frameCls = store.get('frameCls', null);
+      const needsFrame = () => (frameCls === null ? classUp : frameCls < avCls);
+      const showFrameNudge = () => {
+        nudgeBtn.hidden = false;
+        requestAnimationFrame(() => nudgeBtn.classList.add('is-in'));
+        plink(tier.level);
+      };
+      if (!hidden && needsFrame()) showFrameNudge();
       const showAvatar = (photo) => {
         avCanvas = renderAvatar(photo, avCls);
         avImg.src = avCanvas.toDataURL('image/jpeg', 0.9);
         avSave.disabled = !photo;
       };
-      el.querySelector('[data-avatar]').addEventListener('click', () => {
+      const openAvatar = () => {
         closeSheet();
         avSheet.hidden = false;
         requestAnimationFrame(() => avSheet.classList.add('is-open'));
         if (!avCanvas) showAvatar(null);
-      });
+      };
+      el.querySelector('[data-avatar]').addEventListener('click', openAvatar);
+      nudgeBtn.addEventListener('click', openAvatar);
       el.querySelector('[data-close-av]').addEventListener('click', () => {
         avSheet.classList.remove('is-open');
         setTimeout(() => { avSheet.hidden = true; }, 300);
@@ -1025,6 +1048,10 @@ function card() {
       avSave.addEventListener('click', async () => {
         if (!avCanvas) return;
         const how = await saveAvatar(avCanvas, c.serial);
+        if (how !== 'cancelled') {
+          store.set('frameCls', avCls);
+          nudgeBtn.hidden = true;
+        }
         if (how === 'saved') toast('Profilbild gespeichert – jetzt in Instagram oder TikTok einstellen.');
       });
 
