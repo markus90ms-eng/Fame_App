@@ -60,8 +60,9 @@ const OUTLINES = {
 
 // Treppenschliff-Umrisse
 const STEP_OUTLINES = {
-  emerald: (ratio = 1.4) => cutRect(0.92 * ratio, 0.92, 0.2),
-  asscher: () => cutRect(0.95, 0.95, 0.3),
+  // corner: Größe der abgeschrägten Ecken (Pink Legacy hat besonders große)
+  emerald: (ratio = 1.4, corner = 0.2) => cutRect(0.92 * ratio, 0.92, corner),
+  asscher: (ratio = 1, corner = 0.3) => cutRect(0.95 * ratio, 0.95, corner),
   octagon: () => curve((t) => [Math.cos(t), Math.sin(t)], 8).map(([x, z]) => {
     const a = Math.atan2(z, x) + Math.PI / 8;
     return [Math.cos(a), Math.sin(a)];
@@ -145,10 +146,42 @@ function pebbleGeometry(name) {
 
 export const isPebble = (spec) => spec.cut === 'cabochon' && ['opaque', 'milk', 'labra'].includes(spec.look);
 
+// Rohdiamant: unregelmäßiger Kristall mit großen, flachen Spaltflächen (z. B. The Constellation)
+function roughGeometry(name) {
+  const rnd = seeded(`rough-${name}`);
+  const base = new THREE.IcosahedronGeometry(1, 1);
+  // Spaltflächen: Punkte jenseits einer Ebene werden auf die Ebene gedrückt
+  const planes = Array.from({ length: 11 }, () => {
+    const n = new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).normalize();
+    return { n, d: 0.62 + rnd() * 0.3 };
+  });
+  const seen = new Map();
+  const pos = base.attributes.position;
+  const t = [];
+  for (let i = 0; i < pos.count; i++) {
+    const v = new THREE.Vector3().fromBufferAttribute(pos, i);
+    const key = `${v.x.toFixed(3)},${v.y.toFixed(3)},${v.z.toFixed(3)}`;
+    if (!seen.has(key)) {
+      const w = v.clone().multiplyScalar(1 + (rnd() - 0.5) * 0.12);
+      for (const { n, d } of planes) {
+        const k = w.dot(n);
+        if (k > d) w.addScaledVector(n, d - k);
+      }
+      seen.set(key, w.multiply(new THREE.Vector3(0.95, 1.3, 0.62)));
+    }
+    t.push(seen.get(key));
+  }
+  base.dispose();
+  const geo = facetGeometry(t, new THREE.Vector3(0, 0, 0));
+  geo.rotateX(-0.55); // gegen die Neigung der Bühne: der Kristall steht aufrecht
+  return geo;
+}
+
 function cutGeometry(spec) {
+  if (spec.cut === 'rough') return roughGeometry(spec.name);
   if (isPebble(spec)) return pebbleGeometry(spec.name);
   if (spec.cut === 'cabochon') return cabochonGeometry();
-  if (STEP_OUTLINES[spec.cut]) return stepCut(STEP_OUTLINES[spec.cut](spec.ratio), { steps: spec.cut === 'asscher' ? 4 : 3 });
+  if (STEP_OUTLINES[spec.cut]) return stepCut(STEP_OUTLINES[spec.cut](spec.ratio, spec.corner), { steps: spec.cut === 'asscher' ? 4 : 3 });
   const geo = brilliantGeometry();
   return OUTLINES[spec.cut] ? reshape(geo, radiusTable(OUTLINES[spec.cut](spec.ratio))) : geo;
 }
@@ -359,13 +392,15 @@ function buildMaterials(spec, geo, envCube, style) {
   if (spec.cut !== 'cabochon' && envCube) {
     // Facettiert: echte Lichtbrechung im Stein (siehe refraction.js)
     const lum = new THREE.Color(spec.c).getHSL({}).l;
+    // Rohdiamant: kaum Feuer, milchig wie Eis
+    const rough = spec.cut === 'rough';
     const outer = refractionMaterial(geo, envCube, {
-      color: spec.bicolor ? '#ffffff' : spec.c, ior: spec.ior ?? 2.42, dispersion: spec.disp ?? 0.02,
+      color: spec.bicolor ? '#ffffff' : spec.c, ior: spec.ior ?? 2.42, dispersion: rough ? 0.004 : spec.disp ?? 0.02,
       bounces: spec.look === 'diamond' ? 5 : 4,
       glow: spec.glow ? 0.18 : 0, vertexColors: !!spec.bicolor,
       ...(style === 'photo'
         // Foto-Look: satte Farbe, harte weiße Lichtreflexe, kein Holo-Film
-        ? { body: spec.c === '#ffffff' ? 0.02 : 0.24, holo: 0, contrast: spec.c === '#ffffff' ? 0.3 : 1, exposure: spec.c === '#ffffff' ? 1.6 : 2.1 + Math.max(0, 0.5 - lum) * 1.6 }
+        ? rough ? { body: 0.07, holo: 0, contrast: 0.5, exposure: 1.35 } : { body: spec.c === '#ffffff' ? 0.02 : 0.24, holo: 0, contrast: spec.c === '#ffffff' ? 0.3 : Math.min(1, Math.max(0.5, (0.85 - lum) * 3)), exposure: spec.c === '#ffffff' ? 1.6 : 2.1 + Math.max(0, 0.5 - lum) * 1.6 }
         : { body: spec.c === '#ffffff' ? 0.06 : 0.16, holo: spec.c === '#ffffff' ? 0.75 : 0.4, exposure: 1.05 + Math.max(0, 0.5 - lum) * 1.2 }),
     });
     return { outer, inner: null, disposables };

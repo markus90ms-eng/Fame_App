@@ -336,11 +336,11 @@ export function createDiamond(container, opts = {}) {
   try { envCube = cubeFromScene(renderer, photo ? photoScene() : holoScene(), 256); } catch { /* Ersatzmaterial */ }
   const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 50);
   // Foto-Modus: Kamera so weit weg, dass der Stein etwa 4/5 der Bildbreite füllt
-  let gemWidth = 2.6;
+  let gemWidth = 2.6, gemHeight = 1.2;
   const fitCamera = () => {
     if (!photo) return;
     const half = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    const dist = Math.max((gemWidth / 2) / (0.8 * half * camera.aspect), 1.2 / (0.55 * half), 3.6);
+    const dist = Math.max((gemWidth / 2) / (0.8 * half * camera.aspect), 1.2 / (0.55 * half), gemHeight / (1.3 * half), 3.6);
     camera.position.set(0, FLOOR_Y + 0.5 + dist * 0.14, dist);
     camera.lookAt(0, FLOOR_Y + 0.85, 0);
   };
@@ -403,6 +403,7 @@ export function createDiamond(container, opts = {}) {
       gem.mesh.geometry.computeBoundingBox();
       const bb = gem.mesh.geometry.boundingBox;
       gemWidth = Math.max(bb.max.x - bb.min.x, (bb.max.z - bb.min.z) * 0.8);
+      gemHeight = bb.max.y - bb.min.y;
       fitCamera();
     }
   };

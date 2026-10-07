@@ -1,8 +1,9 @@
 // Die 89 Edelsteine von Fame – Stufe 1 (Malachit) bis Stufe 89 (Diamant).
 //
 // cut:  Brillant-Familie: round, oval, cushion, cushionSquare, marquise, pear, princess, radiant,
-//       radiantSquare – Treppenschliffe: emerald (ratio = Länge zu Breite), asscher, octagon –
-//       cabochon (gewölbt, ohne Facetten). Typischer Schliff je Stein: siehe CUTS unten.
+//       radiantSquare – Treppenschliffe: emerald (ratio = Länge zu Breite, corner = Eckenschräge),
+//       asscher, octagon – cabochon (gewölbt, ohne Facetten) – rough (Rohdiamant).
+//       Typischer Schliff je Stein: siehe CUTS unten. Oval, Kissen und Birne kennen ebenfalls ratio.
 // look: clear (durchsichtig), milk (milchig), opaque (undurchsichtig mit Muster),
 //       opal (Farbspiel), labra (Farbschimmer), moon (bläulicher Schimmer), star (Sternstein),
 //       diamond (der Diamant)
@@ -108,11 +109,11 @@ export const GEM_LIST = [
   G('De Beers Millennium Jewel 4', '#8ea8ec', 'oval', 'diamond', { legend: true, ratio: 1.38, flavor: 'Blau wie die Tiefe des Ozeans.' }),
   G('Fancy Intense Pink', '#f6b3d0', 'cushion', 'diamond', { legend: true, ratio: 1.22, flavor: 'Intensiv. Wie dein Auftritt.' }),
   G('Blue Moon of Josephine', '#2a62e8', 'cushion', 'diamond', { legend: true, ratio: 1.36, flavor: 'Einmal im blauen Mond.' }),
-  G('Pink Legacy', '#ff6fa8', 'emerald', 'diamond', { legend: true, ratio: 1.3, flavor: 'Ein Vermächtnis in Rosa.' }),
-  G('Oppenheimer Blue', '#3f7dff', 'emerald', 'diamond', { legend: true, ratio: 1.22, flavor: 'Das tiefste Blau der Welt.' }),
-  G('The Constellation', '#ffffff', 'cushion', 'diamond', { legend: true, flavor: 'Ein ganzes Sternbild in deiner Hand.' }),
-  G('Lesedi La Rona', '#ffffff', 'asscher', 'diamond', { legend: true, flavor: '„Unser Licht“ – jetzt deins.' }),
-  G('The Pink Star', '#ff4f9a', 'oval', 'diamond', { legend: true, flavor: 'Der Stern über allen.' }),
+  G('Pink Legacy', '#f98db2', 'emerald', 'diamond', { legend: true, ratio: 1.2, corner: 0.32, flavor: 'Ein Vermächtnis in Rosa.' }),
+  G('Oppenheimer Blue', '#3f6cb4', 'emerald', 'diamond', { legend: true, ratio: 1.48, corner: 0.14, flavor: 'Das tiefste Blau der Welt.' }),
+  G('The Constellation', '#ffffff', 'rough', 'diamond', { legend: true, flavor: 'Ein ganzes Sternbild in deiner Hand.' }),
+  G('Lesedi La Rona', '#ffffff', 'asscher', 'diamond', { legend: true, ratio: 1.04, corner: 0.27, flavor: '„Unser Licht“ – jetzt deins.' }),
+  G('The Pink Star', '#f78aa2', 'oval', 'diamond', { legend: true, ratio: 1.3, flavor: 'Der Stern über allen.' }),
 ];
 
 // Typischer Schliff je Stein (für alle facettierten Steine außer den Legenden)

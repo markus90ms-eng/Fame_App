@@ -42,7 +42,7 @@ Es gibt 99 Stufen, jede ist ein Edelstein: von **Stufe 1 Malachit** (ab 1 €) �
 | 94 | 510.000 € | Blue Moon of Josephine | Kissen |
 | 95 | 590.000 € | Pink Legacy | Smaragdschliff |
 | 96 | 670.000 € | Oppenheimer Blue | Smaragdschliff |
-| 97 | 770.000 € | The Constellation | Kissen |
+| 97 | 770.000 € | The Constellation | Rohdiamant |
 | 98 | 870.000 € | Lesedi La Rona | Smaragdschliff (quadratisch) |
 | 99 | 1.000.000 € | The Pink Star | Oval |
  Die Liste steht in `js/gems.js`, die Beträge rechnet `js/data.js` aus. Sie steigen gleichmäßig (logarithmisch): Am Anfang ist der nächste Stein schnell erreicht, oben wird es exklusiv. Beispiele: 100 € → Stufe 26, 1.000 € → Stufe 44, 10.000 € → Stufe 63, 100.000 € → Stufe 82.
