@@ -53,6 +53,7 @@ Es gibt 99 Stufen, jede ist ein Edelstein: von **Stufe 1 Malachit** (ab 1 €) �
 - **Sound:** Jeder neue Stein beim Schieben gibt einen Kristall-Ton (je höher, desto heller). Bei einer neuen Seltenheitsklasse kommen Klassen-Sound, Farbwechsel und Funken dazu.
 - **Seltenheitsklassen** (nur Farben und Effekte, nicht sichtbar benannt): Stufe 1–25 grau, 26–50 blau, 51–70 gelb, 71–82 lila, ab 83 orange.
 - **Echte Lichtbrechung:** Facettierte Steine verfolgen das Licht im Stein. Es wird beim Eintritt gebrochen, an den Facetten mehrfach gespiegelt und beim Austritt in Regenbogenfarben aufgespalten (Feuer). Jede Steinart hat ihre echte Brechzahl (Diamant 2,42, Saphir 1,77, Smaragd 1,58 …). Technik: `js/refraction.js` mit three-mesh-bvh.
+- **Holo-Look:** Die facettierten Steine sind im Stil von holografischem Glas gestaltet. Sie spiegeln einen hellen Pastell-Himmel (`holoScene` in `js/diamond3d.js`), haben einen zarten Regenbogen-Film auf jeder Facette und feine silberne Kanten. Man sieht sie fast von der Seite, damit der Unterteil (Pavillon) groß sichtbar ist.
 - **Schliffe:** Jeder facettierte Stein hat seinen typischen Schliff (Liste `CUTS` in `js/gems.js`). Es gibt 12 Schliffarten:
   - **Brillant-Familie:** Round, Oval, Cushion, Cushion square, Marquise, Pear, Princess, Radiant, Radiant square. Der Rundbrillant wird in die jeweilige Umrissform gebracht, die Facetten bleiben erhalten.
   - **Treppenschliffe:** Emerald, Emerald square (Asscher), Octagon, mit gestuften Facetten entlang des Umrisses.
@@ -64,7 +65,7 @@ Es gibt 99 Stufen, jede ist ein Edelstein: von **Stufe 1 Malachit** (ab 1 €) �
 - **Fame-Card im Design des Steins:**
   - Rahmen aus Metall passend zur Steinfarbe: Gold für warme Töne, Roségold für Rosa und Rot, Platin für kühle und farblose Steine. Die Legenden haben einen umlaufenden Holo-Schimmer.
   - Grund in der Farbe des Steins mit Facetten-Wasserzeichen und feiner Metall-Linie.
-  - Name in Serifenschrift (Cormorant Garamond) mit Metall-Verlauf, dazu Zierlinie, Spruch und ein Echtheitssiegel.
+  - Unter dem Stein steht nur der Name in Serifenschrift (Cormorant Garamond) mit Metall-Verlauf, dazu Zierlinie, Spruch und ein Echtheitssiegel. Keine Stufen-Zeile.
 - Oben rechts steht eine Seriennummer (`FM-XXXX-XXXX-P` mit Prüfzeichen) als Nachweis, dass die Card aus der App stammt.
 
 ## Konto und mehrfaches Einzahlen

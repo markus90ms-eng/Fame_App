@@ -54,6 +54,41 @@ export function studioScene() {
   return s;
 }
 
+// Helle Holo-Umgebung für die Lichtbrechung: weiß-lavendel oben, zartes Cyan/Rosa am Horizont,
+// tiefes Indigo unten, dazu pastellige Lichtflächen. Ergibt den gläsernen, schimmernden Look.
+export function holoScene() {
+  const s = new THREE.Scene();
+  const sky = new THREE.SphereGeometry(10, 48, 32);
+  const top = new THREE.Color('#f6f3ff'), mid = new THREE.Color('#bfe4ff'), pink = new THREE.Color('#ffd1ec'),
+    low = new THREE.Color('#5a4fd6'), bottom = new THREE.Color('#1a1d5a');
+  const pos = sky.attributes.position;
+  const cols = new Float32Array(pos.count * 3);
+  const c = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) {
+    const y = pos.getY(i) / 10, x = pos.getX(i) / 10;
+    if (y > 0.35) c.copy(mid).lerp(top, (y - 0.35) / 0.65);
+    else if (y > -0.05) c.copy(pink).lerp(mid, (y + 0.05) / 0.4).lerp(pink, Math.max(0, x) * 0.4);
+    else if (y > -0.5) c.copy(low).lerp(pink, (y + 0.5) / 0.45);
+    else c.copy(bottom).lerp(low, (y + 1) / 0.5);
+    c.toArray(cols, i * 3);
+  }
+  sky.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+  s.add(new THREE.Mesh(sky, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide })));
+  const panel = (w, h, p, color, k) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(k), side: THREE.DoubleSide }));
+    m.position.set(...p);
+    m.lookAt(0, 0, 0);
+    s.add(m);
+  };
+  panel(5, 5, [0, 6, 0], '#ffffff', 2.4);
+  ['#ffb3e6', '#b3ffe0', '#c9b3ff', '#ffe2b3', '#9fc4ff', '#ffffff', '#ffc6f0', '#a8fff5'].forEach((col, i) => {
+    const a = (i / 8) * Math.PI * 2;
+    panel(1.6, 2.6, [Math.cos(a) * 6, i % 2 ? 1.5 : -0.5, Math.sin(a) * 6], col, i === 5 ? 2.6 : 1.7);
+  });
+  return s;
+}
+
 export function studioEnvironment(renderer) {
   const s = studioScene();
   const pm = new THREE.PMREMGenerator(renderer);
@@ -166,7 +201,7 @@ export function brilliantGeometry({ damage = 0 } = {}) {
 // ---- Fertige Bühne mit Renderer, Drehung per Finger und Glow ------------------------------
 
 export function createDiamond(container, opts = {}) {
-  const { level = 2, glow = 0.4, autoRotate = true, interactive = true, tilt = 0.55, rim = '#ffffff', mystery = false } = opts;
+  const { level = 2, glow = 0.4, autoRotate = true, interactive = true, tilt = 0.2, rim = '#ffffff', mystery = false } = opts;
   // opts.gem: ein Edelstein aus data.js (TIERS). Ohne Angabe zeigt die Bühne den Diamanten.
 
   if (!webglAvailable()) {
@@ -187,7 +222,7 @@ export function createDiamond(container, opts = {}) {
   scene.environment = env;
   // Würfel-Umgebung für die Lichtbrechung in facettierten Steinen
   let envCube = null;
-  try { envCube = cubeFromScene(renderer, studioScene(), 256); } catch { /* Ersatzmaterial */ }
+  try { envCube = cubeFromScene(renderer, holoScene(), 256); } catch { /* Ersatzmaterial */ }
   const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 50);
   camera.position.set(0, 0.5, 5.4);
   camera.lookAt(0, -0.14, 0);

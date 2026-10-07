@@ -335,9 +335,10 @@ function buildMaterials(spec, geo, envCube) {
     const outer = refractionMaterial(geo, envCube, {
       color: spec.bicolor ? '#ffffff' : spec.c, ior: spec.ior ?? 2.42, dispersion: spec.disp ?? 0.02,
       bounces: spec.look === 'diamond' ? 5 : 4,
-      exposure: 1.2 + Math.max(0, 0.5 - lum) * 1.4,   // dunkle Steine etwas aufhellen
       glow: spec.glow ? 0.18 : 0, vertexColors: !!spec.bicolor,
-      body: spec.c === '#ffffff' ? 0.02 : 0.16,
+      body: spec.c === '#ffffff' ? 0.06 : 0.16,
+      holo: spec.c === '#ffffff' ? 0.75 : 0.4,
+      exposure: 1.05 + Math.max(0, 0.5 - lum) * 1.2,
     });
     return { outer, inner: null, disposables };
   }
@@ -469,7 +470,11 @@ export function gemObject(spec, { envCube = null } = {}) {
   const edgeMat = new THREE.LineBasicMaterial({ transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
   const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo, spec.cut === 'cabochon' ? 30 : 1), edgeMat);
   edges.scale.setScalar(1.003);
-  edges.visible = false;
+  // Feine Silberkanten auf den Facetten (im Mystery-Modus leuchten sie in der Klassenfarbe)
+  const faceted = spec.cut !== 'cabochon';
+  edgeMat.color.set('#ffffff');
+  edgeMat.opacity = faceted ? 0.22 : 0;
+  edges.visible = faceted;
   group.add(edges);
   const blackMat = new THREE.MeshStandardMaterial({ color: 0x050506, roughness: 0.8, flatShading: true, emissiveIntensity: 0.14 });
   const colA = new THREE.Color(spec.c), colB = new THREE.Color(spec.c2 || spec.c);
@@ -479,9 +484,10 @@ export function gemObject(spec, { envCube = null } = {}) {
     group,
     setMystery(on, color) {
       mystery = on;
-      if (color) { edgeMat.color.set(color); blackMat.emissive.set(color); }
-      edgeMat.opacity = on ? 1 : 0;
-      edges.visible = on;
+      if (color) blackMat.emissive.set(color);
+      edgeMat.color.set(on && color ? color : '#ffffff');
+      edgeMat.opacity = on ? 1 : faceted ? 0.22 : 0;
+      edges.visible = on || faceted;
       sparkles.visible = !on;
       main.material = on ? blackMat : outer;
       if (innerMesh) innerMesh.visible = !on;

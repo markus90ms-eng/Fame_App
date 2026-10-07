@@ -185,16 +185,9 @@ export function drawCard(g, { x, y, w, h, tier, serial, insta, gem }) {
     g.restore();
   }
 
-  // Schild: Stufe, Name in Serifenschrift mit Metall-Verlauf, Zierlinie, Spruch
-  let ty = gemY + gemH + 16 * s;
+  // Schild: Name in Serifenschrift mit Metall-Verlauf, Zierlinie, Spruch
+  let ty = gemY + gemH + 34 * s;
   g.textAlign = 'center';
-  g.font = font(700, 9 * s);
-  g.fillStyle = c;
-  const stageText = `${tier.legend ? 'LEGENDE' : 'EDELSTEIN'} · STUFE ${tier.stage} VON ${GEM_COUNT}`;
-  if ('letterSpacing' in g) g.letterSpacing = `${2 * s}px`;
-  g.fillText(stageText, cx, ty);
-  if ('letterSpacing' in g) g.letterSpacing = '0px';
-  ty += 30 * s;
   let size = 31;
   g.font = `700 ${size * s}px ${SERIF}`;
   while (g.measureText(tier.name).width > iw - 30 * s && size > 18) { size -= 1; g.font = `700 ${size * s}px ${SERIF}`; }

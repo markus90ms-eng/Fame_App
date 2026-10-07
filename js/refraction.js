@@ -48,6 +48,7 @@ const fragmentShader = /* glsl */`
   uniform vec3 glowColor;
   uniform float glow;
   uniform float body;
+  uniform float holo;
   varying vec3 vWorldPosition;
   varying vec3 vNormal;
   varying mat4 vModelMatrixInverse;
@@ -88,6 +89,10 @@ const fragmentShader = /* glsl */`
     vec3 refl = textureCube(envMap, reflect(rd, n)).rgb;
     float f = fresnel * pow(1.0 + dot(rd, n), 5.0);
     c = mix(c, refl, clamp(f, 0.0, 1.0));
+    // Holo-Film: zarter Regenbogen je Facette und Blickwinkel, wie bei geschliffenem Glas
+    float ndv = abs(dot(n, rd));
+    vec3 film = 0.5 + 0.5 * cos(6.2832 * (vec3(0.0, 0.33, 0.67) + ndv * 1.4 + dot(n, vec3(0.6, 0.3, 0.7)) * 0.9));
+    c = mix(c, c * (0.55 + film * 0.9) + film * 0.06, holo);
     c += glowColor * glow;
     gl_FragColor = vec4(c, 1.0);
     #include <tonemapping_fragment>
@@ -103,7 +108,7 @@ export function cubeFromScene(renderer, scene, size = 256) {
   return rt;
 }
 
-export function refractionMaterial(geometry, envCube, { color = '#ffffff', ior = 2.4, dispersion = 0.02, bounces = 4, exposure = 1.25, glow = 0, body = 0, vertexColors = false } = {}) {
+export function refractionMaterial(geometry, envCube, { color = '#ffffff', ior = 2.4, dispersion = 0.02, bounces = 4, exposure = 1.25, glow = 0, body = 0, holo = 0.5, vertexColors = false } = {}) {
   const bvh = new MeshBVH(geometry);
   const bvhUniform = new MeshBVHUniformStruct();
   bvhUniform.updateFrom(bvh);
@@ -120,6 +125,7 @@ export function refractionMaterial(geometry, envCube, { color = '#ffffff', ior =
       glowColor: { value: new THREE.Color(color) },
       glow: { value: glow },
       body: { value: body },
+      holo: { value: holo },
     },
     vertexShader,
     fragmentShader,

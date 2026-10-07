@@ -1570,7 +1570,6 @@ button, input { font: inherit; color: inherit; }
 .gcell.is-found { background: var(--c); box-shadow: 0 0 6px color-mix(in srgb, var(--c) 70%, transparent); }
 .gcell.is-target { transform: scale(1.5); background: #fff; box-shadow: 0 0 0 1px var(--rar), 0 0 10px var(--rar); z-index: 1; }
 .collection-label b { color: var(--green); }
-.famecard-stage { margin-top: 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #a9a7a0; }
 
 /* ---- Fame-Card: edles Design je Edelstein ---------------------------------------------
    Rahmen aus Metall passend zur Steinfarbe (Gold, Roségold, Platin, bei Legenden Holo),
@@ -1651,13 +1650,6 @@ button, input { font: inherit; color: inherit; }
   background: radial-gradient(circle, color-mix(in srgb, var(--gem) 55%, transparent) 0%, transparent 60%);
 }
 .famecard-plate { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; }
-.famecard .famecard-stage {
-  margin: 0 0 2px;
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.24em;
-  color: color-mix(in srgb, var(--gem) 70%, #fff);
-}
 .famecard .famecard-name {
   margin: 0;
   font-family: var(--serif);

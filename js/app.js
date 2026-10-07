@@ -681,7 +681,6 @@ function card() {
               </div>
               <div class="famecard-gem"><div class="glow"></div><div class="stage3d" data-diamond></div></div>
               <div class="famecard-plate">
-                <div class="famecard-stage">${tier.legend ? 'Legende' : 'Edelstein'} · Stufe ${tier.stage} von ${GEM_COUNT}</div>
                 <h2 class="famecard-name">${tier.name}</h2>
                 <div class="famecard-rule" aria-hidden="true"><i></i>${diamondSvg({ filled: true })}<i></i></div>
                 <p class="famecard-flavor">${tier.flavor}</p>
