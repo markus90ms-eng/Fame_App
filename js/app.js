@@ -673,13 +673,12 @@ function card() {
           <article class="famecard metal-${tier.metal}${tier.legend ? ' is-legend' : ''} flip-front" data-card style="--gem:${tier.tone}">
             <div class="famecard-ring" aria-hidden="true"></div>
             <div class="famecard-inner">
-              <div class="famecard-facets" aria-hidden="true"></div>
+              <div class="famecard-photo"><div class="stage3d" data-diamond></div></div>
               <div class="famecard-shine" data-shine></div>
               <div class="famecard-top">
                 <span class="famecard-brand">${LOGO_TEXT}${diamondSvg({ filled: true, cls: 'dia-inline' })}</span>
                 <span class="famecard-serial" title="Seriennummer">Nr. ${c.serial}</span>
               </div>
-              <div class="famecard-gem"><div class="glow"></div><div class="stage3d" data-diamond></div></div>
               <div class="famecard-plate">
                 <h2 class="famecard-name">${tier.name}</h2>
                 <div class="famecard-rule" aria-hidden="true"><i></i>${diamondSvg({ filled: true })}<i></i></div>
@@ -731,8 +730,9 @@ function card() {
       </div>
     </section>`,
     mount(el) {
+      // Foto-Look: der Stein liegt auf einem dunklen Tisch, mit Spiegelung und Bokeh
       const dia = createDiamond(el.querySelector('[data-diamond]'), {
-        gem: tier, rim: rarity.color, glow: 0.8, interactive: false,
+        gem: tier, rim: rarity.color, glow: 0.3, interactive: false, photo: true,
       });
       const canvas = el.querySelector('[data-fx]');
       const fx = particles(canvas, {
@@ -824,7 +824,7 @@ function card() {
       wrap.addEventListener('pointermove', onMove);
 
       // Sharing-Bilder werden erst gebaut, wenn sie gebraucht werden, und dann wiederverwendet.
-      const shareData = () => ({ tier, serial: c.serial, insta: state.user?.insta || '', gem: dia.snapshot(900, 700) });
+      const shareData = () => ({ tier, serial: c.serial, insta: state.user?.insta || '', gem: dia.snapshot(900, 760) });
       let cache = {};
       const memo = (key, make) => () => (cache[key] ||= make(shareData()));
       const assets = { story: memo('story', renderStory), sticker: memo('sticker', renderSticker) };

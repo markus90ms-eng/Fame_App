@@ -49,6 +49,7 @@ const fragmentShader = /* glsl */`
   uniform float glow;
   uniform float body;
   uniform float holo;
+  uniform float contrast;
   varying vec3 vWorldPosition;
   varying vec3 vNormal;
   varying mat4 vModelMatrixInverse;
@@ -84,15 +85,24 @@ const fragmentShader = /* glsl */`
     vec3 c = vec3(textureCube(envMap, dirR).r, textureCube(envMap, dirG).g, textureCube(envMap, dirB).b);
     c *= color * vTint * exposure;
     // Körperfarbe: auch wo kein Licht ankommt, leuchtet ein farbiger Stein leicht in seiner Farbe
-    c += color * vTint * body;
+    // Körperfarbe, im Foto-Look mit Helligkeit je Facette
+    // Jede Facette bekommt je nach Austrittsrichtung des Lichts ihre eigene Helligkeit:
+    // so entstehen helle und dunkle Felder statt einer flachen Farbfläche.
+    float shade = mix(1.0, 0.15 + 1.6 * pow(0.5 + 0.5 * dot(dirG, normalize(vec3(0.35, 0.75, -0.55))), 3.0), contrast);
+    c += color * vTint * body * shade;
     // Spiegelung an der Oberfläche (Fresnel)
     vec3 refl = textureCube(envMap, reflect(rd, n)).rgb;
+    // Foto-Look: nur helle Lichter spiegeln sich, dunkle Umgebung legt keinen grauen Schleier über die Farbe
+    refl = mix(refl, pow(refl, vec3(1.0 + 1.5 * contrast)) * (1.0 + 0.4 * contrast), step(0.001, contrast));
     float f = fresnel * pow(1.0 + dot(rd, n), 5.0);
     c = mix(c, refl, clamp(f, 0.0, 1.0));
     // Holo-Film: zarter Regenbogen je Facette und Blickwinkel, wie bei geschliffenem Glas
     float ndv = abs(dot(n, rd));
     vec3 film = 0.5 + 0.5 * cos(6.2832 * (vec3(0.0, 0.33, 0.67) + ndv * 1.4 + dot(n, vec3(0.6, 0.3, 0.7)) * 0.9));
     c = mix(c, c * (0.55 + film * 0.9) + film * 0.06, holo);
+    // Foto-Look: sattere Farben und tiefere Schatten
+    float luma = dot(c, vec3(0.299, 0.587, 0.114));
+    c = mix(vec3(luma), c, 1.0 + 0.45 * contrast);
     c += glowColor * glow;
     gl_FragColor = vec4(c, 1.0);
     #include <tonemapping_fragment>
@@ -108,7 +118,7 @@ export function cubeFromScene(renderer, scene, size = 256) {
   return rt;
 }
 
-export function refractionMaterial(geometry, envCube, { color = '#ffffff', ior = 2.4, dispersion = 0.02, bounces = 4, exposure = 1.25, glow = 0, body = 0, holo = 0.5, vertexColors = false } = {}) {
+export function refractionMaterial(geometry, envCube, { color = '#ffffff', ior = 2.4, dispersion = 0.02, bounces = 4, exposure = 1.25, glow = 0, body = 0, holo = 0.5, contrast = 0, vertexColors = false } = {}) {
   const bvh = new MeshBVH(geometry);
   const bvhUniform = new MeshBVHUniformStruct();
   bvhUniform.updateFrom(bvh);
@@ -126,6 +136,7 @@ export function refractionMaterial(geometry, envCube, { color = '#ffffff', ior =
       glow: { value: glow },
       body: { value: body },
       holo: { value: holo },
+      contrast: { value: contrast },
     },
     vertexShader,
     fragmentShader,

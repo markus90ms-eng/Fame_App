@@ -115,44 +115,31 @@ export function drawCard(g, { x, y, w, h, tier, serial, insta, gem }) {
   roundRect(g, x, y, w, h, r);
   g.fill();
 
-  // Innenfläche in der Farbe des Steins
+  // Innenfläche: tiefes Schwarz
   const b = 3 * s;
   const ix = x + b, iy = y + b, iw = w - 2 * b, ih = h - 2 * b;
-  const bg = g.createRadialGradient(cx, iy + ih * 0.22, 0, cx, iy + ih * 0.22, ih * 0.85);
-  bg.addColorStop(0, hexA(c, 0.42));
-  bg.addColorStop(0.6, '#0b0b0d');
-  bg.addColorStop(1, '#050506');
-  g.fillStyle = '#0b0b0d';
-  roundRect(g, ix, iy, iw, ih, r - b);
-  g.fill();
-  g.fillStyle = bg;
+  g.fillStyle = '#0b0a0d';
   roundRect(g, ix, iy, iw, ih, r - b);
   g.fill();
 
-  // Facetten-Wasserzeichen
-  g.save();
-  roundRect(g, ix, iy, iw, ih, r - b);
-  g.clip();
-  g.translate(cx, iy + ih * 0.32);
-  g.globalAlpha = 0.07;
-  g.fillStyle = c;
-  for (let i = 0; i < 24; i++) {
-    g.rotate((Math.PI * 2) / 24);
-    g.beginPath();
-    g.moveTo(0, 0);
-    g.lineTo(-4 * s, -ih);
-    g.lineTo(4 * s, -ih);
-    g.fill();
+  // Foto des Steins randlos oben, läuft weich ins Schwarz aus
+  const photoH = 250 * s;
+  if (gem) {
+    const k = Math.max(iw / gem.width, photoH / gem.height);
+    const gw = gem.width * k, gh = gem.height * k;
+    g.save();
+    roundRect(g, ix, iy, iw, ih, r - b);
+    g.clip();
+    g.drawImage(gem, cx - gw / 2, iy + (photoH - gh) / 2, gw, gh);
+    const fade = g.createLinearGradient(0, iy + photoH * 0.62, 0, iy + photoH);
+    fade.addColorStop(0, 'rgba(11,10,13,0)');
+    fade.addColorStop(1, 'rgba(11,10,13,1)');
+    g.fillStyle = fade;
+    g.fillRect(ix, iy + photoH * 0.62, iw, photoH * 0.38 + 1);
+    g.restore();
   }
-  g.restore();
 
-  // feine Metall-Linie innen
-  g.strokeStyle = hexA(line, 0.55);
-  g.lineWidth = 1 * s;
-  roundRect(g, ix + 4 * s, iy + 4 * s, iw - 8 * s, ih - 8 * s, r - 8 * s);
-  g.stroke();
-
-  // Kopfzeile: Logo links, Seriennummer rechts
+  // Kopfzeile über dem Foto: Logo links, Seriennummer rechts
   const pad = 16 * s;
   g.textAlign = 'left';
   g.textBaseline = 'alphabetic';
@@ -165,25 +152,14 @@ export function drawCard(g, { x, y, w, h, tier, serial, insta, gem }) {
   drawDiamondGlyph(g, ix + pad + lw + 4 * s, iy + pad + 2 * s, 18 * s, '#f8f8f6', '#3dfa74');
   g.textAlign = 'right';
   g.font = font(600, 9.5 * s);
-  g.fillStyle = line;
-  g.fillText(`Nr. ${serial}`, ix + iw - pad, iy + pad + 14 * s);
-
-  // Edelstein mit Lichthof
+  const serialText = `Nr. ${serial}`;
+  const sw = g.measureText(serialText).width + 16 * s;
+  g.fillStyle = 'rgba(0,0,0,0.45)';
+  roundRect(g, ix + iw - pad - sw + 6 * s, iy + pad + 1 * s, sw, 20 * s, 10 * s);
+  g.fill();
+  g.fillStyle = 'rgba(255,255,255,0.8)';
+  g.fillText(serialText, ix + iw - pad - 2 * s, iy + pad + 14.5 * s);
   const gemY = iy + 42 * s, gemH = 190 * s;
-  const glow = g.createRadialGradient(cx, gemY + gemH / 2, 0, cx, gemY + gemH / 2, gemH * 0.62);
-  glow.addColorStop(0, hexA(c, 0.5));
-  glow.addColorStop(1, hexA(c, 0));
-  g.fillStyle = glow;
-  g.fillRect(ix, gemY - 20 * s, iw, gemH + 40 * s);
-  if (gem) {
-    const gw = iw * 1.02;
-    const gh = gw * (gem.height / gem.width);
-    g.save();
-    roundRect(g, ix, iy, iw, ih, r - b);
-    g.clip();
-    g.drawImage(gem, cx - gw / 2, gemY + (gemH - gh) / 2, gw, gh);
-    g.restore();
-  }
 
   // Schild: Name in Serifenschrift mit Metall-Verlauf, Zierlinie, Spruch
   let ty = gemY + gemH + 34 * s;

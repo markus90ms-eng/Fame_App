@@ -1621,35 +1621,32 @@ button, input { font: inherit; color: inherit; }
 .famecard .famecard-inner {
   border-radius: 15px;
   padding: 16px 18px 14px;
-  background:
-    radial-gradient(120% 65% at 50% 22%, color-mix(in srgb, var(--gem) 40%, #0d0d10) 0%, #0b0b0d 62%, #050506 100%);
+  background: #0b0a0d;
   box-shadow: none;
 }
-/* feine Metall-Linie innen */
-.famecard .famecard-inner::after {
-  content: "";
+/* Foto des Steins: randlos oben, läuft weich ins Schwarz aus */
+.famecard-photo {
   position: absolute;
-  inset: 7px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--metal-line) 55%, transparent);
-  pointer-events: none;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 250px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 64%, transparent 98%);
+  mask-image: linear-gradient(to bottom, #000 64%, transparent 98%);
 }
-/* Facettenmuster wie ein Wasserzeichen */
-.famecard-facets {
-  position: absolute;
-  inset: 0;
-  background: repeating-conic-gradient(from 0deg at 50% 32%, color-mix(in srgb, var(--gem) 20%, transparent) 0deg 1.5deg, transparent 1.5deg 15deg);
-  -webkit-mask-image: radial-gradient(circle at 50% 32%, #000 0%, transparent 70%);
-  mask-image: radial-gradient(circle at 50% 32%, #000 0%, transparent 70%);
-  opacity: 0.55;
-  pointer-events: none;
+.famecard-photo .stage3d { inset: 0; }
+.famecard .famecard-serial {
+  padding: 4px 8px;
+  border-radius: 99px;
+  font-size: 9.5px;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(0, 0, 0, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
-.famecard .famecard-serial { color: color-mix(in srgb, var(--metal-line) 80%, #fff); }
-.famecard .famecard-gem { height: 190px; }
-.famecard .famecard-gem .glow {
-  background: radial-gradient(circle, color-mix(in srgb, var(--gem) 55%, transparent) 0%, transparent 60%);
-}
-.famecard-plate { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; }
+.famecard .famecard-brand .dia-line { stroke: #fff; }
+.famecard-plate { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; margin-top: 196px; }
 .famecard .famecard-name {
   margin: 0;
   font-family: var(--serif);
@@ -1671,7 +1668,7 @@ button, input { font: inherit; color: inherit; }
 .famecard-rule .dia { width: 14px; height: 12px; flex: 0 0 auto; }
 .famecard-rule .dia-fill { fill: var(--gem); }
 .famecard-rule .dia-line { stroke: var(--metal-line); stroke-width: 3; }
-.famecard .famecard-flavor { margin: 0; font-family: var(--serif); font-size: 16px; font-style: italic; font-weight: 500; color: #e2dccd; }
+.famecard .famecard-flavor { margin: 0; font-family: var(--serif); font-size: 16.5px; line-height: 1.25; font-style: italic; font-weight: 500; color: #e2dccd; }
 .famecard-foot { position: relative; z-index: 3; display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 12px; }
 .famecard .famecard-insta { margin: 0; font-size: 12px; }
 .famecard .famecard-insta input { border-bottom-color: var(--metal-line); }

@@ -53,7 +53,9 @@ Es gibt 99 Stufen, jede ist ein Edelstein: von **Stufe 1 Malachit** (ab 1 €) �
 - **Sound:** Jeder neue Stein beim Schieben gibt einen Kristall-Ton (je höher, desto heller). Bei einer neuen Seltenheitsklasse kommen Klassen-Sound, Farbwechsel und Funken dazu.
 - **Seltenheitsklassen** (nur Farben und Effekte, nicht sichtbar benannt): Stufe 1–25 grau, 26–50 blau, 51–70 gelb, 71–82 lila, ab 83 orange.
 - **Echte Lichtbrechung:** Facettierte Steine verfolgen das Licht im Stein. Es wird beim Eintritt gebrochen, an den Facetten mehrfach gespiegelt und beim Austritt in Regenbogenfarben aufgespalten (Feuer). Jede Steinart hat ihre echte Brechzahl (Diamant 2,42, Saphir 1,77, Smaragd 1,58 …). Technik: `js/refraction.js` mit three-mesh-bvh.
-- **Holo-Look:** Die facettierten Steine sind im Stil von holografischem Glas gestaltet. Sie spiegeln einen hellen Pastell-Himmel (`holoScene` in `js/diamond3d.js`), haben einen zarten Regenbogen-Film auf jeder Facette und feine silberne Kanten. Man sieht sie fast von der Seite, damit der Unterteil (Pavillon) groß sichtbar ist.
+- **Foto-Look auf der Card:** Der Stein liegt wie auf einem Produktfoto schräg auf einem dunklen Tisch (`createDiamond(…, { photo: true })`). Dazu kommen ein warmer Lichtkegel dahinter, ein farbiger Lichtfleck davor, eine Spiegelung im Tisch und unscharfe Lichter (Bokeh) in der Steinfarbe. Die Lichtbrechung nutzt ein dunkles Fotostudio mit wenigen hellen Softboxen (`photoScene`). Die Farben sind satt, nur helle Lichter spiegeln sich, und jede Facette leuchtet je nach Lichtrichtung heller oder dunkler. Die Kamera rahmt jeden Stein automatisch ein.
+- **Holo-Look auf den übrigen Seiten:** Dort spiegeln die Steine einen hellen Pastell-Himmel (`holoScene`), mit Regenbogen-Film und feinen silbernen Kanten.
+- **Trommelsteine:** Undurchsichtige und milchige Steine (Malachit, Lapislazuli, Türkis, Rosenquarz, Labradorit …) sind polierte Kiesel, jeder mit eigener Form. Opale, Mondstein und Sternsteine bleiben gewölbte Cabochons.
 - **Schliffe:** Jeder facettierte Stein hat seinen typischen Schliff (Liste `CUTS` in `js/gems.js`). Es gibt 12 Schliffarten:
   - **Brillant-Familie:** Round, Oval, Cushion, Cushion square, Marquise, Pear, Princess, Radiant, Radiant square. Der Rundbrillant wird in die jeweilige Umrissform gebracht, die Facetten bleiben erhalten.
   - **Treppenschliffe:** Emerald, Emerald square (Asscher), Octagon, mit gestuften Facetten entlang des Umrisses.
@@ -61,10 +63,10 @@ Es gibt 99 Stufen, jede ist ein Edelstein: von **Stufe 1 Malachit** (ab 1 €) �
 - **Sprüche:** Jede der 99 Cards hat einen eigenen Spruch passend zum Stein (`SAYINGS` in `js/gems.js`, bei den Legenden direkt in der Liste).
 - **3D-Darstellung je Stein:**
   - Cabochons mit gezeichnetem Muster: Malachit-Bänder, Lapislazuli mit Goldflecken, Türkis-Adern, Dendriten, Opal-Farbspiel, Labradorit-Schimmer, Mondstein-Schein, Sternsaphir und Sternrubin mit Stern.
-  - Besondere Steine: Bicolor (Fluorit, Andalusit, Bicolor-Turmalin), Alexandrit mit Farbwechsel, Paraíba mit Neon-Leuchten, Rutilquarz mit goldenen Nadeln. Der Diamant ist ein Brillantschliff mit 57 Facetten. Die Legenden haben ihre echten Schliffe: Birne, Oval, Kissen, Smaragdschliff.
+  - Besondere Steine: Bicolor (Fluorit, Andalusit, Bicolor-Turmalin), Alexandrit mit Farbwechsel, Paraíba mit Neon-Leuchten, Rutilquarz mit goldenen Nadeln. Der Diamant ist ein Brillantschliff mit 57 Facetten. Die Legenden haben ihre echten Schliffe, Farben und Proportionen (Länge zu Breite) nach Fotos der echten Steine: Birne, Oval, Kissen, Smaragdschliff.
 - **Fame-Card im Design des Steins:**
   - Rahmen aus Metall passend zur Steinfarbe: Gold für warme Töne, Roségold für Rosa und Rot, Platin für kühle und farblose Steine. Die Legenden haben einen umlaufenden Holo-Schimmer.
-  - Grund in der Farbe des Steins mit Facetten-Wasserzeichen und feiner Metall-Linie.
+  - Oben randlos das Foto des Steins (live 3D, wiegt sich leicht im Licht), es läuft weich ins Schwarz aus. Logo und Seriennummer liegen darüber.
   - Unter dem Stein steht nur der Name in Serifenschrift (Cormorant Garamond) mit Metall-Verlauf, dazu Zierlinie, Spruch und ein Echtheitssiegel. Keine Stufen-Zeile.
 - Oben rechts steht eine Seriennummer (`FM-XXXX-XXXX-P` mit Prüfzeichen) als Nachweis, dass die Card aus der App stammt.
 

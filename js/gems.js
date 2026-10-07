@@ -103,11 +103,11 @@ export const GEM_LIST = [
   G('Diamant', '#ffffff', 'round', 'diamond', { flavor: 'Erst Fame, dann die anderen.' }),
 
   // Die Legenden: berühmte Diamanten ab 300.000 € bis 1 Mio. €
-  G('Orangefarbener Diamant', '#ff8a1c', 'pear', 'diamond', { legend: true, flavor: 'Feuer in Tropfenform.' }),
-  G('The Unique Pink', '#ff7fb6', 'pear', 'diamond', { legend: true, flavor: 'Einzigartig. Wie der Name sagt.' }),
-  G('De Beers Millennium Jewel 4', '#4f8fff', 'oval', 'diamond', { legend: true, flavor: 'Blau wie die Tiefe des Ozeans.' }),
-  G('Fancy Intense Pink', '#ff5fa2', 'radiant', 'diamond', { legend: true, flavor: 'Intensiv. Wie dein Auftritt.' }),
-  G('Blue Moon of Josephine', '#5aa2ff', 'cushion', 'diamond', { legend: true, flavor: 'Einmal im blauen Mond.' }),
+  G('Orangefarbener Diamant', '#f7a01a', 'pear', 'diamond', { legend: true, flavor: 'Feuer in Tropfenform.' }),
+  G('The Unique Pink', '#ff7d8c', 'pear', 'diamond', { legend: true, flavor: 'Einzigartig. Wie der Name sagt.' }),
+  G('De Beers Millennium Jewel 4', '#8ea8ec', 'oval', 'diamond', { legend: true, ratio: 1.38, flavor: 'Blau wie die Tiefe des Ozeans.' }),
+  G('Fancy Intense Pink', '#f6b3d0', 'cushion', 'diamond', { legend: true, ratio: 1.22, flavor: 'Intensiv. Wie dein Auftritt.' }),
+  G('Blue Moon of Josephine', '#2a62e8', 'cushion', 'diamond', { legend: true, ratio: 1.36, flavor: 'Einmal im blauen Mond.' }),
   G('Pink Legacy', '#ff6fa8', 'emerald', 'diamond', { legend: true, ratio: 1.3, flavor: 'Ein Vermächtnis in Rosa.' }),
   G('Oppenheimer Blue', '#3f7dff', 'emerald', 'diamond', { legend: true, ratio: 1.22, flavor: 'Das tiefste Blau der Welt.' }),
   G('The Constellation', '#ffffff', 'cushion', 'diamond', { legend: true, flavor: 'Ein ganzes Sternbild in deiner Hand.' }),

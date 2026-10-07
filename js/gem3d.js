@@ -44,14 +44,15 @@ const curve = (fn, steps = 720) => Array.from({ length: steps }, (_, i) => fn((i
 const cutRect = (w, d, c) => [[w, -d + c], [w, d - c], [w - c, d], [-w + c, d], [-w, d - c], [-w, -d + c], [-w + c, -d], [w - c, -d]];
 
 const OUTLINES = {
-  oval: () => curve((t) => [1.3 * Math.cos(t), 0.9 * Math.sin(t)]),
+  // r: Verhältnis Länge zu Breite (für die Legenden nach ihren echten Maßen)
+  oval: (r = 1.44) => curve((t) => [0.9 * r * Math.cos(t), 0.9 * Math.sin(t)]),
   // Kissen: Superellipse, eckig mit runden Ecken
-  cushion: () => curve((t) => [1.18 * Math.sign(Math.cos(t)) * Math.abs(Math.cos(t)) ** 0.5, 0.95 * Math.sign(Math.sin(t)) * Math.abs(Math.sin(t)) ** 0.5]),
+  cushion: (r = 1.24) => curve((t) => [0.95 * r * Math.sign(Math.cos(t)) * Math.abs(Math.cos(t)) ** 0.5, 0.95 * Math.sign(Math.sin(t)) * Math.abs(Math.sin(t)) ** 0.5]),
   cushionSquare: () => curve((t) => [1.02 * Math.sign(Math.cos(t)) * Math.abs(Math.cos(t)) ** 0.5, 1.02 * Math.sign(Math.sin(t)) * Math.abs(Math.sin(t)) ** 0.5]),
   // Marquise: Schiffchen mit zwei Spitzen
   marquise: () => curve((t) => [1.45 * Math.cos(t), 0.62 * Math.sin(t) * Math.abs(Math.sin(t)) ** 0.35]),
   // Birne: links rund, rechts spitz
-  pear: () => curve((t) => [1.35 * Math.cos(t) - 0.28, 0.95 * Math.sin(t) * Math.abs(Math.sin(t / 2)) ** 0.9]),
+  pear: (r = 1) => curve((t) => [(1.35 * Math.cos(t) - 0.28) * r, 0.95 * Math.sin(t) * Math.abs(Math.sin(t / 2)) ** 0.9]),
   princess: () => cutRect(0.9, 0.9, 0.001),
   radiant: () => cutRect(1.22, 0.9, 0.22),
   radiantSquare: () => cutRect(0.95, 0.95, 0.26),
@@ -119,11 +120,37 @@ function cabochonGeometry(oval = 1.2) {
   return geo;
 }
 
+// Trommelstein: rundlich polierter Kiesel, jeder Stein mit eigener, leicht unregelmäßiger Form.
+// UVs als Draufsicht, damit Bänder und Adern wie bei echten Trommelsteinen über den Stein laufen.
+function pebbleGeometry(name) {
+  const rnd = seeded(`pebble-${name}`);
+  const geo = new THREE.SphereGeometry(1, 96, 64);
+  const sx = 1.05 + rnd() * 0.2, sy = 0.5 + rnd() * 0.12, sz = 0.72 + rnd() * 0.16;
+  const k = Array.from({ length: 6 }, () => rnd() * Math.PI * 2);
+  const pos = geo.attributes.position;
+  const uv = geo.attributes.uv;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    // weiche Beulen und eine leicht abgeflachte Unterseite
+    const bump = 1 + 0.07 * Math.sin(x * 2.1 + k[0]) * Math.cos(z * 1.7 + k[1])
+      + 0.05 * Math.sin(y * 2.6 + x * 1.3 + k[2]) + 0.04 * Math.cos(z * 3.1 + y * 1.1 + k[3]);
+    const flat = y < 0 ? 1 - 0.25 * y * y : 1;
+    const taper = 1 + 0.12 * x * Math.sin(k[4]);
+    pos.setXYZ(i, x * sx * bump * taper, y * sy * bump * flat, z * sz * bump * taper);
+    uv.setXY(i, x * 0.5 + 0.5, z * 0.5 + 0.5);
+  }
+  geo.computeVertexNormals();
+  return geo;
+}
+
+export const isPebble = (spec) => spec.cut === 'cabochon' && ['opaque', 'milk', 'labra'].includes(spec.look);
+
 function cutGeometry(spec) {
+  if (isPebble(spec)) return pebbleGeometry(spec.name);
   if (spec.cut === 'cabochon') return cabochonGeometry();
   if (STEP_OUTLINES[spec.cut]) return stepCut(STEP_OUTLINES[spec.cut](spec.ratio), { steps: spec.cut === 'asscher' ? 4 : 3 });
   const geo = brilliantGeometry();
-  return OUTLINES[spec.cut] ? reshape(geo, radiusTable(OUTLINES[spec.cut]())) : geo;
+  return OUTLINES[spec.cut] ? reshape(geo, radiusTable(OUTLINES[spec.cut](spec.ratio))) : geo;
 }
 
 // ---- Gezeichnete Muster (Canvas-Texturen) -----------------------------------------------
@@ -320,7 +347,7 @@ function darker(hex, k) {
   return new THREE.Color(hex).multiplyScalar(k);
 }
 
-function buildMaterials(spec, geo, envCube) {
+function buildMaterials(spec, geo, envCube, style) {
   const rnd = seeded(spec.name);
   const disposables = [];
   const tex = (name) => {
@@ -336,9 +363,10 @@ function buildMaterials(spec, geo, envCube) {
       color: spec.bicolor ? '#ffffff' : spec.c, ior: spec.ior ?? 2.42, dispersion: spec.disp ?? 0.02,
       bounces: spec.look === 'diamond' ? 5 : 4,
       glow: spec.glow ? 0.18 : 0, vertexColors: !!spec.bicolor,
-      body: spec.c === '#ffffff' ? 0.06 : 0.16,
-      holo: spec.c === '#ffffff' ? 0.75 : 0.4,
-      exposure: 1.05 + Math.max(0, 0.5 - lum) * 1.2,
+      ...(style === 'photo'
+        // Foto-Look: satte Farbe, harte weiße Lichtreflexe, kein Holo-Film
+        ? { body: spec.c === '#ffffff' ? 0.02 : 0.24, holo: 0, contrast: spec.c === '#ffffff' ? 0.3 : 1, exposure: spec.c === '#ffffff' ? 1.6 : 2.1 + Math.max(0, 0.5 - lum) * 1.6 }
+        : { body: spec.c === '#ffffff' ? 0.06 : 0.16, holo: spec.c === '#ffffff' ? 0.75 : 0.4, exposure: 1.05 + Math.max(0, 0.5 - lum) * 1.2 }),
     });
     return { outer, inner: null, disposables };
   }
@@ -358,7 +386,10 @@ function buildMaterials(spec, geo, envCube) {
   }
 
   // Cabochons: wenig Umgebungsspiegelung, sonst überstrahlt der Glanz das Muster
-  const base = { roughness: 0.55, metalness: 0, clearcoat: 0.5, clearcoatRoughness: 0.05, envMapIntensity: 0.22 };
+  const base = style === 'photo'
+    // polierte Oberfläche wie bei Trommelsteinen: klare Glanzlichter, Muster bleibt sichtbar
+    ? { roughness: 0.5, metalness: 0, clearcoat: 0.7, clearcoatRoughness: 0.12, envMapIntensity: 0.3 }
+    : { roughness: 0.55, metalness: 0, clearcoat: 0.5, clearcoatRoughness: 0.05, envMapIntensity: 0.22 };
   let outer;
   switch (spec.look) {
     case 'opaque':
@@ -419,11 +450,11 @@ function paintBicolor(geo, c1, c2) {
 
 // ---- Edelstein-Objekt ----------------------------------------------------------------------
 
-export function gemObject(spec, { envCube = null } = {}) {
+export function gemObject(spec, { envCube = null, style = 'holo' } = {}) {
   const group = new THREE.Group();
   const geo = cutGeometry(spec);
   if (spec.bicolor) paintBicolor(geo, spec.c, spec.c2);
-  const { outer, inner, disposables } = buildMaterials(spec, geo, envCube);
+  const { outer, inner, disposables } = buildMaterials(spec, geo, envCube, style);
   const main = new THREE.Mesh(geo, outer);
   let innerMesh = null;
   if (inner) {
@@ -452,6 +483,8 @@ export function gemObject(spec, { envCube = null } = {}) {
   // Lichtblitze: facettierte Steine funkeln mehr als Cabochons
   const sparkles = new THREE.Group();
   group.add(sparkles);
+  // im Foto-Modus ist die Kamera näher dran: kleinere, feinere Lichtblitze
+  const sparkleSize = style === 'photo' ? 0.4 : 1;
   const count = spec.cut === 'cabochon' ? 2 : 3 + (spec.level ?? 2) * 2 + (spec.legend ? 4 : 0);
   const pos = geo.attributes.position;
   for (let i = 0; i < count; i++) {
@@ -473,8 +506,9 @@ export function gemObject(spec, { envCube = null } = {}) {
   // Feine Silberkanten auf den Facetten (im Mystery-Modus leuchten sie in der Klassenfarbe)
   const faceted = spec.cut !== 'cabochon';
   edgeMat.color.set('#ffffff');
-  edgeMat.opacity = faceted ? 0.22 : 0;
-  edges.visible = faceted;
+  const edgeOn = faceted && style !== 'photo' ? 0.22 : 0;
+  edgeMat.opacity = edgeOn;
+  edges.visible = edgeOn > 0;
   group.add(edges);
   const blackMat = new THREE.MeshStandardMaterial({ color: 0x050506, roughness: 0.8, flatShading: true, emissiveIntensity: 0.14 });
   const colA = new THREE.Color(spec.c), colB = new THREE.Color(spec.c2 || spec.c);
@@ -482,12 +516,13 @@ export function gemObject(spec, { envCube = null } = {}) {
   let mystery = false;
   return {
     group,
+    mesh: main,
     setMystery(on, color) {
       mystery = on;
       if (color) blackMat.emissive.set(color);
       edgeMat.color.set(on && color ? color : '#ffffff');
-      edgeMat.opacity = on ? 1 : faceted ? 0.22 : 0;
-      edges.visible = on || faceted;
+      edgeMat.opacity = on ? 1 : edgeOn;
+      edges.visible = on || edgeOn > 0;
       sparkles.visible = !on;
       main.material = on ? blackMat : outer;
       if (innerMesh) innerMesh.visible = !on;
@@ -506,7 +541,7 @@ export function gemObject(spec, { envCube = null } = {}) {
         const ph = (t * sp.userData.speed + sp.userData.phase) % 1;
         const f = Math.pow(Math.max(0, Math.sin(ph * Math.PI)), 14);
         sp.material.opacity = Math.min(1, f + boost * 0.6);
-        sp.scale.setScalar(0.06 + f * 0.55 + boost * 0.35);
+        sp.scale.setScalar((0.06 + f * 0.55 + boost * 0.35) * sparkleSize);
       });
     },
     dispose() {
