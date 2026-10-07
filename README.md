@@ -7,12 +7,13 @@ Erster klickbarer Stand der Fame-App als Web-App (PWA): läuft im Handy-Browser 
 ES-Module brauchen einen kleinen Webserver (ein Doppelklick auf `index.html` reicht nicht):
 
 ```bash
-cd fame
+git clone https://github.com/markus90ms-eng/Fame_App.git
+cd Fame_App
 python3 -m http.server 8080
 # dann http://localhost:8080 öffnen (am besten in der Handy-Ansicht der Browser-Devtools)
 ```
 
-Über GitHub Pages ist die App unter `/fame/` erreichbar.
+Über GitHub Pages (Einstellungen → Pages → Branch `main`, Ordner `/`) ist die App direkt unter der Pages-Adresse des Repos erreichbar.
 
 ## Screens
 
@@ -73,7 +74,7 @@ Ton und Vibration starten nach dem ersten Antippen, so verlangen es die Handy-Br
 ## Struktur
 
 ```
-fame/
+Fame_App/
   index.html, manifest.webmanifest, sw.js
   css/app.css        Design (Farben, Marker-Text, Buttons mit grünem Versatz, Kurven)
   js/app.js          Router und Screens
