@@ -152,8 +152,20 @@ function meEntry() {
 const hasData = () => !!(state.user || state.account.total || state.account.cards?.length);
 const resetLink = () => (hasData() ? '<button class="link welcome-reset" type="button" data-reset>Alles zurücksetzen</button>' : '');
 function bindReset(el) {
-  el.querySelector('[data-reset]')?.addEventListener('click', () => {
-    if (!confirm('Alles zurücksetzen? Konto, Cards und Login auf diesem Gerät werden gelöscht.')) return;
+  // Eigene Rückfrage statt confirm(): in eingebetteten Ansichten werden Browser-Dialoge oft blockiert
+  let armed = 0;
+  el.querySelector('[data-reset]')?.addEventListener('click', (e) => {
+    const link = e.currentTarget;
+    if (Date.now() - armed > 4000) {
+      armed = Date.now();
+      link.textContent = 'Wirklich alles löschen? Nochmal tippen';
+      link.classList.add('is-armed');
+      buzz(20);
+      setTimeout(() => {
+        if (Date.now() - armed >= 4000) { link.textContent = 'Alles zurücksetzen'; link.classList.remove('is-armed'); }
+      }, 4100);
+      return;
+    }
     ['user', 'account', 'amount', 'donation'].forEach((k) => store.remove(k));
     state.user = null;
     state.account = { total: 0, deposits: [], cards: [] };

@@ -1840,4 +1840,5 @@ button, input { font: inherit; color: inherit; }
 .welcome-hi { margin: 0 var(--gutter) 14px; text-align: center; font-size: 16px; font-weight: 700; }
 .welcome-more { display: block; margin: 10px auto 0; text-align: center; }
 .welcome-logout { display: block; margin: 18px auto 0; color: #8b8a85; font-size: 12px; }
+.welcome-reset.is-armed { color: #e5484d; font-weight: 700; text-decoration-color: #e5484d; }
 .welcome-reset { position: relative; z-index: 1; display: block; margin: 8px auto max(14px, env(safe-area-inset-bottom)); color: #b0aea8; font-size: 11px; }
