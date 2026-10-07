@@ -148,7 +148,7 @@ function meEntry() {
 const hasCard = () => !!state.account.cards?.length;
 
 function splash() {
-  // Wer schon eingezahlt hat, kommt nach dem Lichteffekt direkt zu seiner Card
+  // Wer schon eingezahlt hat, sieht direkt den Knopf zu seiner Card (ohne automatische Weiterleitung)
   if (hasCard()) {
     const cls = classFor(state.account.total);
     return {
@@ -160,10 +160,6 @@ function splash() {
         <div class="splash-login">${button('Meine Card', 'data-go="card"')}</div>
         <a class="link welcome-more" href="#/donate">Nochmal einzahlen</a>
       </section>`,
-      mount() {
-        const t = setTimeout(() => { if (location.hash.replace(/^#\/?/, '') === '') go('card'); }, 2400);
-        return () => clearTimeout(t);
-      },
     };
   }
   return {
