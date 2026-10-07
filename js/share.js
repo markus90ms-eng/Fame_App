@@ -314,8 +314,11 @@ export async function renderStory(data) {
   g.fillRect(0, 0, STORY_W, STORY_H);
   g.globalAlpha = 1;
 
-  const cardW = 780, cardH = Math.round(780 * CARD_RATIO);
-  const cardX = (STORY_W - cardW) / 2, cardY = 330;
+  // Freie Zonen: Instagram verdeckt oben ~250 px (Profilzeile) und unten ~300 px (Antwortfeld),
+  // TikTok zusätzlich rechts die Button-Spalte (ab x ≈ 930) und unten links die Beschreibung
+  // (ab y ≈ 1450). Darum: Logo und Slogan oben unter der Profilzeile, Card etwas kleiner darunter.
+  const cardW = 600, cardH = Math.round(600 * CARD_RATIO);
+  const cardX = (STORY_W - cardW) / 2, cardY = 552;
   const ccx = STORY_W / 2, ccy = cardY + cardH * 0.4;
 
   // Strahlenkranz + Licht hinter der Card
@@ -349,30 +352,25 @@ export async function renderStory(data) {
     g.fill();
   }
 
-  // Logo oben
+  // Logo oben, darunter der Slogan (beides unterhalb der Profilzeile von Instagram/TikTok)
   g.textAlign = 'center';
   g.textBaseline = 'alphabetic';
-  g.font = font(800, 76);
+  g.font = font(800, 72);
   const lw = g.measureText(LOGO_TEXT).width;
-  const lx = STORY_W / 2 - 34;
+  const lx = STORY_W / 2 - 32;
   g.fillStyle = '#3dfa74';
-  g.fillText(LOGO_TEXT, lx + 5, 286);
+  g.fillText(LOGO_TEXT, lx + 5, 346);
   g.fillStyle = '#f8f8f6';
-  g.fillText(LOGO_TEXT, lx, 280);
-  drawDiamondGlyph(g, lx + lw / 2 + 10, 216, 64, '#f8f8f6', '#3dfa74');
+  g.fillText(LOGO_TEXT, lx, 340);
+  drawDiamondGlyph(g, lx + lw / 2 + 10, 278, 60, '#f8f8f6', '#3dfa74');
+  g.font = font(800, 40);
+  g.fillStyle = '#f8f8f6';
+  g.fillText('Erst Fame,', STORY_W / 2, 428);
+  g.fillStyle = '#3dfa74';
+  g.fillText('dann die anderen.', STORY_W / 2, 478);
 
   drawCard(g, { x: cardX, y: cardY, w: cardW, h: cardH, ...data });
 
-  // Botschaft unter der Card
-  g.textAlign = 'center';
-  g.font = font(800, 46);
-  g.fillStyle = '#f8f8f6';
-  g.fillText('Erst Fame,', STORY_W / 2, cardY + cardH + 92);
-  g.fillStyle = '#3dfa74';
-  g.fillText('dann die anderen.', STORY_W / 2, cardY + cardH + 148);
-  g.font = font(500, 26);
-  g.fillStyle = 'rgba(248,248,246,0.6)';
-  g.fillText(`${APP_NAME} · then the others`, STORY_W / 2, cardY + cardH + 196);
   return cv;
 }
 
