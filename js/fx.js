@@ -162,3 +162,14 @@ export function reveal(level) {
     for (let i = 0; i < 26; i++) tone(2400 + Math.random() * 2400, { at: 0.5 + i * 0.045, dur: 0.05, vol: 0.02, type: 'triangle' });
   }
 }
+
+// Neuer Edelstein beim Schieben: kurzer Kristall-Ton, je höher die Stufe, desto heller.
+export function stageTick(stage, up = true) {
+  const now = performance.now();
+  if (now - lastTick < 60) return;
+  lastTick = now;
+  const f = 520 * Math.pow(2, stage / 36);
+  tone(f, { type: 'sine', dur: 0.18, vol: up ? 0.05 : 0.03 });
+  tone(f * 1.5, { at: 0.04, type: 'sine', dur: 0.16, vol: up ? 0.03 : 0.015 });
+  if (up) buzz(10);
+}

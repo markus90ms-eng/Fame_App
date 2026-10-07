@@ -5,6 +5,7 @@
 
 import * as THREE from '../vendor/three.module.min.js';
 import { glassDiamond } from './ui.js';
+import { gemObject } from './gem3d.js';
 
 export { THREE };
 
@@ -269,10 +270,11 @@ export function diamondObject(level = 2) {
 
 export function createDiamond(container, opts = {}) {
   const { level = 2, glow = 0.4, autoRotate = true, interactive = true, tilt = 0.38, rim = '#ffffff', mystery = false } = opts;
+  // opts.gem: ein Edelstein aus data.js (TIERS). Ohne Angabe zeigt die Bühne den Diamanten.
 
   if (!webglAvailable()) {
     container.innerHTML = `<div class="diamond-fallback">${glassDiamond()}</div>`;
-    return { setLevel() {}, setMystery() {}, setRim() {}, setGlow() {}, pulse() {}, snapshot() { return null; }, canvas: null, dispose() { container.innerHTML = ''; } };
+    return { setLevel() {}, setGem() {}, setMystery() {}, setRim() {}, setGlow() {}, pulse() {}, snapshot() { return null; }, canvas: null, dispose() { container.innerHTML = ''; } };
   }
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -290,10 +292,20 @@ export function createDiamond(container, opts = {}) {
   camera.position.set(0, 0.5, 5.4);
   camera.lookAt(0, -0.14, 0);
 
-  const gem = diamondObject(level);
-  if (mystery) gem.setMystery(true, rim);
-  gem.group.rotation.x = tilt;
-  scene.add(gem.group);
+  // Halter für den Stein: kippen, drehen, pulsieren. Der Stein darin lässt sich austauschen.
+  const holder = new THREE.Group();
+  holder.rotation.x = tilt;
+  scene.add(holder);
+  let gem = null;
+  let mysteryOn = mystery;
+  let mysteryColor = rim;
+  const setGem = (spec) => {
+    if (gem) { holder.remove(gem.group); gem.dispose(); }
+    gem = !spec ? diamondObject(level) : spec.look === 'diamond' ? diamondObject(4) : gemObject(spec);
+    holder.add(gem.group);
+    if (mysteryOn) gem.setMystery(true, mysteryColor);
+  };
+  setGem(opts.gem);
 
   // Farbiges Randlicht von unten (Seltenheit) und ein Spitzlicht
   const rimLight = new THREE.PointLight(rim, 10, 10, 1.4);
@@ -342,9 +354,9 @@ export function createDiamond(container, opts = {}) {
       velocity *= 0.94;
       spin += velocity + (autoRotate ? dt * 0.5 : 0);
     }
-    gem.group.rotation.y = spin;
+    holder.rotation.y = spin;
     pulseT = Math.max(0, pulseT - dt * 2.2);
-    gem.group.scale.setScalar(1 + glowLevel * 0.04 + pulseT * 0.1);
+    holder.scale.setScalar(1 + glowLevel * 0.04 + pulseT * 0.1);
     gem.update(now / 1000, pulseT);
     rimLight.intensity = 4 + glowLevel * 10 + pulseT * 25;
     renderer.toneMappingExposure = 1.05 + pulseT * 0.6;
@@ -355,8 +367,9 @@ export function createDiamond(container, opts = {}) {
 
   return {
     canvas: renderer.domElement,
-    setLevel: gem.setLevel,
-    setMystery: gem.setMystery,
+    setLevel(lv) { gem.setLevel?.(lv); },
+    setGem,
+    setMystery(on, color) { mysteryOn = on; if (color) mysteryColor = color; gem.setMystery(on, mysteryColor); },
     setRim(color) { rimLight.color.set(color); },
     setGlow(v) { glowLevel = Math.max(0, Math.min(1, v)); },
     pulse() { pulseT = 1; },

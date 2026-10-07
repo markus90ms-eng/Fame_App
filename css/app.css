@@ -764,7 +764,7 @@ button, input { font: inherit; color: inherit; }
 
 /* Einzahlen: dunkel und clean, der Diamant als Geheimnis */
 .screen--donate { background: radial-gradient(ellipse at 50% 18%, color-mix(in srgb, var(--rar) 22%, #0f0f11) 0%, #0a0a0b 60%); }
-.vault { position: relative; height: 210px; margin-top: max(26px, env(safe-area-inset-top)); }
+.vault { position: relative; height: 180px; margin-top: max(26px, env(safe-area-inset-top)); }
 .vault .stage3d { inset: 0 12%; }
 .vault-glow {
   position: absolute;
@@ -1384,7 +1384,7 @@ button, input { font: inherit; color: inherit; }
   border: 1px solid rgba(255, 255, 255, 0.1);
   min-width: 0;
 }
-.stat b { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat b { font-size: 14px; letter-spacing: -0.02em; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .stat span { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: #8b8a85; }
 .stat--me { border-color: rgba(61, 250, 116, 0.5); }
 .stat--me b { color: var(--green); }
@@ -1550,3 +1550,24 @@ button, input { font: inherit; color: inherit; }
 .share-btn--ig { border: 0; background: linear-gradient(135deg, #feda75, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5); }
 .share-btn--tt { border: 0; background: #000; box-shadow: -2px -2px 0 #25f4ee, 2px 2px 0 #fe2c55; }
 .sheet-note { margin: 12px 0 0; text-align: center; font-size: 11px; color: #8b8a85; }
+
+/* ---- Edelsteine: Sammlung und Stufe ------------------------------------------------- */
+
+.vault-name span { display: block; margin-top: 2px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; color: #cfcdc6; text-shadow: none; }
+.gem-grid {
+  display: grid;
+  grid-template-columns: repeat(30, 1fr);
+  gap: 2px;
+  width: 100%;
+  max-width: 330px;
+}
+.gcell {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.gcell.is-found { background: var(--c); box-shadow: 0 0 6px color-mix(in srgb, var(--c) 70%, transparent); }
+.gcell.is-target { transform: scale(1.5); background: #fff; box-shadow: 0 0 0 1px var(--rar), 0 0 10px var(--rar); z-index: 1; }
+.collection-label b { color: var(--green); }
+.famecard-stage { margin-top: 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #a9a7a0; }

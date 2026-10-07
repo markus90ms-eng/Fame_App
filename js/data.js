@@ -1,5 +1,7 @@
 // Stammdaten, Formatierung und das (vorerst simulierte) Ranking.
 
+import { GEM_LIST, BAND_FLAVOR, bandFor } from './gems.js';
+
 export const CURRENCY = '€';
 export const MIN_AMOUNT = 1;
 export const MAX_AMOUNT = 1_000_000;
@@ -7,7 +9,7 @@ export const MAX_AMOUNT = 1_000_000;
 // Ab diesem Betrag gibt es den echten Diamant Pin.
 export const PIN_FROM = 1_000;
 
-// Seltenheiten wie bei Diablo/WoW – sie färben Seite, Glow, Card und bestimmen den Sound.
+// Seltenheitsklassen: färben Seite, Glow, Card-Rahmen und bestimmen den Sound.
 export const RARITIES = [
   { id: 'normal',    label: 'Normal',   item: 'Normaler Gegenstand',    color: '#b4b4b4' },
   { id: 'magic',     label: 'Magisch',  item: 'Magischer Gegenstand',   color: '#5b8cff' },
@@ -16,14 +18,35 @@ export const RARITIES = [
   { id: 'legendary', label: 'Legendär', item: 'Legendärer Gegenstand',  color: '#ff8a1f' },
 ];
 
-// Diamant-Stufen nach Reinheit. `level` steuert Schliff, Klarheit und Funkeln des 3D-Diamanten.
-export const TIERS = [
-  { id: 'chipped',  name: 'Lädierter Diamant',    min: 1,       level: 0, flavor: 'Jeder fängt mal klein an.' },
-  { id: 'flawed',   name: 'Fehlerhafter Diamant', min: 100,     level: 1, flavor: 'Ein Kratzer hier, ein Funkeln da.' },
-  { id: 'diamond',  name: 'Diamant',              min: 1_000,   level: 2, flavor: 'Jetzt schauen die Leute hin.' },
-  { id: 'flawless', name: 'Makelloser Diamant',   min: 10_000,  level: 3, flavor: 'Kein Makel. Nur Fame.' },
-  { id: 'perfect',  name: 'Perfekter Diamant',    min: 100_000, level: 4, flavor: 'Erst Fame, dann die anderen.' },
-].map((t) => ({ ...t, rarity: RARITIES[t.level], css: RARITIES[t.level].color }));
+// 89 Edelstein-Stufen: Stufe 1 ab 1 €, Stufe 2 ab 5 €, dann gleichmäßig (logarithmisch)
+// bis zum Diamanten bei 250.000 €. Grenzen auf zwei Stellen gerundet, damit sie sich gut lesen.
+export const TOP_AMOUNT = 250_000;
+function twoDigits(v) {
+  const p = 10 ** Math.max(0, Math.floor(Math.log10(v)) - 1);
+  return Math.round(v / p) * p;
+}
+const mins = [1];
+for (let i = 1; i < GEM_LIST.length; i++) {
+  const v = twoDigits(5 * (TOP_AMOUNT / 5) ** ((i - 1) / (GEM_LIST.length - 2)));
+  mins.push(Math.max(v, mins[i - 1] + 1));
+}
+
+// Jede Stufe: stage = 1..89 (welcher Stein), level = Seltenheitsklasse 0..4 (Farben, Sound, Effekte).
+export const TIERS = GEM_LIST.map((g, i) => {
+  const stage = i + 1;
+  const level = bandFor(stage);
+  return {
+    ...g,
+    id: `gem-${stage}`,
+    stage,
+    level,
+    min: mins[i],
+    rarity: RARITIES[level],
+    css: RARITIES[level].color,
+    flavor: g.flavor || BAND_FLAVOR[level],
+  };
+});
+export const GEM_COUNT = TIERS.length;
 
 export function tierFor(amount) {
   let tier = TIERS[0];

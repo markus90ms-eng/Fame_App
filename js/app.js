@@ -1,7 +1,7 @@
 // Fame – App-Shell, Router und Screens.
 
 import {
-  TIERS, RARITIES, PIN_FROM, COUNTRIES, countryById, tierFor, nextTier, fmt, money,
+  TIERS, GEM_COUNT, RARITIES, PIN_FROM, COUNTRIES, countryById, tierFor, nextTier, fmt, money,
   amountFromPos, posFromAmount, rankFor, standings, groupTotals, makeSerial,
   MAX_AMOUNT, MIN_AMOUNT,
 } from './data.js';
@@ -9,7 +9,7 @@ import {
   APP_NAME, LOGO_TEXT, esc, logo, logoInline, hl, dots, hero, button, backButton, diamondSvg,
   diamondShadowed, icons,
 } from './ui.js';
-import { tick, plink, rarityDrop, buzz, unlockAudio, buildup, reveal } from './fx.js';
+import { tick, plink, stageTick, rarityDrop, buzz, unlockAudio, buildup, reveal } from './fx.js';
 import { createDiamond } from './diamond3d.js';
 import { particles } from './particles.js';
 import {
@@ -125,6 +125,11 @@ function centerIn(canvas, el) {
   const a = canvas.getBoundingClientRect();
   const b = el.getBoundingClientRect();
   return [b.left + b.width / 2 - a.left, b.top + b.height / 2 - a.top];
+}
+
+// Stufen aller bisher aufgedeckten Edelsteine.
+function collectedStages() {
+  return new Set((state.account.cards || []).filter((c) => c.stage && c.revealed !== false).map((c) => c.stage));
 }
 
 // Das eigene Konto als Eintrag fürs Ranking.
@@ -403,7 +408,8 @@ function stepFor(amount, dir) {
 function donate() {
   const registered = !!state.user;
   const acc = state.account;
-  const owned = acc.total ? tierFor(acc.total).level : -1;
+  // Sammlung: alle Steine, die man schon auf einer Card aufgedeckt hat
+  const collected = collectedStages();
   const start = tierFor(acc.total + state.amount);
   return {
     html: `<section class="screen screen--dark screen--donate" style="--rar:${start.css}">
@@ -419,10 +425,11 @@ function donate() {
         <h1 class="vault-name" data-tier></h1>
         <p class="vault-teaser" data-teaser></p>
       </div>
-      <div class="collection" aria-label="Deine Diamanten">
-        ${TIERS.map((t) => `<span class="cslot" data-cslot="${t.level}" style="--c:${t.css}" title="${t.name}">
-          ${t.level <= owned ? diamondSvg({ filled: true }) : '<span class="cslot-q">?</span>'}</span>`).join('')}
-        <span class="collection-label">${owned + 1} von ${TIERS.length} entdeckt</span>
+      <div class="collection" aria-label="Deine Sammlung">
+        <div class="gem-grid">
+          ${TIERS.map((t) => `<i class="gcell${collected.has(t.stage) ? ' is-found' : ''}" data-cell="${t.stage}" style="--c:${t.css}"></i>`).join('')}
+        </div>
+        <span class="collection-label"><b>${collected.size}</b> von ${GEM_COUNT} Edelsteinen entdeckt</span>
       </div>
       <div class="donate-body">
         ${acc.total ? `<div class="account">Dein Konto <b>${money(acc.total)}</b> → danach <b data-after></b></div>` : ''}
@@ -458,8 +465,10 @@ function donate() {
     </section>`,
     mount(el) {
       const $ = (s) => el.querySelector(s);
+      // Bekannte Steine zeigen sich, unbekannte nur als Silhouette
+      const known = (t) => collected.has(t.stage);
       const dia = createDiamond($('[data-diamond]'), {
-        level: start.level, rim: start.css, mystery: start.level > owned, glow: 0.6,
+        gem: known(start) ? start : null, rim: start.css, mystery: !known(start), glow: 0.6,
       });
       const canvas = $('[data-fx]');
       const fx = particles(canvas, { color: start.css, mode: 'embers', density: 0.3 + start.level * 0.3 });
@@ -472,6 +481,7 @@ function donate() {
       const flash = $('[data-flash]');
       const nudge = $('[data-nudge]');
       let level = start.level;
+      let stage = start.stage;
       let amount = state.amount;
       let nudgeTarget = 0;
 
@@ -494,7 +504,7 @@ function donate() {
         const after = acc.total + amount;
         const pos = posFromAmount(amount);
         const tier = tierFor(after);
-        const locked = tier.level > owned;
+        const locked = !known(tier);
 
         knob.setAttribute('transform', `translate(${20 + 260 * pos} ${16 + 304 * pos * (1 - pos)})`);
         fill.style.strokeDasharray = `${pos} 1`;
@@ -504,23 +514,23 @@ function donate() {
         const afterEl = $('[data-after]');
         if (afterEl) afterEl.textContent = money(after);
 
-        $('[data-tier]').textContent = tier.name;
+        $('[data-tier]').innerHTML = `Edelstein <span>Stufe ${tier.stage} von ${GEM_COUNT}</span>`;
         $('[data-teaser]').textContent = locked
-          ? 'Wie er aussieht, wissen nur die, die ihn haben.'
-          : 'Den kennst du schon. Willst du mehr sehen?';
+          ? 'Welcher es ist, zeigt dir erst deine Card.'
+          : 'Den hast du schon in deiner Sammlung.';
         el.classList.toggle('is-locked', locked);
-        el.querySelectorAll('[data-cslot]').forEach((s) => s.classList.toggle('is-target', +s.dataset.cslot === tier.level));
+        el.querySelectorAll('[data-cell]').forEach((c) => c.classList.toggle('is-target', +c.dataset.cell === tier.stage));
         el.style.setProperty('--rar', tier.css);
         el.style.setProperty('--glow', (0.3 + posFromAmount(after) * 0.7).toFixed(3));
         dia.setGlow(posFromAmount(after));
 
-        // Anreiz: wie viel fehlt bis zum nächsten unbekannten Diamanten?
+        // Anreiz: wie viel fehlt bis zum nächsten Edelstein?
         const nx = nextTier(after);
         if (nx) {
           nudgeTarget = nx.min - acc.total;
           nudge.hidden = false;
           nudge.style.setProperty('--c', nx.css);
-          nudge.innerHTML = `<span>Nur noch <b>${money(nx.min - after)}</b> bis zum <b>${nx.name}</b></span><span class="nudge-go">${nx.level > owned ? 'Freischalten' : 'Aufsteigen'} →</span>`;
+          nudge.innerHTML = `<span>Nur noch <b>${money(nx.min - after)}</b> bis <b>Stufe ${nx.stage}</b></span><span class="nudge-go">Nächster Edelstein →</span>`;
         } else {
           nudge.hidden = true;
         }
@@ -530,14 +540,22 @@ function donate() {
           rl.innerHTML = `${icons.trophy} Rang danach <b>${fmt(rank)}</b> von ${fmt(total)}`;
         }
 
-        if (tier.level !== level) {
-          dia.setLevel(tier.level);
-          dia.setRim(tier.css);
+        if (tier.stage !== stage) {
+          // neuer Edelstein: unbekannt -> Silhouette, bekannt -> echter Stein
+          dia.setGem(locked ? null : tier);
           dia.setMystery(locked, tier.css);
-          fx.setColor(tier.css);
-          fx.setDensity(0.3 + tier.level * 0.3);
-          if (sound) tierChanged(tier, tier.level > level);
-          level = tier.level;
+          dia.setRim(tier.css);
+          if (tier.level !== level) {
+            // neue Seltenheitsklasse: Farbe, Funken und der Sound der Klasse
+            fx.setColor(tier.css);
+            fx.setDensity(0.3 + tier.level * 0.3);
+            if (sound) tierChanged(tier, tier.level > level);
+            level = tier.level;
+          } else if (sound) {
+            stageTick(tier.stage, tier.stage > stage);
+            dia.pulse();
+          }
+          stage = tier.stage;
         } else if (sound && amount !== prev) {
           tick(pos, amount > prev);
         }
@@ -608,7 +626,7 @@ function donate() {
         acc.deposits.push({ amount, at });
         const tier = tierFor(acc.total);
         acc.cards.push({
-          tier: tier.id, total: acc.total, at, revealed: false,
+          tier: tier.id, stage: tier.stage, total: acc.total, at, revealed: false,
           serial: makeSerial(`${state.user.name}|${state.user.insta}|${acc.total}|${at}`),
         });
         saveAccount();
@@ -631,7 +649,8 @@ function card() {
     queueMicrotask(() => go('donate'));
     return { html: '<section class="screen"></section>' };
   }
-  const tier = TIERS.find((t) => t.id === c.tier) || tierFor(acc.total);
+  const tier = TIERS.find((t) => t.id === c.tier) || TIERS[c.stage - 1] || tierFor(c.total || acc.total);
+  const isNew = !collectedStages().has(tier.stage);
   const rarity = tier.rarity;
   const insta = state.user?.insta || '';
   const hidden = c.revealed === false;
@@ -660,6 +679,7 @@ function card() {
               </div>
               <div class="famecard-gem"><div class="glow"></div><div class="stage3d" data-diamond></div></div>
               <h2 class="famecard-name">${tier.name}</h2>
+              <div class="famecard-stage">Edelstein · Stufe ${tier.stage} von ${GEM_COUNT}</div>
               <p class="famecard-flavor">„${tier.flavor}“</p>
               <div class="famecard-insta">${icons.insta}
                 ${insta
@@ -705,7 +725,7 @@ function card() {
     </section>`,
     mount(el) {
       const dia = createDiamond(el.querySelector('[data-diamond]'), {
-        level: tier.level, rim: rarity.color, glow: 0.8, interactive: false,
+        gem: tier, rim: rarity.color, glow: 0.8, interactive: false,
       });
       const canvas = el.querySelector('[data-fx]');
       const fx = particles(canvas, {
@@ -768,6 +788,8 @@ function card() {
           if (tier.level >= 3) timers.push(setTimeout(() => fx.burst(x, y - 60, 60, '#ffffff'), 350));
           fx.setDensity(0.4 + tier.level * 0.45);
           c.revealed = true;
+          c.stage = tier.stage;
+          if (isNew) timers.push(setTimeout(() => toast(`Neu in deiner Sammlung: ${collectedStages().size} von ${GEM_COUNT} Edelsteinen`), 1400));
           saveAccount();
           flip.setAttribute('aria-label', tier.name);
         }, dur * 1000));
@@ -891,7 +913,7 @@ function rankingPage(mode) {
     return `<li class="rrow${r.me ? ' rrow--me' : ''}" style="--rar:${t.css}">
       <span class="rrow-rank">${fmt(r.rank)}</span>
       ${avatar(r)}
-      <span class="rrow-name">@${esc(r.handle)}<small>${t.name}</small></span>
+      <span class="rrow-name">@${esc(r.handle)}<small>Edelstein · Stufe ${t.stage}</small></span>
       <span class="rrow-amount">${money(r.amount)}</span>
     </li>`;
   };
@@ -965,7 +987,7 @@ function rankingPage(mode) {
       </section>
       <div class="mebar">
         ${mine
-          ? `<div><b>Platz ${fmt(mine.rank)}</b> in ${esc(region || country.name)}<small>${money(mine.amount)} · ${tierFor(mine.amount).name}</small></div>`
+          ? `<div><b>Platz ${fmt(mine.rank)}</b> in ${esc(region || country.name)}<small>${money(mine.amount)} · Stufe ${tierFor(mine.amount).stage}</small></div>`
           : `<div><b>${state.user ? 'Noch nicht dabei' : 'Du fehlst noch'}</b><small>Zahl ein und steig ins Ranking ein</small></div>`}
         ${button(mine ? 'Höher steigen' : 'Steig ein', 'data-go="donate"')}
       </div>

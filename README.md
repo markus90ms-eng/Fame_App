@@ -29,18 +29,19 @@ python3 -m http.server 8080
 | `#/ranking/region` | Ranking im Bundesland: Kennzahlen, Podest mit Avataren, Rangliste, Deutschland-Kachelkarte (antippbar) und Bundesländer-Duell, eigene Platzierung unten fixiert |
 | `#/ranking/country` | Ranking im Land, dazu das Länder-Duell |
 
-Diamant-Stufen (wie die Edelsteine bei Diablo) und ihre Seltenheit:
+## 89 Edelsteine
 
-| Stufe | ab | Seltenheit | Farbe |
-|---|---|---|---|
-| Lädierter Diamant | 1 € | Normal | grau |
-| Fehlerhafter Diamant | 100 € | Magisch | blau |
-| Diamant | 1.000 € | Selten | gelb |
-| Makelloser Diamant | 10.000 € | Mystisch | lila |
-| Perfekter Diamant | 100.000 € | Legendär | orange |
+Es gibt 89 Stufen, jede ist ein Edelstein: von **Stufe 1 Malachit** (ab 1 €) bis **Stufe 89 Diamant** (ab 250.000 €). Die Liste steht in `js/gems.js`, die Beträge rechnet `js/data.js` aus. Sie steigen gleichmäßig (logarithmisch): Am Anfang ist der nächste Stein schnell erreicht, oben wird es exklusiv. Beispiele: 100 € → Stufe 26, 1.000 € → Stufe 44, 10.000 € → Stufe 63, 100.000 € → Stufe 82.
 
-- Der Diamant ist ein echter Brillantschliff mit 57 Facetten. Er spiegelt eine Studio-Lichtumgebung und hat Regenbogen-Feuer und Lichtblitze auf den Facetten. Je höher die Stufe, desto klarer der Stein und desto mehr Funkeln. Der lädierte Diamant ist angeschlagen und trüb.
-- Jede Stufe hat ihren eigenen Sound, nach oben wie nach unten. Beim Aufstieg wechselt die Seite in die Farbe der Stufe und Funken sprühen.
+- **Einzahlen:** Dort steht nur „Edelstein · Stufe X von 89“, der Stein ist eine leuchtende Silhouette mit „?“. **Welcher Stein es ist, zeigt erst die aufgedeckte Card.** Steine aus der eigenen Sammlung sieht man echt.
+- **Sammlung:** Ein Raster mit 89 Feldern zeigt, welche Steine man schon entdeckt hat (Stufe angepeilt = weißes Feld).
+- **Anreiz:** „Nur noch X € bis Stufe Y – Nächster Edelstein →“ setzt den fehlenden Betrag ein.
+- **Sound:** Jeder neue Stein beim Schieben gibt einen Kristall-Ton (je höher, desto heller). Bei einer neuen Seltenheitsklasse kommen Klassen-Sound, Farbwechsel und Funken dazu.
+- **Seltenheitsklassen** (nur Farben und Effekte, nicht sichtbar benannt): Stufe 1–25 grau, 26–50 blau, 51–70 gelb, 71–82 lila, 83–89 orange.
+- **3D-Darstellung je Stein:**
+  - Facettierte Steine in ihrer Farbe: rund, oval oder Treppenschliff (z. B. Smaragd, Aquamarin, Turmaline).
+  - Cabochons mit gezeichnetem Muster: Malachit-Bänder, Lapislazuli mit Goldflecken, Türkis-Adern, Dendriten, Opal-Farbspiel, Labradorit-Schimmer, Mondstein-Schein, Sternsaphir und Sternrubin mit Stern.
+  - Besondere Steine: Bicolor (Fluorit, Andalusit, Bicolor-Turmalin), Alexandrit mit Farbwechsel, Paraíba mit Neon-Leuchten, Rutilquarz mit goldenen Nadeln. Der Diamant ist ein Brillantschliff mit 57 Facetten.
 - Die Fame-Card bekommt den Rahmen der Seltenheit: Normal schlicht grau, Magisch blau, Selten mit goldenem Doppelrahmen. Ab Mystisch hat sie einen umlaufend leuchtenden Rand. Der Hintergrund wächst mit: Strahlen, ein Runenkreis, eine Lichtsäule.
 - Oben rechts steht eine Seriennummer (`FM-XXXX-XXXX-P` mit Prüfzeichen) als Nachweis, dass die Card aus der App stammt.
 
@@ -79,7 +80,9 @@ Fame_App/
   css/app.css        Design (Farben, Marker-Text, Buttons mit grünem Versatz, Kurven)
   js/app.js          Router und Screens
   js/ui.js           Logo, Diamant-Icons, Buttons, Hero mit Kurve
-  js/data.js         Stufen, Länder/Bundesländer, Ranking, Seriennummern
+  js/gems.js         Die 89 Edelsteine (Name, Farbe, Schliff, Look)
+  js/gem3d.js        3D-Edelsteine: Schliffe, Materialien, Muster
+  js/data.js         Stufen und Beträge, Länder/Bundesländer, Ranking, Seriennummern
   js/diamond3d.js    Realistischer 3D-Diamant (three.js, liegt in vendor/)
   js/fx.js           Loot-Sounds und Vibration
   js/particles.js    Funken und Staub

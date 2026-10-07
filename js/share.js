@@ -7,6 +7,7 @@
 // gespeichert und wir sagen, wie es weitergeht.
 
 import { LOGO_TEXT, APP_NAME, DIA } from './ui.js';
+import { GEM_COUNT } from './data.js';
 
 // Wohin der Link in der Story führt (Echtheits-Seite der Card). Vor dem Livegang anpassen.
 export const SHARE_BASE = 'https://fame.app/card/';
@@ -192,21 +193,24 @@ export function drawCard(g, { x, y, w, h, tier, serial, insta, gem }) {
   g.shadowBlur = 16 * s;
   g.font = font(800, 21 * s);
   g.fillStyle = c;
-  g.fillText(tier.name, cx, gemY + gemH + 30 * s);
+  g.fillText(tier.name, cx, gemY + gemH + 28 * s);
   g.restore();
+  g.font = font(600, 9 * s);
+  g.fillStyle = '#a9a7a0';
+  g.fillText(`EDELSTEIN · STUFE ${tier.stage} VON ${GEM_COUNT}`, cx, gemY + gemH + 44 * s);
   g.font = font(500, 11.5 * s, 'italic');
   g.fillStyle = '#d9a35b';
-  g.fillText(`„${tier.flavor}“`, cx, gemY + gemH + 52 * s);
+  g.fillText(`„${tier.flavor}“`, cx, gemY + gemH + 62 * s);
   if (insta) {
     g.font = font(600, 13 * s);
     const t = `@${insta}`;
     const tw = g.measureText(t).width;
     const gs = 14 * s;
     const tx = cx - (tw + gs + 6 * s) / 2;
-    drawInstaGlyph(g, tx, gemY + gemH + 66 * s, gs, '#f8f8f6');
+    drawInstaGlyph(g, tx, gemY + gemH + 72 * s, gs, '#f8f8f6');
     g.textAlign = 'left';
     g.fillStyle = '#f8f8f6';
-    g.fillText(t, tx + gs + 6 * s, gemY + gemH + 78 * s);
+    g.fillText(t, tx + gs + 6 * s, gemY + gemH + 84 * s);
   }
   g.textAlign = 'left';
 
@@ -344,7 +348,7 @@ function nativeShare() {
 // ---- Teilen ---------------------------------------------------------------------------------
 
 export function shareText(data) {
-  return `Mein ${data.tier.name} auf ${APP_NAME} 💎 Nr. ${data.serial} – erst Fame, dann die anderen. #fame #thentheothers`;
+  return `Mein ${data.tier.name} (Stufe ${data.tier.stage}/${GEM_COUNT}) auf ${APP_NAME} 💎 Nr. ${data.serial} – erst Fame, dann die anderen. #fame #thentheothers`;
 }
 
 async function webShare(blob, data, name) {
