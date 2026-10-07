@@ -145,7 +145,8 @@ function meEntry() {
 
 // ---- Screens ----------------------------------------------------------------
 
-const hasCard = () => !!state.account.cards?.length;
+// Eingeloggt und schon eine Card: dann gibt es überall den schnellen Weg zur eigenen Card
+const hasCard = () => !!state.user && !!state.account.cards?.length;
 
 function splash() {
   // Wer schon eingezahlt hat, sieht direkt den Knopf zu seiner Card (ohne automatische Weiterleitung)
@@ -159,7 +160,16 @@ function splash() {
         <p class="welcome-hi">Hey ${esc(firstName(state.user?.name) || 'du')} – deine Card wartet.</p>
         <div class="splash-login">${button('Meine Card', 'data-go="card"')}</div>
         <a class="link welcome-more" href="#/donate">Nochmal einzahlen</a>
+        <button class="link welcome-logout" type="button" data-logout>Abmelden</button>
       </section>`,
+      mount(el) {
+        el.querySelector('[data-logout]').addEventListener('click', () => {
+          state.user = null;
+          store.set('user', null);
+          toast('Du bist abgemeldet.');
+          render();
+        });
+      },
     };
   }
   return {
