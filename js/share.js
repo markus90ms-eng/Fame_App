@@ -6,7 +6,7 @@
 // dort erscheinen Instagram (Story) und TikTok als Ziel. Klappt auch das nicht, wird das Bild
 // gespeichert und wir sagen, wie es weitergeht.
 
-import { LOGO_TEXT, APP_NAME } from './ui.js';
+import { LOGO_TEXT, APP_NAME, DIA } from './ui.js';
 
 // Wohin der Link in der Story führt (Echtheits-Seite der Card). Vor dem Livegang anpassen.
 export const SHARE_BASE = 'https://fame.app/card/';
@@ -67,24 +67,21 @@ function drawInstaGlyph(g, x, y, s, color) {
 }
 
 function drawDiamondGlyph(g, x, y, s, line, fill) {
-  // gleiche Form wie das Logo-Icon (viewBox 48x40)
+  // gleiche Form wie das Logo-Icon (48x40-Box)
   const k = s / 48;
-  const P = (px, py) => [x + px * k, y + py * k];
+  const trace = (poly) => {
+    g.beginPath();
+    poly.forEach(([px, py], i) => (i ? g.lineTo(x + px * k, y + py * k) : g.moveTo(x + px * k, y + py * k)));
+    g.closePath();
+  };
   g.save();
   g.fillStyle = fill;
-  g.beginPath();
-  [[12, 4], [36, 4], [44, 14], [4, 14]].forEach(([a, b], i) => (i ? g.lineTo(...P(a, b)) : g.moveTo(...P(a, b))));
-  g.closePath();
+  trace(DIA.crown);
   g.fill();
   g.strokeStyle = line;
-  g.lineWidth = 3.2 * k;
+  g.lineWidth = 2.6 * k;
   g.lineJoin = 'round';
-  g.beginPath();
-  [[12, 4], [36, 4], [44, 14], [24, 37], [4, 14]].forEach(([a, b], i) => (i ? g.lineTo(...P(a, b)) : g.moveTo(...P(a, b))));
-  g.closePath();
-  g.moveTo(...P(4, 14)); g.lineTo(...P(44, 14));
-  g.moveTo(...P(18, 14)); g.lineTo(...P(24, 37)); g.lineTo(...P(30, 14));
-  g.stroke();
+  DIA.facets.forEach((f) => { trace(f); g.stroke(); });
   g.restore();
 }
 
