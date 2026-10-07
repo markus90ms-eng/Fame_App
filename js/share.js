@@ -7,7 +7,7 @@
 // gespeichert und wir sagen, wie es weitergeht.
 
 import { LOGO_TEXT, APP_NAME, DIA } from './ui.js';
-import { GEM_COUNT } from './data.js';
+import { GEM_COUNT, CLASSES } from './data.js';
 import { facetImages, holoStrength } from './cardfx.js';
 
 // Wohin der Link in der Story führt (Echtheits-Seite der Card). Vor dem Livegang anpassen.
@@ -471,4 +471,103 @@ export async function shareElsewhere(data, assets) {
 export async function saveImage(data, assets) {
   download(await toBlob(await assets.story()), `fame-${data.serial}.png`);
   return { how: 'saved', hint: 'Story-Bild gespeichert.' };
+}
+
+// ---- Profilbild mit Rahmen (Instagram, TikTok) ------------------------------------------
+// Polierter Metallring in der Farbe der Klasse, unten in der Mitte ein Abzeichen mit dem Stein
+// wie bei einem Siegelring. Alles liegt im Kreis, weil beide Apps das Profilbild rund zuschneiden.
+// Ab 1 Mio. € ist der Ring in Regenbogenfarben.
+
+const AVATAR = 1080;
+const HOLO_RING = ['#ff9ad5', '#9fd0ff', '#fff3a8', '#b6ffd9', '#c6b6ff', '#ff9ad5'];
+
+function shade(hex, k) {
+  const n = parseInt(hex.slice(1), 16);
+  const f = (v) => Math.round(Math.max(0, Math.min(255, v * k)));
+  return `rgb(${f((n >> 16) & 255)},${f((n >> 8) & 255)},${f(n & 255)})`;
+}
+
+// cls: Farbklasse (0..9), photo: geladenes Bild (beliebiges Format, wird mittig quadratisch zugeschnitten)
+export function renderAvatar(photo, cls) {
+  const S = AVATAR, u = S / 200; // Maßstab: Entwurf war 200 × 200
+  const holo = cls === CLASSES.length - 1;
+  const color = CLASSES[cls].color;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = S;
+  const g = cv.getContext('2d');
+  const metal = (x0, y0, x1, y1) => {
+    const gr = g.createLinearGradient(x0, y0, x1, y1);
+    if (holo) HOLO_RING.forEach((c, i) => gr.addColorStop(i / (HOLO_RING.length - 1), c));
+    else [[0, '#ffffff'], [0.3, color], [0.65, shade(color, 0.55)], [1, color]].forEach(([o, c]) => gr.addColorStop(o, c));
+    return gr;
+  };
+
+  // Foto rund zuschneiden
+  g.save();
+  g.beginPath();
+  g.arc(S / 2, S / 2, S / 2, 0, Math.PI * 2);
+  g.clip();
+  g.fillStyle = '#d9dee6';
+  g.fillRect(0, 0, S, S);
+  if (photo) {
+    const k = Math.max(S / photo.width, S / photo.height);
+    g.drawImage(photo, (S - photo.width * k) / 2, (S - photo.height * k) / 2, photo.width * k, photo.height * k);
+  }
+  g.restore();
+
+  // Metallring mit dunkler Außen- und heller Innenkante, dazu ein Glanzlicht oben links
+  g.lineWidth = 13 * u;
+  g.strokeStyle = metal(0, 0, S, S);
+  g.beginPath(); g.arc(S / 2, S / 2, 93 * u, 0, Math.PI * 2); g.stroke();
+  g.lineWidth = 1.2 * u;
+  g.strokeStyle = 'rgba(0,0,0,0.25)';
+  g.beginPath(); g.arc(S / 2, S / 2, 99.3 * u, 0, Math.PI * 2); g.stroke();
+  g.lineWidth = 1 * u;
+  g.strokeStyle = 'rgba(255,255,255,0.6)';
+  g.beginPath(); g.arc(S / 2, S / 2, 86.5 * u, 0, Math.PI * 2); g.stroke();
+  g.lineWidth = 3 * u;
+  g.lineCap = 'round';
+  g.strokeStyle = 'rgba(255,255,255,0.8)';
+  g.beginPath(); g.arc(S / 2, S / 2, 93 * u, Math.PI * 1.08, Math.PI * 1.38); g.stroke();
+
+  // Abzeichen mit dem Stein unten in der Mitte
+  const bx = S / 2, by = 172 * u, br = 22 * u;
+  g.fillStyle = '#0b0b0d';
+  g.beginPath(); g.arc(bx, by, br, 0, Math.PI * 2); g.fill();
+  g.lineWidth = 2.2 * u;
+  g.strokeStyle = metal(bx - br, by - br, bx + br, by + br);
+  g.beginPath(); g.arc(bx, by, br - 1.5 * u, 0, Math.PI * 2); g.stroke();
+  // Stein: ganz in der Klassenfarbe gefüllt, darüber feine helle Facettenlinien
+  const gw = 28 * u, gk = gw / 48, gx = bx - gw / 2, gy = by - gw * 0.46;
+  const trace = (poly) => {
+    g.beginPath();
+    poly.forEach(([px, py], i) => (i ? g.lineTo(gx + px * gk, gy + py * gk) : g.moveTo(gx + px * gk, gy + py * gk)));
+    g.closePath();
+  };
+  const fill = g.createLinearGradient(gx, gy, gx + gw, gy + gw);
+  if (holo) HOLO_RING.forEach((c, i) => fill.addColorStop(i / (HOLO_RING.length - 1), c));
+  else [[0, '#ffffff'], [0.35, color], [1, shade(color, 0.6)]].forEach(([o, c]) => fill.addColorStop(o, c));
+  g.fillStyle = fill;
+  trace(DIA.outline);
+  g.fill();
+  g.strokeStyle = 'rgba(255,255,255,0.7)';
+  g.lineWidth = 0.55 * u;
+  g.lineJoin = 'round';
+  DIA.facets.forEach((f) => { trace(f); g.stroke(); });
+  return cv;
+}
+
+export async function saveAvatar(cv, serial) {
+  const blob = await toBlob(cv);
+  const file = new File([blob], `fame-profilbild-${serial}.png`, { type: 'image/png' });
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: APP_NAME });
+      return 'shared';
+    } catch (err) {
+      if (err?.name === 'AbortError') return 'cancelled';
+    }
+  }
+  download(blob, file.name);
+  return 'saved';
 }

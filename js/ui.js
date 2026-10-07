@@ -128,6 +128,7 @@ export function itemTooltip({ name, rarity, type, stats = [], flavor = '', img =
 }
 
 export const icons = {
+  user: `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="10" r="3.2"/><path d="M6.2 18.6c1.3-2.3 3.4-3.6 5.8-3.6s4.5 1.3 5.8 3.6"/></svg>`,
   trophy: `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4a5 5 0 0 1-10 0z M7 6H4a3 3 0 0 0 3 4 M17 6h3a3 3 0 0 1-3 4 M12 13v4 M8 20h8 M9 17h6v3H9z"/></svg>`,
   insta: `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r=".6"/></svg>`,
   rotate: `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 4 0 0 0 16 0 M20 12a8 4 0 0 0-11-3.7 M9 6l-1 2.4 2.6.6"/></svg>`,

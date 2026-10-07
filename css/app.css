@@ -1932,3 +1932,9 @@ button, input { font: inherit; color: inherit; }
 /* auch der Fuß (Instagram, Siegel) bekommt einen leichten Schatten */
 .famecard-foot { position: relative; z-index: 3; }
 .famecard-foot::before { left: -10%; right: -10%; top: -10px; bottom: -12px; background: linear-gradient(transparent, rgba(11, 10, 13, 0.7) 45%); border-radius: 0; }
+
+/* ---- Profilbild-Rahmen ---------------------------------------------------------------- */
+.avatar-hint { margin: 0 0 12px; font-size: 12.5px; line-height: 1.4; color: #b9b7b0; text-align: center; }
+.avatar-preview { display: flex; justify-content: center; margin: 0 0 14px; }
+.avatar-preview img { width: 190px; height: 190px; border-radius: 50%; box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.8); }
+.share-btn:disabled { opacity: 0.4; cursor: not-allowed; }

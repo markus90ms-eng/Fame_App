@@ -14,7 +14,7 @@ import { createDiamond } from './diamond3d.js';
 import { facetArt, facetMask, svgUrl, holoStrength } from './cardfx.js';
 import { particles } from './particles.js';
 import {
-  renderStory, renderSticker, shareToInstagramStory, shareToTikTok, shareElsewhere, saveImage,
+  renderStory, renderSticker, shareToInstagramStory, shareToTikTok, shareElsewhere, saveImage, renderAvatar, saveAvatar,
 } from './share.js';
 
 // ---- Zustand (lokal gespeichert, bis ein Backend existiert) -----------------
@@ -827,8 +827,23 @@ function card() {
             <button class="share-btn share-btn--tt" type="button" data-share="tt">${icons.tiktok}<span>TikTok</span></button>
             <button class="share-btn" type="button" data-share="more">${icons.share}<span>Weitere Apps</span></button>
             <button class="share-btn" type="button" data-share="save">${icons.download}<span>Bild speichern</span></button>
+            <button class="share-btn share-btn--avatar" type="button" data-avatar>${icons.user}<span>Profilbild-Rahmen</span></button>
           </div>
           <p class="sheet-note">Format 9:16 – passt für Instagram Story, TikTok und WhatsApp-Status.</p>
+        </div>
+      </div>
+      <div class="sheet avatar-sheet" data-avsheet hidden>
+        <div class="sheet-backdrop" data-close-av></div>
+        <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="Profilbild mit Rahmen">
+          <div class="sheet-grip" aria-hidden="true"></div>
+          <h2 class="sheet-title">Dein Profilbild</h2>
+          <p class="avatar-hint">Wähl ein Foto – wir legen den Rahmen deiner Klasse darüber. Danach in Instagram oder TikTok als Profilbild einstellen.</p>
+          <div class="avatar-preview"><img data-avimg alt="Profilbild mit Rahmen"></div>
+          <input type="file" accept="image/*" data-avfile hidden>
+          <div class="sheet-actions">
+            <button class="share-btn" type="button" data-avpick>${icons.download}<span>Foto wählen</span></button>
+            <button class="share-btn share-btn--ig" type="button" data-avsave disabled>${icons.share}<span>Speichern / Teilen</span></button>
+          </div>
         </div>
       </div>
     </section>`,
@@ -975,6 +990,43 @@ function card() {
           b.classList.remove('is-busy');
         }
       }));
+
+      // Profilbild-Rahmen: Foto wählen, Ring der Klasse drüberlegen, speichern oder teilen
+      const avSheet = el.querySelector('[data-avsheet]');
+      const avImg = el.querySelector('[data-avimg]');
+      const avFile = el.querySelector('[data-avfile]');
+      const avSave = el.querySelector('[data-avsave]');
+      const avCls = classFor(acc.total);
+      let avCanvas = null;
+      const showAvatar = (photo) => {
+        avCanvas = renderAvatar(photo, avCls);
+        avImg.src = avCanvas.toDataURL('image/jpeg', 0.9);
+        avSave.disabled = !photo;
+      };
+      el.querySelector('[data-avatar]').addEventListener('click', () => {
+        closeSheet();
+        avSheet.hidden = false;
+        requestAnimationFrame(() => avSheet.classList.add('is-open'));
+        if (!avCanvas) showAvatar(null);
+      });
+      el.querySelector('[data-close-av]').addEventListener('click', () => {
+        avSheet.classList.remove('is-open');
+        setTimeout(() => { avSheet.hidden = true; }, 300);
+      });
+      el.querySelector('[data-avpick]').addEventListener('click', () => avFile.click());
+      avFile.addEventListener('change', () => {
+        const f = avFile.files?.[0];
+        if (!f) return;
+        const img = new Image();
+        img.onload = () => { showAvatar(img); URL.revokeObjectURL(img.src); };
+        img.onerror = () => toast('Das Foto konnte nicht geladen werden.');
+        img.src = URL.createObjectURL(f);
+      });
+      avSave.addEventListener('click', async () => {
+        if (!avCanvas) return;
+        const how = await saveAvatar(avCanvas, c.serial);
+        if (how === 'saved') toast('Profilbild gespeichert – jetzt in Instagram oder TikTok einstellen.');
+      });
 
       return () => {
         timers.forEach((t) => { clearTimeout(t); clearInterval(t); });
