@@ -182,7 +182,7 @@ const hasCard = () => !!state.user && !!state.account.cards?.length;
 function splash() {
   // Wer schon eingezahlt hat, sieht direkt den Knopf zu seiner Card (ohne automatische Weiterleitung)
   if (hasCard()) {
-    // Startseite in der eigenen Farbklasse: dunkel, mit dem eigenen Stein im Tresor.
+    // Startseite in der eigenen Farbklasse: weißer Grund, Akzente in der Klassenfarbe, eigener Stein im Tresor.
     // Mit jeder Klasse kommen Strahlen, Ring, Runen und Glanz dazu – die App wirkt wie neu.
     const acc = state.account;
     const cls = classFor(acc.total);
@@ -190,7 +190,7 @@ function splash() {
     const top = TIERS.find((t) => t.id === last.tier) || tierFor(last.total || acc.total);
     const open = last.revealed !== false;
     return {
-      html: `<section class="screen screen--dark screen--splash screen--welcome cls-${cls}" style="--rar:${CLASSES[cls].color}">
+      html: `<section class="screen screen--splash screen--welcome cls-${cls}" style="--rar:${CLASSES[cls].color}">
         <div class="donate-aura" aria-hidden="true"></div>
         <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
         <div class="sweep" aria-hidden="true"></div>
@@ -206,7 +206,7 @@ function splash() {
         <p class="welcome-hi">Hey ${esc(firstName(state.user?.name) || 'du')} – ${open ? 'deine Card wartet.' : 'deine Card liegt noch verdeckt da.'}</p>
         <p class="welcome-sub">Dein Konto <b>${money(acc.total)}</b></p>
         <div class="splash-login">${button(open ? 'Meine Card' : 'Card aufdecken', 'data-go="card"')}</div>
-        <a class="link welcome-more" href="#/donate">Nochmal einzahlen</a>
+        <a class="link welcome-more" href="#/donate">Fame steigern</a>
         <button class="link welcome-logout" type="button" data-logout>Abmelden</button>
         ${resetLink()}
       </section>`,
@@ -808,7 +808,7 @@ function card() {
           <button class="qs" type="button" data-open-sheet>${icons.share}<span>Mehr</span></button>
         </div>
         <div class="foot-links">
-          <a class="link" href="#/donate">Nochmal einzahlen</a>
+          <a class="link" href="#/donate">Fame steigern</a>
           <a class="link" href="#/ranking">Ranking</a>
         </div>
       </div>

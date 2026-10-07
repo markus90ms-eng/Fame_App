@@ -1861,28 +1861,35 @@ button, input { font: inherit; color: inherit; }
 .cls-9.screen--card .loot-rays { background: repeating-conic-gradient(from 0deg, #ffd6ec66 0 5deg, transparent 5deg 10deg, #9fd8ff66 10deg 15deg, transparent 15deg 20deg, #fff4c266 20deg 25deg, transparent 25deg 30deg); }
 .cls-9.screen--card .cardback { border-color: #fff; box-shadow: 0 0 40px #ffd6ec, 0 0 80px #9fd8ff; }
 
-/* ---- Startseite für Eingeloggte: in der eigenen Farbklasse ------------------------------ */
-.screen--welcome { justify-content: flex-start; }
-.screen--welcome .sweep,
-.screen--welcome .donate-aura { position: absolute; }
+/* ---- Startseite für Eingeloggte: weißer Grund, Akzente in der eigenen Farbklasse ------------ */
+.screen--welcome { justify-content: flex-start; background: var(--bg); color: var(--ink); }
+.screen--welcome > :where(:not(.fx-canvas, .sweep, .donate-aura)) { position: relative; z-index: 1; }
+.screen--welcome .donate-aura {
+  background:
+    radial-gradient(60% 34% at 50% 34%, color-mix(in srgb, var(--rar) 30%, transparent), transparent 70%),
+    radial-gradient(80% 30% at 50% 100%, color-mix(in srgb, var(--rar) 14%, transparent), transparent 70%);
+}
 .screen--welcome .sweep::before {
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--rar) 30%, transparent) 28%, color-mix(in srgb, var(--rar) 85%, transparent) 48%,
-    rgba(255, 255, 255, 0.9) 52%, color-mix(in srgb, var(--rar) 45%, transparent) 62%, transparent);
+    rgba(255, 255, 255, 0.95) 52%, color-mix(in srgb, var(--rar) 45%, transparent) 62%, transparent);
 }
-.screen--welcome .sweep::after { background: radial-gradient(ellipse at 50% 30%, color-mix(in srgb, var(--rar) 35%, transparent), transparent 60%); }
+.screen--welcome .sweep::after { background: radial-gradient(ellipse at 50% 30%, color-mix(in srgb, var(--rar) 30%, transparent), transparent 60%); }
 .screen--welcome .splash-logo { padding-top: max(48px, calc(env(safe-area-inset-top) + 28px)); }
 .screen--welcome .logo-word { animation-name: logo-light-cls; }
 @keyframes logo-light-cls {
   from { text-shadow: 3px 5px 0 transparent; }
-  to { text-shadow: 3px 5px 0 var(--rar), 0 0 28px color-mix(in srgb, var(--rar) 60%, transparent); }
+  to { text-shadow: 3px 5px 0 var(--rar), 0 0 26px color-mix(in srgb, var(--rar) 50%, transparent); }
 }
 .welcome-vault { height: 250px; margin-top: 10px; }
 .welcome-vault .stage3d { inset: 0 8%; }
-.screen--welcome .welcome-hi { margin: 4px var(--gutter) 2px; color: #fff; }
-.welcome-sub { margin: 0 0 16px; text-align: center; font-size: 12.5px; color: #a9a7a0; }
-.welcome-sub b { color: var(--rar); }
+.screen--welcome .vault-rays { background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--rar) 55%, transparent) 0 4deg, transparent 4deg 15deg); }
+.screen--welcome .vault-runes text { fill: color-mix(in srgb, var(--rar) 75%, #000); }
+.screen--welcome .vault-ring { border-color: color-mix(in srgb, var(--rar) 80%, #000); }
+.screen--welcome .welcome-hi { margin: 4px var(--gutter) 2px; color: var(--ink); }
+.welcome-sub { margin: 0 0 16px; text-align: center; font-size: 12.5px; color: #6f6e69; }
+.welcome-sub b { color: color-mix(in srgb, var(--rar) 75%, #000); }
 .screen--welcome .btn { box-shadow: 7px 8px 0 var(--rar); }
-:is(.cls-4, .cls-5, .cls-6, .cls-7, .cls-8, .cls-9).screen--welcome .btn { box-shadow: 0 0 0 2px var(--rar), 0 10px 34px color-mix(in srgb, var(--rar) 55%, transparent); }
-.screen--welcome .welcome-more { color: #e9e7e1; }
-.screen--welcome .welcome-reset { color: #77767a; }
-.cls-9.screen--welcome .welcome-sub b { background: linear-gradient(90deg, #ffb3e2, #9fd0ff, #fff3a8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+:is(.cls-4, .cls-5, .cls-6, .cls-7, .cls-8, .cls-9).screen--welcome .btn { box-shadow: 0 0 0 2px var(--rar), 0 10px 30px color-mix(in srgb, var(--rar) 55%, transparent); }
+.screen--welcome .welcome-reset { color: #9a9993; }
+.cls-9.screen--welcome .vault-ring { border-color: #c6b6ff; box-shadow: 0 0 24px #ffd6ec, inset 0 0 24px #9fd8ff; }
+.cls-9.screen--welcome .welcome-sub b { background: linear-gradient(90deg, #e05fae, #4f8fe0, #c9a10e); -webkit-background-clip: text; background-clip: text; color: transparent; }
