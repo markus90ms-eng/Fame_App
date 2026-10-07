@@ -1571,3 +1571,133 @@ button, input { font: inherit; color: inherit; }
 .gcell.is-target { transform: scale(1.5); background: #fff; box-shadow: 0 0 0 1px var(--rar), 0 0 10px var(--rar); z-index: 1; }
 .collection-label b { color: var(--green); }
 .famecard-stage { margin-top: 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #a9a7a0; }
+
+/* ---- Fame-Card: edles Design je Edelstein ---------------------------------------------
+   Rahmen aus Metall passend zur Steinfarbe (Gold, Roségold, Platin, bei Legenden Holo),
+   Grund in der Farbe des Steins mit feinem Facettenmuster, Name in Serifenschrift. */
+
+.famecard {
+  --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --metal: linear-gradient(135deg, #6f7780, #e9eef3 22%, #9aa3ad 45%, #ffffff 62%, #7c858f 82%, #dfe5ec);
+  --metal-line: #c9d2dc;
+  padding: 3px;
+  border-radius: 18px;
+  animation: none;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 24px 50px rgba(0, 0, 0, 0.6),
+    0 0 60px color-mix(in srgb, var(--gem) 35%, transparent);
+}
+.famecard.metal-gold {
+  --metal: linear-gradient(135deg, #7a5a14, #f7dc8a 22%, #b8892c 45%, #fff3c4 62%, #a47a26 80%, #e9c76a);
+  --metal-line: #d8b95e;
+}
+.famecard.metal-rose {
+  --metal: linear-gradient(135deg, #7e4536, #f6c2b0 22%, #b9735e 45%, #ffe4da 62%, #9a5a48 80%, #e9a892);
+  --metal-line: #e8a894;
+}
+.famecard.metal-legend {
+  --metal: conic-gradient(from 0deg, #ffd6ec, #9fd8ff, #fff4c2, #ff9ad0, #c6b6ff, #b6fff0, #ffd6ec);
+  --metal-line: #f5d2ea;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 24px 50px rgba(0, 0, 0, 0.6),
+    0 0 90px color-mix(in srgb, var(--gem) 55%, transparent);
+}
+.famecard .famecard-ring {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  transform: none;
+  background: var(--metal);
+  animation: none;
+}
+.famecard.metal-legend .famecard-ring {
+  left: 50%;
+  top: 50%;
+  width: 180%;
+  height: auto;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  animation: ring-spin 7s linear infinite;
+}
+.famecard .famecard-inner {
+  border-radius: 15px;
+  padding: 16px 18px 14px;
+  background:
+    radial-gradient(120% 65% at 50% 22%, color-mix(in srgb, var(--gem) 40%, #0d0d10) 0%, #0b0b0d 62%, #050506 100%);
+  box-shadow: none;
+}
+/* feine Metall-Linie innen */
+.famecard .famecard-inner::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--metal-line) 55%, transparent);
+  pointer-events: none;
+}
+/* Facettenmuster wie ein Wasserzeichen */
+.famecard-facets {
+  position: absolute;
+  inset: 0;
+  background: repeating-conic-gradient(from 0deg at 50% 32%, color-mix(in srgb, var(--gem) 20%, transparent) 0deg 1.5deg, transparent 1.5deg 15deg);
+  -webkit-mask-image: radial-gradient(circle at 50% 32%, #000 0%, transparent 70%);
+  mask-image: radial-gradient(circle at 50% 32%, #000 0%, transparent 70%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+.famecard .famecard-serial { color: color-mix(in srgb, var(--metal-line) 80%, #fff); }
+.famecard .famecard-gem { height: 190px; }
+.famecard .famecard-gem .glow {
+  background: radial-gradient(circle, color-mix(in srgb, var(--gem) 55%, transparent) 0%, transparent 60%);
+}
+.famecard-plate { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; }
+.famecard .famecard-stage {
+  margin: 0 0 2px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  color: color-mix(in srgb, var(--gem) 70%, #fff);
+}
+.famecard .famecard-name {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 31px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+  background: var(--metal);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0 14px color-mix(in srgb, var(--gem) 45%, transparent));
+}
+.famecard-rule { display: flex; align-items: center; gap: 8px; width: 70%; margin: 8px 0 6px; color: var(--metal-line); }
+.famecard-rule i { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--metal-line)); }
+.famecard-rule i:last-child { background: linear-gradient(90deg, var(--metal-line), transparent); }
+.famecard-rule .dia { width: 14px; height: 12px; flex: 0 0 auto; }
+.famecard-rule .dia-fill { fill: var(--gem); }
+.famecard-rule .dia-line { stroke: var(--metal-line); stroke-width: 3; }
+.famecard .famecard-flavor { margin: 0; font-family: var(--serif); font-size: 16px; font-style: italic; font-weight: 500; color: #e2dccd; }
+.famecard-foot { position: relative; z-index: 3; display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 12px; }
+.famecard .famecard-insta { margin: 0; font-size: 12px; }
+.famecard .famecard-insta input { border-bottom-color: var(--metal-line); }
+/* Echtheitssiegel: kleines Hologramm */
+.seal {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(from 30deg, #ffd6ec, #9fd8ff, #fff4c2, #b6fff0, #ffd6ec);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.4), 0 0 12px rgba(255, 255, 255, 0.25);
+  color: #0b0b0c;
+  font-size: 6.5px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0.08em;
+  text-align: center;
+  animation: seal-turn 6s linear infinite;
+}
+@keyframes seal-turn { to { filter: hue-rotate(360deg); } }

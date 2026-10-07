@@ -651,7 +651,8 @@ function card() {
   }
   const tier = TIERS.find((t) => t.id === c.tier) || TIERS[c.stage - 1] || tierFor(c.total || acc.total);
   const isNew = !collectedStages().has(tier.stage);
-  const rarity = tier.rarity;
+  // Akzentfarbe aus dem Stein selbst – Card, Licht und Funken passen zum Edelstein
+  const rarity = { ...tier.rarity, color: tier.tone };
   const insta = state.user?.insta || '';
   const hidden = c.revealed === false;
   return {
@@ -669,22 +670,29 @@ function card() {
       ${backButton('back--dark')}
       <div class="card-wrap" data-tiltwrap>
         <div class="flip" data-flip role="button" tabindex="0" aria-label="${hidden ? 'Karte aufdecken' : tier.name}">
-          <article class="famecard famecard--${rarity.id} flip-front" data-card>
+          <article class="famecard metal-${tier.metal}${tier.legend ? ' is-legend' : ''} flip-front" data-card style="--gem:${tier.tone}">
             <div class="famecard-ring" aria-hidden="true"></div>
             <div class="famecard-inner">
+              <div class="famecard-facets" aria-hidden="true"></div>
               <div class="famecard-shine" data-shine></div>
               <div class="famecard-top">
                 <span class="famecard-brand">${LOGO_TEXT}${diamondSvg({ filled: true, cls: 'dia-inline' })}</span>
                 <span class="famecard-serial" title="Seriennummer">Nr. ${c.serial}</span>
               </div>
               <div class="famecard-gem"><div class="glow"></div><div class="stage3d" data-diamond></div></div>
-              <h2 class="famecard-name">${tier.name}</h2>
-              <div class="famecard-stage">Edelstein · Stufe ${tier.stage} von ${GEM_COUNT}</div>
-              <p class="famecard-flavor">„${tier.flavor}“</p>
-              <div class="famecard-insta">${icons.insta}
-                ${insta
-                  ? `<span>${esc(insta)}</span>`
-                  : `<input id="card-insta" data-insta placeholder="dein Instagram" autocomplete="off" autocapitalize="off" aria-label="Instagram-Name">`}
+              <div class="famecard-plate">
+                <div class="famecard-stage">${tier.legend ? 'Legende' : 'Edelstein'} · Stufe ${tier.stage} von ${GEM_COUNT}</div>
+                <h2 class="famecard-name">${tier.name}</h2>
+                <div class="famecard-rule" aria-hidden="true"><i></i>${diamondSvg({ filled: true })}<i></i></div>
+                <p class="famecard-flavor">${tier.flavor}</p>
+              </div>
+              <div class="famecard-foot">
+                <div class="famecard-insta">${icons.insta}
+                  ${insta
+                    ? `<span>${esc(insta)}</span>`
+                    : `<input id="card-insta" data-insta placeholder="dein Instagram" autocomplete="off" autocapitalize="off" aria-label="Instagram-Name">`}
+                </div>
+                <span class="seal" title="Echtheitssiegel">ECHT<br>FAM€</span>
               </div>
             </div>
           </article>

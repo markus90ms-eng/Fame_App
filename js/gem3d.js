@@ -1,8 +1,9 @@
 // 3D-Edelsteine: Schliffe, Materialien und gezeichnete Muster für alle 89 Steine.
-// Der Diamant selbst kommt aus diamond3d.js (diamondObject), alle anderen von hier.
+// Facettierte Steine (auch alle Diamanten) mit Lichtbrechung aus refraction.js, Cabochons mit Mustern.
 
 import * as THREE from '../vendor/three.module.min.js';
 import { brilliantGeometry, starTexture } from './diamond3d.js';
+import { refractionMaterial } from './refraction.js';
 
 // ---- Zufall mit festem Startwert, damit jeder Stein immer gleich aussieht ---------------
 
@@ -19,15 +20,49 @@ function seeded(str) {
 // ---- Schliffe -------------------------------------------------------------------------------
 
 // Treppenschliff (Smaragdschliff): achteckig, gestreckt, mit Stufen in Krone und Pavillon.
-function stepGeometry() {
+function stepGeometry(ratio = 1.25) {
   const profile = [
     [0, -0.72], [0.34, -0.6], [0.66, -0.36], [0.88, -0.14], [1, -0.02],
     [1, 0.03], [0.9, 0.15], [0.78, 0.25], [0.64, 0.32], [0, 0.32],
   ].map(([x, y]) => new THREE.Vector2(x, y));
   const geo = new THREE.LatheGeometry(profile, 8);
   geo.rotateY(Math.PI / 8);
-  geo.scale(1.25, 1, 0.82);
-  return geo.toNonIndexed();
+  geo.scale(ratio * 0.95, 1, 0.95);
+  const flat = geo.toNonIndexed();
+  flat.computeVertexNormals();
+  return flat;
+}
+
+// Umriss-Formen: Faktor für den Radius je Winkel. Der runde Brillant wird damit zur Birne,
+// zum Oval oder zum Kissen umgeformt – Facetten und Proportionen bleiben erhalten.
+function outline(kind) {
+  if (kind === 'oval') return (a) => 1 / Math.sqrt((Math.cos(a) / 1.3) ** 2 + (Math.sin(a) / 0.9) ** 2);
+  if (kind === 'cushion') return (a) => 0.92 * (Math.abs(Math.cos(a)) ** 4 + Math.abs(Math.sin(a)) ** 4) ** -0.25;
+  if (kind === 'pear') {
+    // Tropfen: links rund, rechts spitz. Radius je Winkel aus einer abgetasteten Kurve.
+    const bins = new Float32Array(360);
+    for (let i = 0; i < 2000; i++) {
+      const t = (i / 2000) * Math.PI * 2;
+      const x = 1.35 * Math.cos(t) - 0.28;
+      const z = 0.95 * Math.sin(t) * Math.abs(Math.sin(t / 2)) ** 0.9;
+      const k = Math.floor(((Math.atan2(z, x) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2) * 360) % 360;
+      bins[k] = Math.max(bins[k], Math.hypot(x, z));
+    }
+    for (let k = 0; k < 360; k++) if (!bins[k]) bins[k] = bins[(k + 359) % 360];
+    return (a) => bins[Math.floor(((a + Math.PI * 2) % (Math.PI * 2)) / (Math.PI * 2) * 360) % 360];
+  }
+  return null;
+}
+
+function reshape(geo, fn) {
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), z = pos.getZ(i);
+    const f = fn(Math.atan2(z, x));
+    pos.setXYZ(i, x * f, pos.getY(i), z * f);
+  }
+  geo.computeVertexNormals();
+  return geo;
 }
 
 // Cabochon: glatte Wölbung mit flachem Boden. UVs als Draufsicht, damit Muster natürlich liegen.
@@ -48,10 +83,10 @@ function cabochonGeometry(oval = 1.2) {
 
 function cutGeometry(spec) {
   if (spec.cut === 'cabochon') return cabochonGeometry();
-  if (spec.cut === 'step') return stepGeometry();
+  if (spec.cut === 'step') return stepGeometry(spec.ratio ?? 1.3);
   const geo = brilliantGeometry();
-  if (spec.cut === 'oval') geo.scale(1.24, 1, 0.9);
-  return geo;
+  const fn = outline(spec.cut);
+  return fn ? reshape(geo, fn) : geo;
 }
 
 // ---- Gezeichnete Muster (Canvas-Texturen) -----------------------------------------------
@@ -248,7 +283,7 @@ function darker(hex, k) {
   return new THREE.Color(hex).multiplyScalar(k);
 }
 
-function buildMaterials(spec) {
+function buildMaterials(spec, geo, envCube) {
   const rnd = seeded(spec.name);
   const disposables = [];
   const tex = (name) => {
@@ -257,8 +292,21 @@ function buildMaterials(spec) {
     return t;
   };
 
+  if (spec.cut !== 'cabochon' && envCube) {
+    // Facettiert: echte Lichtbrechung im Stein (siehe refraction.js)
+    const lum = new THREE.Color(spec.c).getHSL({}).l;
+    const outer = refractionMaterial(geo, envCube, {
+      color: spec.bicolor ? '#ffffff' : spec.c, ior: spec.ior ?? 2.42, dispersion: spec.disp ?? 0.02,
+      bounces: spec.look === 'diamond' ? 5 : 4,
+      exposure: 1.2 + Math.max(0, 0.5 - lum) * 1.4,   // dunkle Steine etwas aufhellen
+      glow: spec.glow ? 0.18 : 0, vertexColors: !!spec.bicolor,
+      body: spec.c === '#ffffff' ? 0.02 : 0.16,
+    });
+    return { outer, inner: null, disposables };
+  }
+
   if (spec.cut !== 'cabochon') {
-    // Facettiert: farbiger, durchscheinender Stein mit getönten Innenreflexen
+    // Ersatz ohne Würfel-Umgebung: farbiger, durchscheinender Stein mit getönten Innenreflexen
     const outer = new THREE.MeshPhysicalMaterial({
       color: spec.bicolor ? 0xffffff : spec.c, vertexColors: !!spec.bicolor,
       metalness: 0.55, roughness: 0.03, flatShading: true, transparent: true, opacity: 0.88,
@@ -333,19 +381,19 @@ function paintBicolor(geo, c1, c2) {
 
 // ---- Edelstein-Objekt ----------------------------------------------------------------------
 
-export function gemObject(spec) {
+export function gemObject(spec, { envCube = null } = {}) {
   const group = new THREE.Group();
   const geo = cutGeometry(spec);
   if (spec.bicolor) paintBicolor(geo, spec.c, spec.c2);
-  const { outer, inner, disposables } = buildMaterials(spec);
-  const meshes = [];
+  const { outer, inner, disposables } = buildMaterials(spec, geo, envCube);
+  const main = new THREE.Mesh(geo, outer);
+  let innerMesh = null;
   if (inner) {
-    const im = new THREE.Mesh(geo, inner);
-    im.scale.setScalar(0.985);
-    meshes.push(im);
+    innerMesh = new THREE.Mesh(geo, inner);
+    innerMesh.scale.setScalar(0.985);
+    group.add(innerMesh);
   }
-  meshes.push(new THREE.Mesh(geo, outer));
-  meshes.forEach((m) => group.add(m));
+  group.add(main);
 
   // Rutilquarz: goldene Nadeln im Stein
   if (spec.name === 'Rutilquarz') {
@@ -358,6 +406,7 @@ export function gemObject(spec) {
     const lg = new THREE.BufferGeometry();
     lg.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
     const lines = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: spec.c2, transparent: true, opacity: 0.8 }));
+    lines.renderOrder = 2;
     group.add(lines);
     disposables.push(lg, lines.material);
   }
@@ -365,7 +414,7 @@ export function gemObject(spec) {
   // Lichtblitze: facettierte Steine funkeln mehr als Cabochons
   const sparkles = new THREE.Group();
   group.add(sparkles);
-  const count = spec.cut === 'cabochon' ? 2 : 3 + spec.level * 2;
+  const count = spec.cut === 'cabochon' ? 2 : 3 + (spec.level ?? 2) * 2 + (spec.legend ? 4 : 0);
   const pos = geo.attributes.position;
   for (let i = 0; i < count; i++) {
     const v = new THREE.Vector3().fromBufferAttribute(pos, (i * 7919) % pos.count);
@@ -373,6 +422,7 @@ export function gemObject(spec) {
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({
       map: starTexture(), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0,
     }));
+    if (i % 3 === 2) sp.material.color.set(spec.c === '#ffffff' ? ['#ff9ae6', '#9ae8ff', '#fff29a'][i % 3] : spec.c);
     sp.position.copy(v).multiplyScalar(1.04);
     sp.userData = { phase: (i * 1.618) % 1, speed: 0.35 + ((i * 0.37) % 0.5) };
     sparkles.add(sp);
@@ -382,8 +432,9 @@ export function gemObject(spec) {
   const edgeMat = new THREE.LineBasicMaterial({ transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
   const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo, spec.cut === 'cabochon' ? 30 : 1), edgeMat);
   edges.scale.setScalar(1.003);
+  edges.visible = false;
   group.add(edges);
-  const saved = { color: outer.color.clone(), map: outer.map, emissive: outer.emissive.clone(), ei: outer.emissiveIntensity };
+  const blackMat = new THREE.MeshStandardMaterial({ color: 0x050506, roughness: 0.8, flatShading: true, emissiveIntensity: 0.14 });
   const colA = new THREE.Color(spec.c), colB = new THREE.Color(spec.c2 || spec.c);
 
   let mystery = false;
@@ -391,21 +442,21 @@ export function gemObject(spec) {
     group,
     setMystery(on, color) {
       mystery = on;
-      if (color) edgeMat.color.set(color);
+      if (color) { edgeMat.color.set(color); blackMat.emissive.set(color); }
       edgeMat.opacity = on ? 1 : 0;
+      edges.visible = on;
       sparkles.visible = !on;
-      outer.color.copy(on ? new THREE.Color(0x050506) : saved.color);
-      outer.map = on ? null : saved.map;
-      outer.emissive.copy(on ? edgeMat.color : saved.emissive);
-      outer.emissiveIntensity = on ? 0.14 : saved.ei;
-      outer.needsUpdate = true;
-      if (inner) inner.visible = !on;
+      main.material = on ? blackMat : outer;
+      if (innerMesh) innerMesh.visible = !on;
+      group.children.forEach((c) => { if (c.isLineSegments && c !== edges) c.visible = !on; });
     },
     update(t, boost = 0) {
       if (spec.shift && !mystery) {
         // Alexandrit: Farbwechsel zwischen Grün (Tageslicht) und Purpur (Kunstlicht)
-        outer.color.copy(colA).lerp(colB, (Math.sin(t * 0.8) + 1) / 2);
-        inner?.color.copy(outer.color).multiplyScalar(0.6);
+        const col = colA.clone().lerp(colB, (Math.sin(t * 0.8) + 1) / 2);
+        if (outer.uniforms) outer.uniforms.color.value.copy(col);
+        else outer.color.copy(col);
+        inner?.color.copy(col).multiplyScalar(0.6);
       }
       if (spec.look === 'moon' && !mystery) outer.emissiveIntensity = 0.08 + (Math.sin(t * 1.4) + 1) * 0.08;
       sparkles.children.forEach((sp) => {
@@ -419,10 +470,11 @@ export function gemObject(spec) {
       geo.dispose();
       edges.geometry.dispose();
       edgeMat.dispose();
+      blackMat.dispose();
       outer.dispose();
       inner?.dispose();
       disposables.forEach((d) => d.dispose());
-      sparkles.children.forEach((s) => s.material.dispose());
+      sparkles.children.forEach((sp) => sp.material.dispose());
     },
   };
 }

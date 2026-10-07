@@ -1,7 +1,7 @@
 // Die 89 Edelsteine von Fame – Stufe 1 (Malachit) bis Stufe 89 (Diamant).
 //
-// cut:  brilliant (Facettenschliff), oval (ovaler Facettenschliff), step (Treppenschliff),
-//       cabochon (gewölbt, ohne Facetten)
+// cut:  brilliant (rund), oval, pear (Tropfen/Birne), cushion (Kissen), step (Treppen-/Smaragdschliff,
+//       ratio = Länge zu Breite), cabochon (gewölbt, ohne Facetten)
 // look: clear (durchsichtig), milk (milchig), opaque (undurchsichtig mit Muster),
 //       opal (Farbspiel), labra (Farbschimmer), moon (bläulicher Schimmer), star (Sternstein),
 //       diamond (der Diamant)
@@ -100,7 +100,40 @@ export const GEM_LIST = [
   G('Alexandrit', '#2f8a6a', 'brilliant', 'clear', { c2: '#a02e6a', shift: true, flavor: 'Wechselt die Farbe. Nicht den Charakter.' }),
   G('Paraíba-Turmalin', '#1ee2e0', 'oval', 'clear', { glow: true, flavor: 'Leuchtet heller als jede Clubnacht.' }),
   G('Diamant', '#ffffff', 'brilliant', 'diamond', { flavor: 'Erst Fame, dann die anderen.' }),
+
+  // Die Legenden: berühmte Diamanten ab 300.000 € bis 1 Mio. €
+  G('Orangefarbener Diamant', '#ff8a1c', 'pear', 'diamond', { legend: true, flavor: 'Feuer in Tropfenform.' }),
+  G('The Unique Pink', '#ff7fb6', 'pear', 'diamond', { legend: true, flavor: 'Einzigartig. Wie der Name sagt.' }),
+  G('De Beers Millennium Jewel 4', '#4f8fff', 'oval', 'diamond', { legend: true, flavor: 'Blau wie die Tiefe des Ozeans.' }),
+  G('Fancy Intense Pink', '#ff5fa2', 'cushion', 'diamond', { legend: true, flavor: 'Intensiv. Wie dein Auftritt.' }),
+  G('Blue Moon of Josephine', '#5aa2ff', 'cushion', 'diamond', { legend: true, flavor: 'Einmal im blauen Mond.' }),
+  G('Pink Legacy', '#ff6fa8', 'step', 'diamond', { legend: true, ratio: 1.3, flavor: 'Ein Vermächtnis in Rosa.' }),
+  G('Oppenheimer Blue', '#3f7dff', 'step', 'diamond', { legend: true, ratio: 1.22, flavor: 'Das tiefste Blau der Welt.' }),
+  G('The Constellation', '#ffffff', 'cushion', 'diamond', { legend: true, flavor: 'Ein ganzes Sternbild in deiner Hand.' }),
+  G('Lesedi La Rona', '#ffffff', 'step', 'diamond', { legend: true, ratio: 1.0, flavor: '„Unser Licht“ – jetzt deins.' }),
+  G('The Pink Star', '#ff4f9a', 'oval', 'diamond', { legend: true, flavor: 'Der Stern über allen.' }),
 ];
+
+// Brechzahl und Farbaufspaltung ("Feuer") je Steinart – bestimmen, wie das Licht im Stein läuft.
+const OPTICS = [
+  [/Diamant|Pink|Blue|Jewel|Constellation|Lesedi/, 2.42, 0.024],
+  [/Demantoid/, 1.89, 0.034],
+  [/Titanit/, 1.95, 0.034],
+  [/Zirkon/, 1.95, 0.022],
+  [/Saphir|Rubin/, 1.77, 0.009],
+  [/Granat|Pyrop|Spessartin|Rhodolith|Hessonit|Tsavorit/, 1.76, 0.012],
+  [/Spinell|Chrysoberyll|Alexandrit/, 1.74, 0.01],
+  [/Peridot|Diopsid|Kyanit|Tansanit|Jeremejewit/, 1.68, 0.01],
+  [/Topas|Andalusit|Apatit/, 1.62, 0.008],
+  [/Turmalin|Verdelith|Indigolith|Rubellit|Siberit|Achroit/, 1.63, 0.009],
+  [/Smaragd|Aquamarin|Beryll|Morganit/, 1.58, 0.007],
+];
+for (const g of GEM_LIST) {
+  if (g.cut === 'cabochon') continue;
+  const o = OPTICS.find(([re]) => re.test(g.name));
+  g.ior = o ? o[1] : 1.55;
+  g.disp = o ? o[2] : 0.007;
+}
 
 // Sprüche je Seltenheitsklasse, falls ein Stein keinen eigenen hat
 export const BAND_FLAVOR = [
@@ -111,7 +144,7 @@ export const BAND_FLAVOR = [
   'Kaum einer hat ihn. Du schon.',
 ];
 
-// Stufe -> Seltenheitsklasse (0..4): bestimmt Farben, Sound und Effekte – nicht den Stein selbst.
+// Stufe -> Seltenheitsklasse (0..4): bestimmt Sound und Effekte – nicht den Stein selbst.
 export function bandFor(stage) {
   return stage <= 25 ? 0 : stage <= 50 ? 1 : stage <= 70 ? 2 : stage <= 82 ? 3 : 4;
 }

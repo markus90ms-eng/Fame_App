@@ -18,23 +18,56 @@ export const RARITIES = [
   { id: 'legendary', label: 'Legendär', item: 'Legendärer Gegenstand',  color: '#ff8a1f' },
 ];
 
-// 89 Edelstein-Stufen: Stufe 1 ab 1 €, Stufe 2 ab 5 €, dann gleichmäßig (logarithmisch)
-// bis zum Diamanten bei 250.000 €. Grenzen auf zwei Stellen gerundet, damit sie sich gut lesen.
+// Edelstein-Stufen: Stufe 1 ab 1 €, Stufe 2 ab 5 €, dann gleichmäßig (logarithmisch) bis zum
+// Diamanten bei 250.000 €. Danach die Legenden von 300.000 € bis 1 Mio. €.
+// Grenzen auf zwei Stellen gerundet, damit sie sich gut lesen.
 export const TOP_AMOUNT = 250_000;
+const LEGEND_FROM = 300_000;
+const LEGEND_TO = 1_000_000;
 function twoDigits(v) {
   const p = 10 ** Math.max(0, Math.floor(Math.log10(v)) - 1);
   return Math.round(v / p) * p;
 }
+const BASE = GEM_LIST.filter((g) => !g.legend).length;
+const LEGENDS = GEM_LIST.length - BASE;
 const mins = [1];
 for (let i = 1; i < GEM_LIST.length; i++) {
-  const v = twoDigits(5 * (TOP_AMOUNT / 5) ** ((i - 1) / (GEM_LIST.length - 2)));
+  const v = i < BASE
+    ? twoDigits(5 * (TOP_AMOUNT / 5) ** ((i - 1) / (BASE - 2)))
+    : twoDigits(LEGEND_FROM * (LEGEND_TO / LEGEND_FROM) ** ((i - BASE) / (LEGENDS - 1)));
   mins.push(Math.max(v, mins[i - 1] + 1));
 }
 
-// Jede Stufe: stage = 1..89 (welcher Stein), level = Seltenheitsklasse 0..4 (Farben, Sound, Effekte).
+// Akzentfarbe der Card aus der Steinfarbe: zu dunkle Farben aufhellen, Weiß wird Platin.
+// Dazu das Metall des Rahmens passend zur Farbe.
+function cardLook(hex) {
+  const c = parseInt(hex.slice(1), 16);
+  let r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  const sat = max ? (max - min) / max : 0;
+  let hue = 0;
+  if (max !== min) {
+    hue = max === r ? (g - b) / (max - min) : max === g ? 2 + (b - r) / (max - min) : 4 + (r - g) / (max - min);
+    hue = (hue * 60 + 360) % 360;
+  }
+  let tone = hex;
+  if (sat < 0.12 && lum > 0.6) tone = '#d6e0ea';                       // farblos -> Platin
+  else if (lum < 0.22) {                                              // sehr dunkel -> aufhellen
+    const k = 0.45;
+    r = Math.round(r + (255 - r) * k); g = Math.round(g + (255 - g) * k); b = Math.round(b + (255 - b) * k);
+    tone = `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
+  }
+  const metal = sat < 0.12 ? 'platinum' : (hue >= 300 || hue < 20) && lum > 0.45 ? 'rose'
+    : hue < 70 ? 'gold' : 'platinum';
+  return { tone, metal };
+}
+
+// Jede Stufe: stage = 1..99 (welcher Stein), level = Seltenheitsklasse 0..4 (Sound, Effekte).
 export const TIERS = GEM_LIST.map((g, i) => {
   const stage = i + 1;
   const level = bandFor(stage);
+  const look = cardLook(g.c);
   return {
     ...g,
     id: `gem-${stage}`,
@@ -43,6 +76,8 @@ export const TIERS = GEM_LIST.map((g, i) => {
     min: mins[i],
     rarity: RARITIES[level],
     css: RARITIES[level].color,
+    tone: g.legend ? (g.c === '#ffffff' ? '#e8eef6' : g.c) : look.tone,
+    metal: g.legend ? 'legend' : look.metal,
     flavor: g.flavor || BAND_FLAVOR[level],
   };
 });

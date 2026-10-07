@@ -15,6 +15,7 @@ export const SHARE_BASE = 'https://fame.app/card/';
 const STORY_W = 1080;
 const STORY_H = 1920;
 const FONT = '"Source Code Pro", ui-monospace, monospace';
+const SERIF = '"Cormorant Garamond", Georgia, serif';
 const font = (w, s, style = '') => `${style} ${w} ${s}px ${FONT}`;
 
 // ---- Zeichen-Helfer ------------------------------------------------------------------
@@ -34,21 +35,25 @@ function hexA(hex, a) {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 }
 
-// Rahmen-Füllung je Stufe: einfarbig, gold, oder umlaufender Farbverlauf ab "Makellos".
-function ringFill(g, tier, cx, cy, x, y, w, h) {
-  const c = tier.rarity.color;
-  if (tier.level >= 3 && g.createConicGradient) {
-    const cols = tier.level === 4 ? ['#ff8a1f', '#ffe08a', '#ff3d00'] : ['#b65cff', '#ff5fd2', '#5b8cff'];
-    const grd = g.createConicGradient(-Math.PI / 4, cx, cy);
-    [0, 1, 2, 3, 4, 5, 6].forEach((i) => grd.addColorStop(i / 6, cols[i % 3]));
+// Metall-Verlauf des Rahmens: Gold, Roségold, Platin – bei Legenden ein Holo-Schimmer.
+const METALS = {
+  gold: ['#7a5a14', '#f7dc8a', '#b8892c', '#fff3c4', '#a47a26', '#e9c76a'],
+  rose: ['#7e4536', '#f6c2b0', '#b9735e', '#ffe4da', '#9a5a48', '#e9a892'],
+  platinum: ['#6f7780', '#e9eef3', '#9aa3ad', '#ffffff', '#7c858f', '#dfe5ec'],
+  legend: ['#ffd6ec', '#9fd8ff', '#fff4c2', '#ff9ad0', '#c6b6ff', '#b6fff0'],
+};
+const METAL_LINE = { gold: '#d8b95e', rose: '#e8a894', platinum: '#c9d2dc', legend: '#f5d2ea' };
+
+function metalFill(g, metal, x, y, w, h) {
+  const cols = METALS[metal] || METALS.platinum;
+  if (metal === 'legend' && g.createConicGradient) {
+    const grd = g.createConicGradient(0, x + w / 2, y + h / 2);
+    [...cols, cols[0]].forEach((c, i) => grd.addColorStop(i / cols.length, c));
     return grd;
   }
-  if (tier.level === 2) {
-    const grd = g.createLinearGradient(x, y, x + w, y + h);
-    ['#fff3b0', '#ffd43b', '#8a6a00', '#ffd43b', '#fff3b0'].forEach((col, i) => grd.addColorStop(i / 4, col));
-    return grd;
-  }
-  return c;
+  const grd = g.createLinearGradient(x, y, x + w, y + h);
+  cols.forEach((c, i) => grd.addColorStop(i / (cols.length - 1), c));
+  return grd;
 }
 
 function drawInstaGlyph(g, x, y, s, color) {
@@ -89,67 +94,63 @@ function drawDiamondGlyph(g, x, y, s, line, fill) {
 // ---- Die Card selbst (gleicher Look wie in der App) --------------------------------------
 
 export function drawCard(g, { x, y, w, h, tier, serial, insta, gem }) {
-  const c = tier.rarity.color;
+  const c = tier.tone || tier.rarity.color;
+  const metal = tier.metal || 'platinum';
+  const line = METAL_LINE[metal];
   const s = w / 300; // Maßstab bezogen auf die 300px breite Card in der App
-  const r = 16 * s;
-  const cx = x + w / 2, cy = y + h / 2;
+  const r = 18 * s;
+  const cx = x + w / 2;
 
-  // Leuchten hinter der Card
+  // Leuchten in der Steinfarbe
   g.save();
-  g.shadowColor = hexA(c, 0.35 + tier.level * 0.12);
-  g.shadowBlur = (24 + tier.level * 14) * s;
+  g.shadowColor = hexA(c, 0.55);
+  g.shadowBlur = (tier.legend ? 70 : 45) * s;
   g.fillStyle = '#000';
   roundRect(g, x, y, w, h, r);
   g.fill();
   g.restore();
 
-  // versetzter Schatten in der Stufenfarbe (wie die Buttons der App)
-  g.save();
-  g.fillStyle = hexA(c, 0.55);
-  roundRect(g, x + 9 * s, y + 11 * s, w, h, r);
-  g.fill();
-  g.restore();
-
-  // Rahmen
-  g.fillStyle = ringFill(g, tier, cx, cy, x, y, w, h);
+  // Metallrahmen
+  g.fillStyle = metalFill(g, metal, x, y, w, h);
   roundRect(g, x, y, w, h, r);
   g.fill();
 
-  // Innenfläche
-  const b = 3.5 * s;
+  // Innenfläche in der Farbe des Steins
+  const b = 3 * s;
   const ix = x + b, iy = y + b, iw = w - 2 * b, ih = h - 2 * b;
-  const bg = g.createRadialGradient(cx, iy + ih * 0.34, 10 * s, cx, iy + ih * 0.34, ih * 0.75);
-  bg.addColorStop(0, hexA(c, 0.32));
-  bg.addColorStop(0.55, '#121214');
-  bg.addColorStop(1, '#0a0a0c');
+  const bg = g.createRadialGradient(cx, iy + ih * 0.22, 0, cx, iy + ih * 0.22, ih * 0.85);
+  bg.addColorStop(0, hexA(c, 0.42));
+  bg.addColorStop(0.6, '#0b0b0d');
+  bg.addColorStop(1, '#050506');
+  g.fillStyle = '#0b0b0d';
+  roundRect(g, ix, iy, iw, ih, r - b);
+  g.fill();
   g.fillStyle = bg;
   roundRect(g, ix, iy, iw, ih, r - b);
   g.fill();
 
-  // feine Doppellinie ab "Diamant"
-  if (tier.level >= 2) {
-    g.strokeStyle = hexA(c, 0.5);
-    g.lineWidth = 1.2 * s;
-    roundRect(g, ix + 6 * s, iy + 6 * s, iw - 12 * s, ih - 12 * s, r - 8 * s);
-    g.stroke();
-  }
-
-  // Strahlen hinter dem Diamanten
+  // Facetten-Wasserzeichen
   g.save();
   roundRect(g, ix, iy, iw, ih, r - b);
   g.clip();
-  g.translate(cx, iy + ih * 0.36);
-  g.globalAlpha = 0.05 + tier.level * 0.035;
+  g.translate(cx, iy + ih * 0.32);
+  g.globalAlpha = 0.07;
   g.fillStyle = c;
-  for (let i = 0; i < 20; i++) {
-    g.rotate((Math.PI * 2) / 20);
+  for (let i = 0; i < 24; i++) {
+    g.rotate((Math.PI * 2) / 24);
     g.beginPath();
     g.moveTo(0, 0);
-    g.lineTo(-14 * s, -ih);
-    g.lineTo(14 * s, -ih);
+    g.lineTo(-4 * s, -ih);
+    g.lineTo(4 * s, -ih);
     g.fill();
   }
   g.restore();
+
+  // feine Metall-Linie innen
+  g.strokeStyle = hexA(line, 0.55);
+  g.lineWidth = 1 * s;
+  roundRect(g, ix + 4 * s, iy + 4 * s, iw - 8 * s, ih - 8 * s, r - 8 * s);
+  g.stroke();
 
   // Kopfzeile: Logo links, Seriennummer rechts
   const pad = 16 * s;
@@ -164,20 +165,18 @@ export function drawCard(g, { x, y, w, h, tier, serial, insta, gem }) {
   drawDiamondGlyph(g, ix + pad + lw + 4 * s, iy + pad + 2 * s, 18 * s, '#f8f8f6', '#3dfa74');
   g.textAlign = 'right';
   g.font = font(600, 9.5 * s);
-  g.fillStyle = hexA(c, 0.95);
+  g.fillStyle = line;
   g.fillText(`Nr. ${serial}`, ix + iw - pad, iy + pad + 14 * s);
-  g.textAlign = 'left';
 
-  // Diamant
-  const gemY = iy + 44 * s, gemH = 230 * s;
-  const glow = g.createRadialGradient(cx, gemY + gemH / 2, 0, cx, gemY + gemH / 2, gemH * 0.6);
-  glow.addColorStop(0, hexA(c, 0.55));
+  // Edelstein mit Lichthof
+  const gemY = iy + 42 * s, gemH = 190 * s;
+  const glow = g.createRadialGradient(cx, gemY + gemH / 2, 0, cx, gemY + gemH / 2, gemH * 0.62);
+  glow.addColorStop(0, hexA(c, 0.5));
   glow.addColorStop(1, hexA(c, 0));
   g.fillStyle = glow;
   g.fillRect(ix, gemY - 20 * s, iw, gemH + 40 * s);
   if (gem) {
-    // Aufnahme ist großzügig geschnitten – größer zeichnen und auf die Innenfläche begrenzen
-    const gw = iw * 1.35;
+    const gw = iw * 1.02;
     const gh = gw * (gem.height / gem.width);
     g.save();
     roundRect(g, ix, iy, iw, ih, r - b);
@@ -186,32 +185,55 @@ export function drawCard(g, { x, y, w, h, tier, serial, insta, gem }) {
     g.restore();
   }
 
-  // Name, Spruch, Instagram
+  // Schild: Stufe, Name in Serifenschrift mit Metall-Verlauf, Zierlinie, Spruch
+  let ty = gemY + gemH + 16 * s;
   g.textAlign = 'center';
-  g.save();
-  g.shadowColor = hexA(c, 0.7);
-  g.shadowBlur = 16 * s;
-  g.font = font(800, 21 * s);
+  g.font = font(700, 9 * s);
   g.fillStyle = c;
-  g.fillText(tier.name, cx, gemY + gemH + 28 * s);
+  const stageText = `${tier.legend ? 'LEGENDE' : 'EDELSTEIN'} · STUFE ${tier.stage} VON ${GEM_COUNT}`;
+  if ('letterSpacing' in g) g.letterSpacing = `${2 * s}px`;
+  g.fillText(stageText, cx, ty);
+  if ('letterSpacing' in g) g.letterSpacing = '0px';
+  ty += 30 * s;
+  let size = 31;
+  g.font = `700 ${size * s}px ${SERIF}`;
+  while (g.measureText(tier.name).width > iw - 30 * s && size > 18) { size -= 1; g.font = `700 ${size * s}px ${SERIF}`; }
+  g.save();
+  g.shadowColor = hexA(c, 0.6);
+  g.shadowBlur = 14 * s;
+  const tw = g.measureText(tier.name).width;
+  g.fillStyle = metalFill(g, metal, cx - tw / 2, ty - size * s, tw, size * s);
+  g.fillText(tier.name, cx, ty);
   g.restore();
-  g.font = font(600, 9 * s);
-  g.fillStyle = '#a9a7a0';
-  g.fillText(`EDELSTEIN · STUFE ${tier.stage} VON ${GEM_COUNT}`, cx, gemY + gemH + 44 * s);
-  g.font = font(500, 11.5 * s, 'italic');
-  g.fillStyle = '#d9a35b';
-  g.fillText(`„${tier.flavor}“`, cx, gemY + gemH + 62 * s);
+  ty += 14 * s;
+  g.strokeStyle = line;
+  g.lineWidth = 1 * s;
+  g.beginPath(); g.moveTo(cx - 90 * s, ty); g.lineTo(cx - 12 * s, ty); g.moveTo(cx + 12 * s, ty); g.lineTo(cx + 90 * s, ty); g.stroke();
+  drawDiamondGlyph(g, cx - 7 * s, ty - 5 * s, 14 * s, line, c);
+  ty += 22 * s;
+  g.font = `italic 500 ${16 * s}px ${SERIF}`;
+  g.fillStyle = '#e2dccd';
+  g.fillText(tier.flavor, cx, ty);
+
+  // Fuß: Instagram links, Echtheitssiegel rechts
+  const fy = iy + ih - 26 * s;
+  g.textAlign = 'left';
   if (insta) {
-    g.font = font(600, 13 * s);
-    const t = `@${insta}`;
-    const tw = g.measureText(t).width;
-    const gs = 14 * s;
-    const tx = cx - (tw + gs + 6 * s) / 2;
-    drawInstaGlyph(g, tx, gemY + gemH + 72 * s, gs, '#f8f8f6');
-    g.textAlign = 'left';
+    g.font = font(600, 12 * s);
+    drawInstaGlyph(g, ix + pad, fy - 11 * s, 13 * s, '#f8f8f6');
     g.fillStyle = '#f8f8f6';
-    g.fillText(t, tx + gs + 6 * s, gemY + gemH + 84 * s);
+    g.fillText(`@${insta}`, ix + pad + 19 * s, fy);
   }
+  const sx = ix + iw - pad - 19 * s, sy = fy - 6 * s, sr = 19 * s;
+  const seal = g.createConicGradient ? g.createConicGradient(0.5, sx, sy) : '#e8e8f0';
+  if (seal.addColorStop) ['#ffd6ec', '#9fd8ff', '#fff4c2', '#b6fff0', '#ffd6ec'].forEach((col, i) => seal.addColorStop(i / 4, col));
+  g.fillStyle = seal;
+  g.beginPath(); g.arc(sx, sy, sr, 0, Math.PI * 2); g.fill();
+  g.fillStyle = '#0b0b0c';
+  g.textAlign = 'center';
+  g.font = font(800, 6.5 * s);
+  g.fillText('ECHT', sx, sy - 1 * s);
+  g.fillText(LOGO_TEXT, sx, sy + 7 * s);
   g.textAlign = 'left';
 
   // diagonaler Glanz über allem
@@ -220,7 +242,7 @@ export function drawCard(g, { x, y, w, h, tier, serial, insta, gem }) {
   g.clip();
   const sheen = g.createLinearGradient(x, y, x + w, y + h);
   sheen.addColorStop(0.3, 'rgba(255,255,255,0)');
-  sheen.addColorStop(0.42, 'rgba(255,255,255,0.10)');
+  sheen.addColorStop(0.42, 'rgba(255,255,255,0.09)');
   sheen.addColorStop(0.5, 'rgba(255,255,255,0)');
   g.fillStyle = sheen;
   g.fillRect(x, y, w, h);
@@ -235,6 +257,8 @@ async function fontsReady() {
       document.fonts?.load(`800 40px ${FONT}`),
       document.fonts?.load(`italic 500 20px ${FONT}`),
       document.fonts?.load(`600 20px ${FONT}`),
+      document.fonts?.load(`700 30px ${SERIF}`),
+      document.fonts?.load(`italic 500 16px ${SERIF}`),
     ]);
   } catch { /* Ersatzschrift */ }
 }
@@ -245,7 +269,7 @@ async function fontsReady() {
 export async function renderStory(data) {
   await fontsReady();
   const { tier } = data;
-  const c = tier.rarity.color;
+  const c = tier.tone || tier.rarity.color;
   const cv = document.createElement('canvas');
   cv.width = STORY_W;
   cv.height = STORY_H;
@@ -380,7 +404,7 @@ export async function shareToInstagramStory(data, assets) {
     const sticker = await assets.sticker();
     await native.instagramStory({
       stickerImage: toBase64(sticker),
-      backgroundTopColor: data.tier.rarity.color,
+      backgroundTopColor: data.tier.tone || data.tier.rarity.color,
       backgroundBottomColor: '#070708',
       contentUrl: SHARE_BASE + data.serial,
     });

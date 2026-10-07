@@ -6,6 +6,10 @@
 import * as THREE from '../vendor/three.module.min.js';
 import { glassDiamond } from './ui.js';
 import { gemObject } from './gem3d.js';
+import { cubeFromScene } from './refraction.js';
+
+// Der klassische Diamant, wenn kein bestimmter Stein angegeben ist (Intro, Login, Silhouette).
+const DIAMOND = { name: 'Diamant', c: '#ffffff', cut: 'brilliant', look: 'diamond', ior: 2.42, disp: 0.024, level: 4 };
 
 export { THREE };
 
@@ -22,7 +26,7 @@ export function webglAvailable() {
 
 // Studio mit hellen Lichtleisten auf schwarzem Grund: erzeugt die typischen
 // Schwarz-Weiß-Reflexe eines Brillanten.
-export function studioEnvironment(renderer) {
+export function studioScene() {
   const s = new THREE.Scene();
   s.add(new THREE.Mesh(new THREE.BoxGeometry(12, 12, 12), new THREE.MeshBasicMaterial({ color: 0x16161a, side: THREE.BackSide })));
   const panel = (w, h, pos, color, k) => {
@@ -47,6 +51,11 @@ export function studioEnvironment(renderer) {
     const a = (i / 8) * Math.PI * 2 + 0.2;
     panel(1.1, 1.1, [Math.cos(a) * 4.8, i % 2 ? 0.4 : 2.2, Math.sin(a) * 4.8], c, 5);
   });
+  return s;
+}
+
+export function studioEnvironment(renderer) {
+  const s = studioScene();
   const pm = new THREE.PMREMGenerator(renderer);
   const tex = pm.fromScene(s, 0.015).texture;
   pm.dispose();
@@ -154,122 +163,10 @@ export function brilliantGeometry({ damage = 0 } = {}) {
   return facetGeometry(t, new THREE.Vector3(0, -0.2, 0));
 }
 
-// Aussehen je Stufe: trüb/angeschlagen -> klar mit viel Feuer und Funkeln.
-const QUALITY = [
-  { damage: 0.13, color: 0x9a9b94, rough: 0.32, iri: 0.15, env: 0.7, sparkles: 1, inner: 0x3a3b38 },
-  { damage: 0.04, color: 0xc4ccd2, rough: 0.14, iri: 0.4, env: 1.0, sparkles: 3, inner: 0x4d5560 },
-  { damage: 0,    color: 0xe6eef6, rough: 0.05, iri: 0.65, env: 1.25, sparkles: 6, inner: 0x60707e },
-  { damage: 0,    color: 0xf4f8ff, rough: 0.02, iri: 0.85, env: 1.45, sparkles: 9, inner: 0x7a8a9c },
-  { damage: 0,    color: 0xffffff, rough: 0.0,  iri: 1.0,  env: 1.7,  sparkles: 14, inner: 0x95a6ba },
-];
-
-// Diamant-Mesh mit Materialien und Funkeln – ohne Renderer, damit er in andere Szenen passt.
-export function diamondObject(level = 2) {
-  const group = new THREE.Group();
-  // Innenseite: spiegelt die Rückseiten und wirkt wie Licht, das im Stein hin- und herläuft.
-  const inner = new THREE.MeshPhysicalMaterial({
-    metalness: 1, roughness: 0.05, side: THREE.BackSide, flatShading: true, envMapIntensity: 1.2,
-  });
-  const outer = new THREE.MeshPhysicalMaterial({
-    metalness: 0.9, flatShading: true, transparent: true, opacity: 0.9,
-    iridescenceIOR: 1.8, iridescenceThicknessRange: [120, 900], clearcoat: 1, clearcoatRoughness: 0,
-  });
-  const innerMesh = new THREE.Mesh(undefined, inner);
-  const outerMesh = new THREE.Mesh(undefined, outer);
-  innerMesh.scale.setScalar(0.985);
-  group.add(innerMesh, outerMesh);
-
-  // Mystery-Modus: nur leuchtende Kanten auf schwarzem Stein – wie er aussieht, sieht nur, wer ihn hat.
-  const edgeMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
-  const edges = new THREE.LineSegments(undefined, edgeMat);
-  edges.scale.setScalar(1.003);
-  group.add(edges);
-  let mystery = false;
-
-  const sparkles = new THREE.Group();
-  group.add(sparkles);
-  const spriteMat = () => new THREE.SpriteMaterial({
-    map: starTexture(), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0,
-  });
-
-  let q;
-  const applyLook = () => {
-    outer.color.setHex(mystery ? 0x050506 : q.color);
-    outer.metalness = mystery ? 0 : 0.9;
-    outer.clearcoat = mystery ? 0 : 1;
-    outer.opacity = mystery ? 1 : 0.9;
-    outer.roughness = mystery ? 0.8 : q.rough;
-    outer.iridescence = mystery ? 0 : q.iri;
-    outer.envMapIntensity = mystery ? 0.12 : q.env;
-    inner.color.setHex(mystery ? 0x000000 : q.inner);
-    inner.envMapIntensity = mystery ? 0 : 1.2;
-    edgeMat.opacity = mystery ? 1 : 0;
-    outer.emissive.copy(mystery ? edgeMat.color : new THREE.Color(0x000000));
-    outer.emissiveIntensity = mystery ? 0.14 : 0;
-    sparkles.visible = !mystery;
-  };
-  const setMystery = (on, color) => {
-    mystery = on;
-    if (color) edgeMat.color.set(color);
-    if (q) applyLook();
-  };
-  const setLevel = (lv) => {
-    q = QUALITY[Math.max(0, Math.min(QUALITY.length - 1, lv))];
-    const geo = brilliantGeometry({ damage: q.damage });
-    innerMesh.geometry?.dispose();
-    edges.geometry?.dispose();
-    innerMesh.geometry = geo;
-    outerMesh.geometry = geo;
-    edges.geometry = new THREE.EdgesGeometry(geo, 1);
-    applyLook();
-
-    // Lichtblitze auf zufälligen Kronen-Ecken
-    sparkles.children.forEach((s) => s.material.dispose());
-    sparkles.clear();
-    const pos = geo.attributes.position;
-    for (let i = 0; i < q.sparkles; i++) {
-      const idx = Math.floor(((i * 7919) % pos.count + pos.count) % pos.count);
-      const v = new THREE.Vector3().fromBufferAttribute(pos, idx);
-      if (v.y < -0.05) v.set(v.x * 0.6, 0.2, v.z * 0.6);
-      const sp = new THREE.Sprite(spriteMat());
-      // Jeder dritte Blitz in Regenbogenfarbe – das "Feuer" eines Diamanten
-      if (i % 3 === 2) sp.material.color.setHex([0xff7ae0, 0x7ae8ff, 0xfff07a, 0xa8ff9a][(i / 3) % 4 | 0]);
-      sp.position.copy(v).multiplyScalar(1.04);
-      sp.userData.phase = (i * 1.618) % 1;
-      sp.userData.speed = 0.35 + ((i * 0.37) % 0.5);
-      sparkles.add(sp);
-    }
-  };
-  setLevel(level);
-
-  return {
-    group,
-    setLevel,
-    setMystery,
-    get quality() { return q; },
-    update(t, boost = 0) {
-      sparkles.children.forEach((sp) => {
-        const ph = (t * sp.userData.speed + sp.userData.phase) % 1;
-        const f = Math.pow(Math.max(0, Math.sin(ph * Math.PI)), 14);
-        sp.material.opacity = Math.min(1, f + boost * 0.6);
-        sp.scale.setScalar(0.06 + f * 0.6 + boost * 0.35);
-      });
-    },
-    dispose() {
-      innerMesh.geometry?.dispose();
-      edges.geometry?.dispose();
-      edgeMat.dispose();
-      inner.dispose();
-      outer.dispose();
-      sparkles.children.forEach((s) => s.material.dispose());
-    },
-  };
-}
-
 // ---- Fertige Bühne mit Renderer, Drehung per Finger und Glow ------------------------------
 
 export function createDiamond(container, opts = {}) {
-  const { level = 2, glow = 0.4, autoRotate = true, interactive = true, tilt = 0.38, rim = '#ffffff', mystery = false } = opts;
+  const { level = 2, glow = 0.4, autoRotate = true, interactive = true, tilt = 0.55, rim = '#ffffff', mystery = false } = opts;
   // opts.gem: ein Edelstein aus data.js (TIERS). Ohne Angabe zeigt die Bühne den Diamanten.
 
   if (!webglAvailable()) {
@@ -288,6 +185,9 @@ export function createDiamond(container, opts = {}) {
   const scene = new THREE.Scene();
   const env = studioEnvironment(renderer);
   scene.environment = env;
+  // Würfel-Umgebung für die Lichtbrechung in facettierten Steinen
+  let envCube = null;
+  try { envCube = cubeFromScene(renderer, studioScene(), 256); } catch { /* Ersatzmaterial */ }
   const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 50);
   camera.position.set(0, 0.5, 5.4);
   camera.lookAt(0, -0.14, 0);
@@ -301,7 +201,7 @@ export function createDiamond(container, opts = {}) {
   let mysteryColor = rim;
   const setGem = (spec) => {
     if (gem) { holder.remove(gem.group); gem.dispose(); }
-    gem = !spec ? diamondObject(level) : spec.look === 'diamond' ? diamondObject(4) : gemObject(spec);
+    gem = gemObject(spec || DIAMOND, { envCube: envCube?.texture });
     holder.add(gem.group);
     if (mysteryOn) gem.setMystery(true, mysteryColor);
   };
@@ -395,6 +295,7 @@ export function createDiamond(container, opts = {}) {
       ro.disconnect();
       gem.dispose();
       env.dispose();
+      envCube?.dispose();
       renderer.dispose();
       renderer.domElement.remove();
     },

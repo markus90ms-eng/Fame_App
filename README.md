@@ -29,20 +29,38 @@ python3 -m http.server 8080
 | `#/ranking/region` | Ranking im Bundesland: Kennzahlen, Podest mit Avataren, Rangliste, Deutschland-Kachelkarte (antippbar) und Bundesländer-Duell, eigene Platzierung unten fixiert |
 | `#/ranking/country` | Ranking im Land, dazu das Länder-Duell |
 
-## 89 Edelsteine
+## 99 Edelsteine
 
-Es gibt 89 Stufen, jede ist ein Edelstein: von **Stufe 1 Malachit** (ab 1 €) bis **Stufe 89 Diamant** (ab 250.000 €). Die Liste steht in `js/gems.js`, die Beträge rechnet `js/data.js` aus. Sie steigen gleichmäßig (logarithmisch): Am Anfang ist der nächste Stein schnell erreicht, oben wird es exklusiv. Beispiele: 100 € → Stufe 26, 1.000 € → Stufe 44, 10.000 € → Stufe 63, 100.000 € → Stufe 82.
+Es gibt 99 Stufen, jede ist ein Edelstein: von **Stufe 1 Malachit** (ab 1 €) über **Stufe 89 Diamant** (ab 250.000 €) bis zu den **Legenden**: berühmte Diamanten von 300.000 € bis 1 Mio. €:
 
-- **Einzahlen:** Dort steht nur „Edelstein · Stufe X von 89“, der Stein ist eine leuchtende Silhouette mit „?“. **Welcher Stein es ist, zeigt erst die aufgedeckte Card.** Steine aus der eigenen Sammlung sieht man echt.
-- **Sammlung:** Ein Raster mit 89 Feldern zeigt, welche Steine man schon entdeckt hat (Stufe angepeilt = weißes Feld).
+| Stufe | ab | Legende | Schliff |
+|---|---|---|---|
+| 90 | 300.000 € | Orangefarbener Diamant | Birne |
+| 91 | 340.000 € | The Unique Pink | Birne |
+| 92 | 390.000 € | De Beers Millennium Jewel 4 | Oval |
+| 93 | 450.000 € | Fancy Intense Pink | Kissen |
+| 94 | 510.000 € | Blue Moon of Josephine | Kissen |
+| 95 | 590.000 € | Pink Legacy | Smaragdschliff |
+| 96 | 670.000 € | Oppenheimer Blue | Smaragdschliff |
+| 97 | 770.000 € | The Constellation | Kissen |
+| 98 | 870.000 € | Lesedi La Rona | Smaragdschliff (quadratisch) |
+| 99 | 1.000.000 € | The Pink Star | Oval |
+ Die Liste steht in `js/gems.js`, die Beträge rechnet `js/data.js` aus. Sie steigen gleichmäßig (logarithmisch): Am Anfang ist der nächste Stein schnell erreicht, oben wird es exklusiv. Beispiele: 100 € → Stufe 26, 1.000 € → Stufe 44, 10.000 € → Stufe 63, 100.000 € → Stufe 82.
+
+- **Einzahlen:** Dort steht nur „Edelstein · Stufe X von 99“, der Stein ist eine leuchtende Silhouette mit „?“. **Welcher Stein es ist, zeigt erst die aufgedeckte Card.** Steine aus der eigenen Sammlung sieht man echt.
+- **Sammlung:** Ein Raster mit 99 Feldern zeigt, welche Steine man schon entdeckt hat (Stufe angepeilt = weißes Feld).
 - **Anreiz:** „Nur noch X € bis Stufe Y – Nächster Edelstein →“ setzt den fehlenden Betrag ein.
 - **Sound:** Jeder neue Stein beim Schieben gibt einen Kristall-Ton (je höher, desto heller). Bei einer neuen Seltenheitsklasse kommen Klassen-Sound, Farbwechsel und Funken dazu.
-- **Seltenheitsklassen** (nur Farben und Effekte, nicht sichtbar benannt): Stufe 1–25 grau, 26–50 blau, 51–70 gelb, 71–82 lila, 83–89 orange.
+- **Seltenheitsklassen** (nur Farben und Effekte, nicht sichtbar benannt): Stufe 1–25 grau, 26–50 blau, 51–70 gelb, 71–82 lila, ab 83 orange.
+- **Echte Lichtbrechung:** Facettierte Steine verfolgen das Licht im Stein. Es wird beim Eintritt gebrochen, an den Facetten mehrfach gespiegelt und beim Austritt in Regenbogenfarben aufgespalten (Feuer). Jede Steinart hat ihre echte Brechzahl (Diamant 2,42, Saphir 1,77, Smaragd 1,58 …). Technik: `js/refraction.js` mit three-mesh-bvh.
 - **3D-Darstellung je Stein:**
   - Facettierte Steine in ihrer Farbe: rund, oval oder Treppenschliff (z. B. Smaragd, Aquamarin, Turmaline).
   - Cabochons mit gezeichnetem Muster: Malachit-Bänder, Lapislazuli mit Goldflecken, Türkis-Adern, Dendriten, Opal-Farbspiel, Labradorit-Schimmer, Mondstein-Schein, Sternsaphir und Sternrubin mit Stern.
-  - Besondere Steine: Bicolor (Fluorit, Andalusit, Bicolor-Turmalin), Alexandrit mit Farbwechsel, Paraíba mit Neon-Leuchten, Rutilquarz mit goldenen Nadeln. Der Diamant ist ein Brillantschliff mit 57 Facetten.
-- Die Fame-Card bekommt den Rahmen der Seltenheit: Normal schlicht grau, Magisch blau, Selten mit goldenem Doppelrahmen. Ab Mystisch hat sie einen umlaufend leuchtenden Rand. Der Hintergrund wächst mit: Strahlen, ein Runenkreis, eine Lichtsäule.
+  - Besondere Steine: Bicolor (Fluorit, Andalusit, Bicolor-Turmalin), Alexandrit mit Farbwechsel, Paraíba mit Neon-Leuchten, Rutilquarz mit goldenen Nadeln. Der Diamant ist ein Brillantschliff mit 57 Facetten. Die Legenden haben ihre echten Schliffe: Birne, Oval, Kissen, Smaragdschliff.
+- **Fame-Card im Design des Steins:**
+  - Rahmen aus Metall passend zur Steinfarbe: Gold für warme Töne, Roségold für Rosa und Rot, Platin für kühle und farblose Steine. Die Legenden haben einen umlaufenden Holo-Schimmer.
+  - Grund in der Farbe des Steins mit Facetten-Wasserzeichen und feiner Metall-Linie.
+  - Name in Serifenschrift (Cormorant Garamond) mit Metall-Verlauf, dazu Zierlinie, Spruch und ein Echtheitssiegel.
 - Oben rechts steht eine Seriennummer (`FM-XXXX-XXXX-P` mit Prüfzeichen) als Nachweis, dass die Card aus der App stammt.
 
 ## Konto und mehrfaches Einzahlen
@@ -80,8 +98,9 @@ Fame_App/
   css/app.css        Design (Farben, Marker-Text, Buttons mit grünem Versatz, Kurven)
   js/app.js          Router und Screens
   js/ui.js           Logo, Diamant-Icons, Buttons, Hero mit Kurve
-  js/gems.js         Die 89 Edelsteine (Name, Farbe, Schliff, Look)
+  js/gems.js         Die 99 Edelsteine (Name, Farbe, Schliff, Look)
   js/gem3d.js        3D-Edelsteine: Schliffe, Materialien, Muster
+  js/refraction.js   Lichtbrechung im Stein (Strahlverfolgung mit three-mesh-bvh, liegt in vendor/)
   js/data.js         Stufen und Beträge, Länder/Bundesländer, Ranking, Seriennummern
   js/diamond3d.js    Realistischer 3D-Diamant (three.js, liegt in vendor/)
   js/fx.js           Loot-Sounds und Vibration
