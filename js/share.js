@@ -184,9 +184,18 @@ export function drawCard(g, { x, y, w, h, tier, serial, insta, gem }) {
   g.beginPath(); g.moveTo(cx - 90 * s, ty); g.lineTo(cx - 12 * s, ty); g.moveTo(cx + 12 * s, ty); g.lineTo(cx + 90 * s, ty); g.stroke();
   drawDiamondGlyph(g, cx - 7 * s, ty - 5 * s, 14 * s, line, c);
   ty += 22 * s;
+  // Spruch: bei Bedarf auf zwei Zeilen umbrechen, damit er nicht über den Rand läuft
   g.font = `italic 500 ${16 * s}px ${SERIF}`;
   g.fillStyle = '#e2dccd';
-  g.fillText(tier.flavor, cx, ty);
+  const maxW = iw - 36 * s;
+  const words = tier.flavor.split(' ');
+  const lines = [''];
+  for (const w of words) {
+    const test = lines[lines.length - 1] ? `${lines[lines.length - 1]} ${w}` : w;
+    if (g.measureText(test).width > maxW && lines[lines.length - 1]) lines.push(w);
+    else lines[lines.length - 1] = test;
+  }
+  lines.slice(0, 2).forEach((l, i) => g.fillText(l, cx, ty + i * 19 * s));
 
   // Fuß: Instagram links, Echtheitssiegel rechts
   const fy = iy + ih - 26 * s;

@@ -50,8 +50,24 @@ Es gibt 99 Stufen, jede ist ein Edelstein: von **Stufe 1 Malachit** (ab 1 €) �
 - **Einzahlen:** Dort steht nur „Edelstein · Stufe X von 99“, der Stein ist eine leuchtende Silhouette mit „?“. **Welcher Stein es ist, zeigt erst die aufgedeckte Card.** Steine aus der eigenen Sammlung sieht man echt.
 - **Sammlung:** Ein Raster mit 99 Feldern zeigt, welche Steine man schon entdeckt hat (Stufe angepeilt = weißes Feld).
 - **Anreiz:** „Nur noch X € bis Stufe Y – Nächster Edelstein →“ setzt den fehlenden Betrag ein.
-- **Sound:** Jeder neue Stein beim Schieben gibt einen Kristall-Ton (je höher, desto heller). Bei einer neuen Seltenheitsklasse kommen Klassen-Sound, Farbwechsel und Funken dazu.
-- **Seltenheitsklassen** (nur Farben und Effekte, nicht sichtbar benannt): Stufe 1–25 grau, 26–50 blau, 51–70 gelb, 71–82 lila, ab 83 orange.
+- **Sound:** Jeder neue Stein beim Schieben gibt einen Kristall-Ton (je höher, desto heller). Bei einer neuen Farbklasse kommen Klassen-Sound, Farbwechsel und Funken dazu.
+- **Farbklassen nach Kontostand** (nur Farben und Effekte, nicht sichtbar benannt, `CLASSES` in `js/data.js`):
+
+  | Klasse | Farbe | Kontostand |
+  |---|---|---|
+  | Kiesel | Grau | 1 – 99 € |
+  | Mint | Mint | 100 – 499 € |
+  | Aquamarin | Türkis | 500 – 999 € |
+  | Saphir | Blau | 1.000 – 4.999 € |
+  | Amethyst | Lila | 5.000 – 9.999 € |
+  | Rubellit | Pink | 10.000 – 49.999 € |
+  | Rubin | Rot | 50.000 – 99.999 € |
+  | Feuer | Orange | 100.000 – 499.999 € |
+  | Gold | Gold | 500.000 – 999.999 € |
+  | Diamant-Holo | Regenbogen | ab 1 Mio. € |
+
+  An jeder Grenze beginnt genau ein neuer Stein. Die Einzahlseite wird mit jeder Klasse wertiger: ab Mint Lichtstrahlen um den Stein, ab Saphir ein Tresor-Ring, ab Amethyst ein Metallrahmen um Betragsfeld und Knopf, ab Rubellit ein Runenkreis, ab Rubin Metall-Schrift, ab Feuer ein Glanz über Feld und Knopf, ab 1 Mio. alles in Regenbogenfarben. Sound und Funken steigen mit (Effektstärke 0–4 aus der Klasse).
+- **Schneller Weg zur Card:** Wer schon eingezahlt hat, sieht auf der Startseite „Hey …, deine Card wartet“ und landet automatisch auf seiner Card. Nach dem Login geht es ebenfalls zur Card. Auf Einzahlseite und Ranking gibt es den Knopf „Meine Card“ zum Posten.
 - **Echte Lichtbrechung:** Facettierte Steine verfolgen das Licht im Stein. Es wird beim Eintritt gebrochen, an den Facetten mehrfach gespiegelt und beim Austritt in Regenbogenfarben aufgespalten (Feuer). Jede Steinart hat ihre echte Brechzahl (Diamant 2,42, Saphir 1,77, Smaragd 1,58 …). Technik: `js/refraction.js` mit three-mesh-bvh.
 - **Foto-Look auf der Card:** Der Stein liegt wie auf einem Produktfoto schräg auf einem dunklen Tisch (`createDiamond(…, { photo: true })`). Dazu kommen ein warmer Lichtkegel dahinter, ein farbiger Lichtfleck davor, eine Spiegelung im Tisch und unscharfe Lichter (Bokeh) in der Steinfarbe. Die Lichtbrechung nutzt ein dunkles Fotostudio mit wenigen hellen Softboxen (`photoScene`). Der beleuchtete Tisch mit Lichtstreifen scheint durch die Tafel, so wirken gläserne Steine klar statt milchig. Fast farblose Steine (Bergkristall, Weißtopas …) werden wie der Diamant behandelt, zarte Farben bekommen wenig Körperfarbe, kräftige Farben bleiben satt. Nur helle Lichter spiegeln sich, und jede Facette leuchtet je nach Lichtrichtung heller oder dunkler. Tropfen und Marquisen liegen flacher, damit ihre Form zu sehen ist. Die Kamera rahmt jeden Stein automatisch ein.
 - **Holo-Look auf den übrigen Seiten:** Dort spiegeln die Steine einen hellen Pastell-Himmel (`holoScene`), mit Regenbogen-Film und feinen silbernen Kanten.
@@ -60,7 +76,7 @@ Es gibt 99 Stufen, jede ist ein Edelstein: von **Stufe 1 Malachit** (ab 1 €) �
   - **Brillant-Familie:** Round, Oval, Cushion, Cushion square, Marquise, Pear, Princess, Radiant, Radiant square. Der Rundbrillant wird in die jeweilige Umrissform gebracht, die Facetten bleiben erhalten.
   - **Treppenschliffe:** Emerald, Emerald square (Asscher), Octagon, mit gestuften Facetten entlang des Umrisses.
   - Die Legenden haben die Form des echten Steins.
-- **Sprüche:** Jede der 99 Cards hat einen eigenen Spruch passend zum Stein (`SAYINGS` in `js/gems.js`, bei den Legenden direkt in der Liste).
+- **Sprüche:** Jede der 99 Cards hat einen eigenen, frechen Spruch in der Sprache der Feeds („Aura“, „das crazy“, „no cap“, „goated“, „Main Character“ …), gesammelt in `SAYINGS` in `js/gems.js`. Lange Sprüche brechen auf der Card und im Story-Bild auf zwei Zeilen um.
 - **3D-Darstellung je Stein:**
   - Cabochons mit gezeichnetem Muster: Malachit-Bänder, Lapislazuli mit Goldflecken, Türkis-Adern, Dendriten, Opal-Farbspiel, Labradorit-Schimmer, Mondstein-Schein, Sternsaphir und Sternrubin mit Stern.
   - Besondere Steine: Bicolor (Fluorit, Andalusit, Bicolor-Turmalin), Alexandrit mit Farbwechsel, Paraíba mit Neon-Leuchten, Rutilquarz mit goldenen Nadeln. Der Diamant ist ein Brillantschliff mit 57 Facetten. Die Legenden haben ihre echten Schliffe, Farben und Proportionen (Länge zu Breite) nach Fotos der echten Steine: Birne, Oval, Kissen, Smaragdschliff.

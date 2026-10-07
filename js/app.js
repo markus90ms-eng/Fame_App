@@ -1,7 +1,7 @@
 // Fame – App-Shell, Router und Screens.
 
 import {
-  TIERS, GEM_COUNT, RARITIES, PIN_FROM, COUNTRIES, countryById, tierFor, nextTier, fmt, money,
+  TIERS, GEM_COUNT, RARITIES, CLASSES, classFor, PIN_FROM, COUNTRIES, countryById, tierFor, nextTier, fmt, money,
   amountFromPos, posFromAmount, rankFor, standings, groupTotals, makeSerial,
   MAX_AMOUNT, MIN_AMOUNT,
 } from './data.js';
@@ -145,7 +145,27 @@ function meEntry() {
 
 // ---- Screens ----------------------------------------------------------------
 
+const hasCard = () => !!state.account.cards?.length;
+
 function splash() {
+  // Wer schon eingezahlt hat, kommt nach dem Lichteffekt direkt zu seiner Card
+  if (hasCard()) {
+    const cls = classFor(state.account.total);
+    return {
+      html: `<section class="screen screen--splash screen--welcome cls-${cls}" style="--rar:${CLASSES[cls].color}">
+        <div class="sweep" aria-hidden="true"></div>
+        <div class="splash-logo">${logo('xl')}</div>
+        <div class="splash-space"></div>
+        <p class="welcome-hi">Hey ${esc(firstName(state.user?.name) || 'du')} – deine Card wartet.</p>
+        <div class="splash-login">${button('Meine Card', 'data-go="card"')}</div>
+        <a class="link welcome-more" href="#/donate">Nochmal einzahlen</a>
+      </section>`,
+      mount() {
+        const t = setTimeout(() => { if (location.hash.replace(/^#\/?/, '') === '') go('card'); }, 2400);
+        return () => clearTimeout(t);
+      },
+    };
+  }
   return {
     html: `<section class="screen screen--splash">
       <div class="sweep" aria-hidden="true"></div>
@@ -160,6 +180,11 @@ function splash() {
     </section>`,
   };
 }
+
+// Schneller Weg zur eigenen Card (zum Posten), sobald man einmal eingezahlt hat
+const myCardButton = () => (hasCard()
+  ? `<button class="mycard-btn" type="button" data-go="card">${icons.share}<span>Meine Card</span></button>`
+  : '');
 
 // 1. Loot-Drop: der Diamant fällt in einer Lichtsäule herunter.
 function intro1() {
@@ -383,7 +408,7 @@ function login() {
         }
         state.user = { name, insta: cleanHandle(form.insta.value), country: form.country.value, region: form.region.value };
         store.set('user', state.user);
-        const next = state.after || 'donate';
+        const next = state.after || (hasCard() ? 'card' : 'donate');
         state.after = null;
         go(next);
       });
@@ -412,10 +437,16 @@ function donate() {
   const collected = collectedStages();
   const start = tierFor(acc.total + state.amount);
   return {
-    html: `<section class="screen screen--dark screen--donate" style="--rar:${start.css}">
+    html: `<section class="screen screen--dark screen--donate cls-${start.cls}" style="--rar:${start.css}">
+      <div class="donate-aura" aria-hidden="true"></div>
       <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
       ${backButton('back--dark')}
+      ${myCardButton()}
       <div class="vault">
+        <div class="vault-rays" aria-hidden="true"></div>
+        <div class="vault-ring" aria-hidden="true"></div>
+        <svg class="vault-runes" viewBox="0 0 200 200" aria-hidden="true"><defs><path id="vaultpath" d="M100 100m-84 0a84 84 0 1 1 168 0a84 84 0 1 1-168 0"/></defs>
+          <text><textPath href="#vaultpath">FAM€ ✦ THEN THE OTHERS ✦ FAM€ ✦ THEN THE OTHERS ✦ FAM€ ✦ THEN THE OTHERS ✦</textPath></text></svg>
         <div class="vault-glow" aria-hidden="true"></div>
         <div class="stage3d" data-diamond></div>
         <div class="vault-q" aria-hidden="true">?</div>
@@ -471,7 +502,7 @@ function donate() {
         gem: known(start) ? start : null, rim: start.css, mystery: !known(start), glow: 0.6,
       });
       const canvas = $('[data-fx]');
-      const fx = particles(canvas, { color: start.css, mode: 'embers', density: 0.3 + start.level * 0.3 });
+      const fx = particles(canvas, { color: start.css, mode: 'embers', density: 0.3 + start.cls * 0.15 });
       const input = $('[data-amount]');
       const arc = $('[data-arc]');
       const fill = $('[data-arcfill]');
@@ -480,7 +511,7 @@ function donate() {
       const accept = $('[data-accept]');
       const flash = $('[data-flash]');
       const nudge = $('[data-nudge]');
-      let level = start.level;
+      let cls = start.cls;
       let stage = start.stage;
       let amount = state.amount;
       let nudgeTarget = 0;
@@ -511,6 +542,7 @@ function donate() {
         arc.setAttribute('aria-valuenow', amount);
         arc.setAttribute('aria-valuetext', `${money(amount)}, danach ${tier.name}`);
         if (document.activeElement !== input) input.value = fmt(amount);
+        input.parentElement.classList.toggle('is-long', amount >= 1_000_000);
         const afterEl = $('[data-after]');
         if (afterEl) afterEl.textContent = money(after);
 
@@ -521,6 +553,8 @@ function donate() {
         el.classList.toggle('is-locked', locked);
         el.querySelectorAll('[data-cell]').forEach((c) => c.classList.toggle('is-target', +c.dataset.cell === tier.stage));
         el.style.setProperty('--rar', tier.css);
+        // Farbklasse: je höher, desto wertiger die Seite (Strahlen, Ring, Runen, Glanz)
+        if (tier.cls !== cls) el.classList.replace(`cls-${cls}`, `cls-${tier.cls}`);
         el.style.setProperty('--glow', (0.3 + posFromAmount(after) * 0.7).toFixed(3));
         dia.setGlow(posFromAmount(after));
 
@@ -545,12 +579,12 @@ function donate() {
           dia.setGem(locked ? null : tier);
           dia.setMystery(locked, tier.css);
           dia.setRim(tier.css);
-          if (tier.level !== level) {
-            // neue Seltenheitsklasse: Farbe, Funken und der Sound der Klasse
+          if (tier.cls !== cls) {
+            // neue Farbklasse: Farbe, Funken und der Sound der Klasse
             fx.setColor(tier.css);
-            fx.setDensity(0.3 + tier.level * 0.3);
-            if (sound) tierChanged(tier, tier.level > level);
-            level = tier.level;
+            fx.setDensity(0.3 + tier.cls * 0.15);
+            if (sound) tierChanged(tier, tier.cls > cls);
+            cls = tier.cls;
           } else if (sound) {
             stageTick(tier.stage, tier.stage > stage);
             dia.pulse();
@@ -949,7 +983,7 @@ function rankingPage(mode) {
     </li>`).join('')}</ol>`;
 
   return {
-    html: `<section class="screen screen--dark screen--ranking" style="--rar:${RARITIES[4].color}">
+    html: `<section class="screen screen--dark screen--ranking" style="--rar:${state.account.total ? CLASSES[classFor(state.account.total)].color : RARITIES[4].color}">
       <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
       ${backButton('back--dark')}
       <nav class="rank-tabs" aria-label="Ranking">
@@ -993,6 +1027,7 @@ function rankingPage(mode) {
         ${bars}
       </section>
       <div class="mebar">
+        ${myCardButton()}
         ${mine
           ? `<div><b>Platz ${fmt(mine.rank)}</b> in ${esc(region || country.name)}<small>${money(mine.amount)} · Stufe ${tierFor(mine.amount).stage}</small></div>`
           : `<div><b>${state.user ? 'Noch nicht dabei' : 'Du fehlst noch'}</b><small>Zahl ein und steig ins Ranking ein</small></div>`}

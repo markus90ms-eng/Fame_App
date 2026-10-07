@@ -866,6 +866,8 @@ button, input { font: inherit; color: inherit; }
   font-variant-numeric: tabular-nums;
 }
 .amount-cur { font-size: 26px; font-weight: 800; }
+.amount-field.is-long input { font-size: 25px; }
+.amount-field.is-long .amount-cur { font-size: 22px; }
 .amount-field:focus-within { box-shadow: 5px 5px 0 var(--pink), 0 0 0 4px rgba(255, 47, 214, 0.25); }
 .amount-hint { margin: -2px 0 0; font-size: 11.5px; color: #8b8a85; }
 .screen--donate .arc-track { stroke: rgba(255, 255, 255, 0.12); }
@@ -1696,3 +1698,144 @@ button, input { font: inherit; color: inherit; }
   animation: seal-turn 6s linear infinite;
 }
 @keyframes seal-turn { to { filter: hue-rotate(360deg); } }
+
+/* ---- Farbklassen: Je höher der Kontostand, desto wertiger die Seite ----------------------
+   --lux 0..1 steuert die Stärke. Ab Mint Lichtstrahlen, ab Saphir ein Tresor-Ring,
+   ab Amethyst ein Metallrahmen ums Betragsfeld, ab Rubellit ein Runenkreis, ab Rubin
+   Metall-Schrift, ab Feuer ein Glanz, der über Feld und Knopf läuft, ab 1 Mio. Regenbogen. */
+.cls-0 { --lux: 0; }
+.cls-1 { --lux: 0.15; }
+.cls-2 { --lux: 0.25; }
+.cls-3 { --lux: 0.35; }
+.cls-4 { --lux: 0.45; }
+.cls-5 { --lux: 0.55; }
+.cls-6 { --lux: 0.65; }
+.cls-7 { --lux: 0.75; }
+.cls-8 { --lux: 0.88; }
+.cls-9 { --lux: 1; }
+
+.screen--donate {
+  background:
+    radial-gradient(ellipse at 50% 18%, color-mix(in srgb, var(--rar) calc(22% + var(--lux) * 20%), #0f0f11) 0%, #0a0a0b calc(60% + var(--lux) * 15%));
+  transition: background 0.5s;
+}
+.donate-aura {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: var(--lux);
+  background:
+    radial-gradient(60% 30% at 50% 0%, color-mix(in srgb, var(--rar) 35%, transparent), transparent 70%),
+    radial-gradient(80% 40% at 50% 100%, color-mix(in srgb, var(--rar) 18%, transparent), transparent 70%);
+  transition: opacity 0.5s;
+}
+.vault-rays {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 420px;
+  height: 420px;
+  margin: -210px 0 0 -210px;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--rar) 40%, transparent) 0 4deg, transparent 4deg 15deg);
+  -webkit-mask-image: radial-gradient(circle, #000 10%, transparent 62%);
+  mask-image: radial-gradient(circle, #000 10%, transparent 62%);
+  opacity: calc(var(--lux) * 0.7);
+  animation: vault-spin calc(60s - var(--lux) * 36s) linear infinite;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+.vault-ring,
+.vault-runes {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 196px;
+  height: 196px;
+  margin: -98px 0 0 -98px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.vault-ring {
+  border-radius: 50%;
+  border: 1.5px dashed color-mix(in srgb, var(--rar) 70%, transparent);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--rar) 30%, transparent), inset 0 0 22px color-mix(in srgb, var(--rar) 20%, transparent);
+  animation: vault-spin 40s linear infinite reverse;
+}
+.vault-runes { width: 214px; height: 214px; margin: -107px 0 0 -107px; animation: vault-spin 50s linear infinite; }
+.vault-runes text { font: 700 9px "Source Code Pro", monospace; letter-spacing: 3px; fill: color-mix(in srgb, var(--rar) 80%, #fff); }
+@keyframes vault-spin { to { transform: rotate(360deg); } }
+:is(.cls-3, .cls-4, .cls-5, .cls-6, .cls-7, .cls-8, .cls-9) .vault-ring { opacity: 1; }
+:is(.cls-5, .cls-6, .cls-7, .cls-8, .cls-9) .vault-runes { opacity: 0.55; }
+:is(.cls-6, .cls-7, .cls-8, .cls-9) .vault-ring { border-style: double; border-width: 4px; }
+
+/* Betragsfeld und Knopf: ab Amethyst Metallrahmen statt flachem Versatz */
+:is(.cls-4, .cls-5, .cls-6, .cls-7, .cls-8, .cls-9) .amount-field {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(135deg, color-mix(in srgb, var(--rar) 60%, #000), #fff 30%, var(--rar) 50%, #fff 70%, color-mix(in srgb, var(--rar) 60%, #000)) border-box;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--rar) 40%, transparent), 0 8px 30px color-mix(in srgb, var(--rar) 45%, transparent);
+}
+:is(.cls-4, .cls-5, .cls-6, .cls-7, .cls-8, .cls-9) .btn:not(:disabled) {
+  box-shadow: 0 0 0 2px var(--rar), 0 10px 34px color-mix(in srgb, var(--rar) 55%, transparent);
+}
+/* ab Rubin: Stufen-Schrift in Metall-Verlauf */
+:is(.cls-6, .cls-7, .cls-8, .cls-9) .vault-name {
+  background: linear-gradient(100deg, color-mix(in srgb, var(--rar) 70%, #fff), #fff 40%, var(--rar) 60%, #fff 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+/* ab Feuer: ein Glanz läuft regelmäßig über Betragsfeld und Knopf */
+.amount-field,
+.screen--donate .btn { position: relative; overflow: hidden; }
+:is(.cls-7, .cls-8, .cls-9) :is(.amount-field, .btn:not(:disabled))::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 40%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: skewX(-20deg);
+  animation: lux-shine 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes lux-shine { 0%, 55% { left: -60%; } 100% { left: 130%; } }
+/* ab 1 Mio.: Regenbogen-Schimmer statt einer Farbe */
+.cls-9 .vault-rays { background: repeating-conic-gradient(from 0deg, #ffd6ec88 0 4deg, transparent 4deg 10deg, #9fd8ff88 10deg 14deg, transparent 14deg 20deg, #fff4c288 20deg 24deg, transparent 24deg 30deg); }
+.cls-9 .vault-ring { border-color: #fff; box-shadow: 0 0 24px #ffd6ec, inset 0 0 24px #9fd8ff; }
+.cls-9 .vault-name { background: linear-gradient(90deg, #ffb3e2, #9fd0ff, #fff3a8, #b6ffd9, #ffb3e2); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.cls-9 .amount-field { background: linear-gradient(#fff, #fff) padding-box, conic-gradient(from 0deg, #ffd6ec, #9fd8ff, #fff4c2, #b6fff0, #c6b6ff, #ffd6ec) border-box; }
+
+/* Schneller Weg zur eigenen Card */
+.mycard-btn {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  right: var(--gutter);
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--rar, var(--green));
+  border-radius: 99px;
+  background: rgba(10, 10, 11, 0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 0 16px color-mix(in srgb, var(--rar, var(--green)) 40%, transparent);
+}
+.mycard-btn .ico { width: 15px; height: 15px; }
+.screen--dark > .mycard-btn { position: absolute; }
+.mebar .mycard-btn { top: -48px; }
+
+/* Startseite für Wiederkehrer */
+.welcome-hi { margin: 0 var(--gutter) 14px; text-align: center; font-size: 16px; font-weight: 700; }
+.welcome-more { display: block; margin: 10px auto 0; text-align: center; }

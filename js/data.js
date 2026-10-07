@@ -1,6 +1,6 @@
 // Stammdaten, Formatierung und das (vorerst simulierte) Ranking.
 
-import { GEM_LIST, BAND_FLAVOR, bandFor } from './gems.js';
+import { GEM_LIST } from './gems.js';
 
 export const CURRENCY = '€';
 export const MIN_AMOUNT = 1;
@@ -9,7 +9,29 @@ export const MAX_AMOUNT = 1_000_000;
 // Ab diesem Betrag gibt es den echten Diamant Pin.
 export const PIN_FROM = 1_000;
 
-// Seltenheitsklassen: färben Seite, Glow, Card-Rahmen und bestimmen den Sound.
+// Farbklassen nach Kontostand: färben Einzahlseite, Card-Seite und Leuchten. Je höher die Klasse,
+// desto wertiger das Design (Strahlen, Rahmen, Glanz). Klasse 10 ab 1 Mio. € schimmert in Regenbogenfarben.
+export const CLASSES = [
+  { id: 'kiesel',    name: 'Kiesel',       from: 0,         color: '#a3a3ab' },
+  { id: 'mint',      name: 'Mint',         from: 100,       color: '#5fe3c0' },
+  { id: 'aquamarin', name: 'Aquamarin',    from: 500,       color: '#38c8f8' },
+  { id: 'saphir',    name: 'Saphir',       from: 1_000,     color: '#3b6bff' },
+  { id: 'amethyst',  name: 'Amethyst',     from: 5_000,     color: '#a855f7' },
+  { id: 'rubellit',  name: 'Rubellit',     from: 10_000,    color: '#ec4899' },
+  { id: 'rubin',     name: 'Rubin',        from: 50_000,    color: '#ef3a3a' },
+  { id: 'feuer',     name: 'Feuer',        from: 100_000,   color: '#ff8a1f' },
+  { id: 'gold',      name: 'Gold',         from: 500_000,   color: '#ffd23f' },
+  { id: 'holo',      name: 'Diamant-Holo', from: 1_000_000, color: '#e9e4ff' },
+];
+export function classFor(amount) {
+  let k = 0;
+  while (k + 1 < CLASSES.length && amount >= CLASSES[k + 1].from) k++;
+  return k;
+}
+// Effektstärke 0..4 (Sound, Funken, Spannung beim Aufdecken) aus der Farbklasse 0..9
+export const fxLevel = (cls) => Math.round((cls * 4) / (CLASSES.length - 1));
+
+// Alte Seltenheitsfarben: nur noch für die Intro-Seiten und das Ranking-Podest.
 export const RARITIES = [
   { id: 'normal',    label: 'Normal',   item: 'Normaler Gegenstand',    color: '#b4b4b4' },
   { id: 'magic',     label: 'Magisch',  item: 'Magischer Gegenstand',   color: '#5b8cff' },
@@ -48,6 +70,13 @@ const mins = baseCurve(qLo).map((v, i) => (i < 2 ? v : nice(v)));
 for (let i = 0; i < LEGENDS; i++) {
   mins.push(twoDigits(LEGEND_FROM * (LEGEND_TO / LEGEND_FROM) ** (i / (LEGENDS - 1))));
 }
+// An jeder Klassengrenze (100 €, 500 €, 1.000 € …) beginnt genau ein Stein: Der nächstgelegene
+// Stein wird auf die Grenze gesetzt, damit die Farbe exakt dort wechselt.
+for (const { from } of CLASSES.slice(1)) {
+  let best = 2;
+  for (let i = 2; i < mins.length; i++) if (Math.abs(mins[i] - from) < Math.abs(mins[best] - from)) best = i;
+  mins[best] = from;
+}
 for (let i = 2; i < mins.length; i++) mins[i] = Math.max(mins[i], mins[i - 1] + STEP);
 
 // Akzentfarbe der Card aus der Steinfarbe: zu dunkle Farben aufhellen, Weiß wird Platin.
@@ -75,22 +104,22 @@ function cardLook(hex) {
   return { tone, metal };
 }
 
-// Jede Stufe: stage = 1..99 (welcher Stein), level = Seltenheitsklasse 0..4 (Sound, Effekte).
+// Jede Stufe: stage = 1..99 (welcher Stein), cls = Farbklasse 0..9, level = Effektstärke 0..4.
 export const TIERS = GEM_LIST.map((g, i) => {
   const stage = i + 1;
-  const level = bandFor(stage);
+  const cls = classFor(mins[i]);
   const look = cardLook(g.c);
   return {
     ...g,
     id: `gem-${stage}`,
     stage,
-    level,
+    cls,
+    level: fxLevel(cls),
     min: mins[i],
-    rarity: RARITIES[level],
-    css: RARITIES[level].color,
+    rarity: CLASSES[cls],
+    css: CLASSES[cls].color,
     tone: g.legend ? (g.c === '#ffffff' ? '#e8eef6' : g.c) : look.tone,
     metal: g.legend ? 'legend' : look.metal,
-    flavor: g.flavor || BAND_FLAVOR[level],
   };
 });
 export const GEM_COUNT = TIERS.length;
