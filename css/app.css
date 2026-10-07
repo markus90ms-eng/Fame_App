@@ -1875,11 +1875,6 @@ button, input { font: inherit; color: inherit; }
 }
 .screen--welcome .sweep::after { background: radial-gradient(ellipse at 50% 30%, color-mix(in srgb, var(--rar) 30%, transparent), transparent 60%); }
 .screen--welcome .splash-logo { padding-top: max(48px, calc(env(safe-area-inset-top) + 28px)); }
-.screen--welcome .logo-word { animation-name: logo-light-cls; }
-@keyframes logo-light-cls {
-  from { text-shadow: 3px 5px 0 transparent; }
-  to { text-shadow: 3px 5px 0 var(--rar), 0 0 26px color-mix(in srgb, var(--rar) 50%, transparent); }
-}
 .welcome-vault { height: 250px; margin-top: 10px; }
 .welcome-vault .stage3d { inset: 0 8%; }
 .screen--welcome .vault-rays { background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--rar) 55%, transparent) 0 4deg, transparent 4deg 15deg); }
