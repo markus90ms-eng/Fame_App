@@ -380,6 +380,22 @@ function darker(hex, k) {
   return new THREE.Color(hex).multiplyScalar(k);
 }
 
+// Foto-Look je nach Farbe: fast farblose Steine (Bergkristall, Weißtopas …) klar wie ein Diamant,
+// zarte Farben mit wenig Körperfarbe (sonst wirken sie milchig), kräftige Farben satt und tief.
+function photoLook(hex, lum) {
+  const col = new THREE.Color(hex);
+  const max = Math.max(col.r, col.g, col.b), min = Math.min(col.r, col.g, col.b);
+  const sat = max ? (max - min) / max : 0;
+  if (sat < 0.12) return { body: 0.02, holo: 0, contrast: 0.3, exposure: 1.6 };
+  const k = Math.min(1, (sat - 0.1) / 0.55);
+  return {
+    body: 0.24 * Math.max(0.15, k),
+    holo: 0,
+    contrast: Math.min(1, Math.max(0.5, (0.85 - lum) * 3)),
+    exposure: 1.2 + 0.35 * k + Math.max(0, 0.5 - lum) * 1.4,
+  };
+}
+
 function buildMaterials(spec, geo, envCube, style) {
   const rnd = seeded(spec.name);
   const disposables = [];
@@ -400,7 +416,7 @@ function buildMaterials(spec, geo, envCube, style) {
       glow: spec.glow ? 0.18 : 0, vertexColors: !!spec.bicolor,
       ...(style === 'photo'
         // Foto-Look: satte Farbe, harte weiße Lichtreflexe, kein Holo-Film
-        ? rough ? { body: 0.07, holo: 0, contrast: 0.5, exposure: 1.35 } : { body: spec.c === '#ffffff' ? 0.02 : 0.24, holo: 0, contrast: spec.c === '#ffffff' ? 0.3 : Math.min(1, Math.max(0.5, (0.85 - lum) * 3)), exposure: spec.c === '#ffffff' ? 1.6 : 2.1 + Math.max(0, 0.5 - lum) * 1.6 }
+        ? rough ? { body: 0.07, holo: 0, contrast: 0.5, exposure: 1.35 } : photoLook(spec.c, lum)
         : { body: spec.c === '#ffffff' ? 0.06 : 0.16, holo: spec.c === '#ffffff' ? 0.75 : 0.4, exposure: 1.05 + Math.max(0, 0.5 - lum) * 1.2 }),
     });
     return { outer, inner: null, disposables };

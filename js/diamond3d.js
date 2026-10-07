@@ -106,12 +106,16 @@ export function photoScene() {
   panel(1.2, 5, [-5.5, 1.5, 1.5], '#ffffff', 5);  // Striplights links und rechts
   panel(1.2, 5, [5.5, 1.5, 1.5], '#ffffff', 5);
   panel(3, 1, [0, 1.2, 6], '#ffffff', 2.5);       // Aufheller von vorn
-  // Tisch unter dem Stein spiegelt sich als dunkle, warme Fläche
-  panel(14, 14, [0, -6.5, 0], '#2a2018', 1.6);
+  // beleuchteter Tisch unter dem Stein: sein Licht fällt durch die Tafel zurück (gläserne Steine wirken klar)
+  panel(14, 14, [0, -6.5, 0], '#cfc2ae', 1.1);
+  // Lichtstreifen auf dem Tisch hinter dem Stein: geben der Tafel Struktur statt einer flachen Fläche
+  for (let i = 0; i < 6; i++) panel(0.9, 4.5, [-5 + i * 2, -1.8, -6.5], '#d8c6a8', 0.6 + (i % 3) * 0.35);
+  panel(4.5, 12, [-6.5, -1.8, 0], '#a99f92', 0.8); // seitlich etwas Raumlicht
+  panel(4.5, 12, [6.5, -1.8, 0], '#a99f92', 0.8);
   panel(6, 1.6, [0, -2.5, 5.5], '#ffffff', 3);       // Lichtkante vorne unten: Licht fällt durch den Stein zurück
   [0xff3b3b, 0xffa02e, 0xfff23a, 0x46ff6a, 0x35d4ff, 0x6a5bff].forEach((c, i) => {
     const a = (i / 6) * Math.PI * 2 + 0.4;
-    panel(0.7, 0.7, [Math.cos(a) * 5.6, 2.8, Math.sin(a) * 5.6], c, 6);
+    panel(0.45, 0.45, [Math.cos(a) * 5.6, 2.8, Math.sin(a) * 5.6], c, 5);
   });
   return s;
 }
@@ -394,6 +398,8 @@ export function createDiamond(container, opts = {}) {
     holder.add(gem.group);
     if (mysteryOn) gem.setMystery(true, mysteryColor);
     if (photo) {
+      // Lange Formen (Tropfen, Marquise) von schräg oben zeigen, damit ihre Form erkennbar ist
+      if (opts.tilt == null) holder.rotation.x = ['pear', 'marquise'].includes((spec || DIAMOND).cut) ? 1.05 : tilt;
       if (reflection) { mHolder.remove(reflection.group); reflection.dispose(); }
       reflection = gemObject(spec || DIAMOND, { envCube: envCube?.texture, style });
       mHolder.add(reflection.group);

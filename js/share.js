@@ -144,8 +144,12 @@ export function drawCard(g, { x, y, w, h, tier, serial, insta, gem }) {
   g.textAlign = 'left';
   g.textBaseline = 'alphabetic';
   g.font = font(800, 19 * s);
+  g.save();
+  g.shadowColor = 'rgba(0,0,0,0.85)';
+  g.shadowBlur = 8 * s;
   g.fillStyle = '#3dfa74';
-  g.fillText(LOGO_TEXT, ix + pad + 2 * s, iy + pad + 18 * s);
+  g.fillText(LOGO_TEXT, ix + pad + 1 * s, iy + pad + 17.5 * s);
+  g.restore();
   g.fillStyle = '#f8f8f6';
   g.fillText(LOGO_TEXT, ix + pad, iy + pad + 16 * s);
   const lw = g.measureText(LOGO_TEXT).width;

@@ -18,25 +18,37 @@ export const RARITIES = [
   { id: 'legendary', label: 'Legendär', item: 'Legendärer Gegenstand',  color: '#ff8a1f' },
 ];
 
-// Edelstein-Stufen: Stufe 1 ab 1 €, Stufe 2 ab 5 €, dann gleichmäßig (logarithmisch) bis zum
-// Diamanten bei 250.000 €. Danach die Legenden von 300.000 € bis 1 Mio. €.
-// Grenzen auf zwei Stellen gerundet, damit sie sich gut lesen.
+// Edelstein-Stufen: Stufe 1 ab 1 €, danach kommt am Anfang alle 5 € ein neuer Stein
+// (5, 10, 15 …). Sobald 5 € zu wenig werden, wachsen die Schritte gleichmäßig (Faktor q)
+// bis zum Diamanten bei 250.000 €. Danach die Legenden von 300.000 € bis 1 Mio. €.
+// Grenzen gut lesbar gerundet: unter 100 € auf 5 €, unter 1.000 € auf 10 €, sonst zwei Stellen.
 export const TOP_AMOUNT = 250_000;
 const LEGEND_FROM = 300_000;
 const LEGEND_TO = 1_000_000;
+const STEP = 5;
 function twoDigits(v) {
   const p = 10 ** Math.max(0, Math.floor(Math.log10(v)) - 1);
   return Math.round(v / p) * p;
 }
+const nice = (v) => (v < 100 ? Math.round(v / 5) * 5 : v < 1000 ? Math.round(v / 10) * 10 : twoDigits(v));
 const BASE = GEM_LIST.filter((g) => !g.legend).length;
 const LEGENDS = GEM_LIST.length - BASE;
-const mins = [1];
-for (let i = 1; i < GEM_LIST.length; i++) {
-  const v = i < BASE
-    ? twoDigits(5 * (TOP_AMOUNT / 5) ** ((i - 1) / (BASE - 2)))
-    : twoDigits(LEGEND_FROM * (LEGEND_TO / LEGEND_FROM) ** ((i - BASE) / (LEGENDS - 1)));
-  mins.push(Math.max(v, mins[i - 1] + 1));
+const baseCurve = (q) => {
+  const a = [1, STEP];
+  for (let i = 2; i < BASE; i++) a.push(Math.max(a[i - 1] + STEP, a[i - 1] * q));
+  return a;
+};
+// Wachstumsfaktor so wählen, dass der Diamant (letzter Basisstein) genau bei TOP_AMOUNT liegt
+let qLo = 1, qHi = 2;
+for (let k = 0; k < 50; k++) {
+  const q = (qLo + qHi) / 2;
+  if (baseCurve(q)[BASE - 1] > TOP_AMOUNT) qHi = q; else qLo = q;
 }
+const mins = baseCurve(qLo).map((v, i) => (i < 2 ? v : nice(v)));
+for (let i = 0; i < LEGENDS; i++) {
+  mins.push(twoDigits(LEGEND_FROM * (LEGEND_TO / LEGEND_FROM) ** (i / (LEGENDS - 1))));
+}
+for (let i = 2; i < mins.length; i++) mins[i] = Math.max(mins[i], mins[i - 1] + STEP);
 
 // Akzentfarbe der Card aus der Steinfarbe: zu dunkle Farben aufhellen, Weiß wird Platin.
 // Dazu das Metall des Rahmens passend zur Farbe.
