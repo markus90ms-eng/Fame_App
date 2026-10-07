@@ -349,7 +349,8 @@ function floorTexture(color) {
 // ---- Fertige Bühne mit Renderer, Drehung per Finger und Glow ------------------------------
 
 export function createDiamond(container, opts = {}) {
-  const { level = 2, glow = 0.4, autoRotate = true, interactive = true, rim = '#ffffff', mystery = false, photo = false } = opts;
+  const { level = 2, glow = 0.4, autoRotate = true, interactive = true, rim = '#ffffff', mystery = false, photo = false, bare = false } = opts;
+  // opts.bare (mit photo): nur der Stein im Foto-Licht, ohne Tisch, Hintergrund und Spiegelbild (z. B. fürs Profilbild-Abzeichen)
   const tilt = opts.tilt ?? (photo ? 0.62 : 0.2);
   // opts.gem: ein Edelstein aus data.js (TIERS). Ohne Angabe zeigt die Bühne den Diamanten.
   // opts.photo: Stein liegt wie auf einem Produktfoto auf einem dunklen Tisch.
@@ -394,7 +395,7 @@ export function createDiamond(container, opts = {}) {
   const stageTex = [];
   let floor = null, mirror = null, mHolder = null, reflection = null;
   const setStage = (color) => {
-    if (!photo) return;
+    if (!photo || bare) return;
     stageTex.forEach((t) => t.dispose());
     stageTex.length = 0;
     const bgTex = backdropTexture(color), flTex = floorTexture(color);
@@ -409,7 +410,7 @@ export function createDiamond(container, opts = {}) {
     floor.material.map = flTex;
     floor.material.needsUpdate = true;
   };
-  if (photo) {
+  if (photo && !bare) {
     scene.fog = new THREE.Fog(FOG, 7, 16);
     mirror = new THREE.Group();
     mirror.scale.y = -1;
@@ -435,10 +436,12 @@ export function createDiamond(container, opts = {}) {
     if (photo) {
       // Lange Formen (Tropfen, Marquise) von schräg oben zeigen, damit ihre Form erkennbar ist
       if (opts.tilt == null) holder.rotation.x = ['pear', 'marquise'].includes((spec || DIAMOND).cut) ? 1.05 : tilt;
-      if (reflection) { mHolder.remove(reflection.group); reflection.dispose(); }
-      reflection = gemObject(spec || DIAMOND, { envCube: envCube?.texture, style });
-      mHolder.add(reflection.group);
-      if (mysteryOn) reflection.setMystery(true, mysteryColor);
+      if (mHolder) {
+        if (reflection) { mHolder.remove(reflection.group); reflection.dispose(); }
+        reflection = gemObject(spec || DIAMOND, { envCube: envCube?.texture, style });
+        mHolder.add(reflection.group);
+        if (mysteryOn) reflection.setMystery(true, mysteryColor);
+      }
       setStage(mysteryOn ? mysteryColor : (spec || DIAMOND).c);
       // Breite des Steins (auch beim Wiegen) für den Bildausschnitt
       gem.mesh.geometry.computeBoundingBox();
@@ -496,6 +499,7 @@ export function createDiamond(container, opts = {}) {
     holder.updateMatrixWorld(true);
     box.setFromObject(gem.mesh, true);
     holder.position.y += FLOOR_Y - box.min.y;
+    if (!mHolder) return;
     mHolder.position.copy(holder.position);
     mHolder.rotation.copy(holder.rotation);
     mHolder.scale.copy(holder.scale);

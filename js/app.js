@@ -1007,6 +1007,35 @@ function card() {
       const avSave = el.querySelector('[data-avsave]');
       const avCls = classFor(acc.total);
       let avCanvas = null;
+      let avGem = null;
+      // Eigener Stein fürs Abzeichen: einmal im Foto-Licht ohne Bühne rendern und freistellen
+      const gemCutout = () => {
+        if (avGem) return avGem;
+        const box = document.createElement('div');
+        box.style.cssText = 'position:fixed;left:-9999px;top:0;width:300px;height:300px;';
+        document.body.appendChild(box);
+        const d = createDiamond(box, { gem: tier, photo: true, bare: true, interactive: false, autoRotate: false, glow: 0 });
+        const shot = d.snapshot(640, 640);
+        d.dispose();
+        box.remove();
+        if (!shot) return null;
+        const px = shot.getContext('2d').getImageData(0, 0, shot.width, shot.height).data;
+        let x0 = shot.width, y0 = shot.height, x1 = 0, y1 = 0;
+        for (let y = 0; y < shot.height; y++) {
+          for (let x = 0; x < shot.width; x++) {
+            if (px[(y * shot.width + x) * 4 + 3] > 10) {
+              if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+            }
+          }
+        }
+        if (x1 <= x0) return null;
+        const out = document.createElement('canvas');
+        out.width = x1 - x0 + 1;
+        out.height = y1 - y0 + 1;
+        out.getContext('2d').drawImage(shot, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
+        avGem = out;
+        return out;
+      };
 
       // Erinnerung an den neuen Rahmen: bei einem Klassenaufstieg, oder solange der zuletzt
       // erstellte Rahmen aus einer niedrigeren Klasse stammt. Verschwindet, sobald der neue gespeichert ist.
@@ -1020,7 +1049,7 @@ function card() {
       };
       if (!hidden && needsFrame()) showFrameNudge();
       const showAvatar = (photo) => {
-        avCanvas = renderAvatar(photo, avCls);
+        avCanvas = renderAvatar(photo, avCls, gemCutout());
         avImg.src = avCanvas.toDataURL('image/jpeg', 0.9);
         avSave.disabled = !photo;
       };

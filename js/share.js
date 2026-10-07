@@ -488,7 +488,8 @@ function shade(hex, k) {
 }
 
 // cls: Farbklasse (0..9), photo: geladenes Bild (beliebiges Format, wird mittig quadratisch zugeschnitten)
-export function renderAvatar(photo, cls) {
+// gemImg (optional): freigestelltes Bild des eigenen Steins fürs Abzeichen
+export function renderAvatar(photo, cls, gemImg = null) {
   const S = AVATAR, u = S / 200; // Maßstab: Entwurf war 200 × 200
   const holo = cls === CLASSES.length - 1;
   const color = CLASSES[cls].color;
@@ -531,12 +532,31 @@ export function renderAvatar(photo, cls) {
   g.beginPath(); g.arc(S / 2, S / 2, 93 * u, Math.PI * 1.08, Math.PI * 1.38); g.stroke();
 
   // Abzeichen mit dem Stein unten in der Mitte
-  const bx = S / 2, by = 172 * u, br = 22 * u;
+  const bx = S / 2, by = 166 * u, br = 28 * u;
   g.fillStyle = '#0b0b0d';
   g.beginPath(); g.arc(bx, by, br, 0, Math.PI * 2); g.fill();
   g.lineWidth = 2.2 * u;
   g.strokeStyle = metal(bx - br, by - br, bx + br, by + br);
   g.beginPath(); g.arc(bx, by, br - 1.5 * u, 0, Math.PI * 2); g.stroke();
+  if (gemImg) {
+    // der eigene Stein, freigestellt, mittig im Abzeichen
+    const box = (br - 4 * u) * 2 * 0.94;
+    const k = box / Math.max(gemImg.width, gemImg.height);
+    const w = gemImg.width * k, h = gemImg.height * k;
+    g.save();
+    g.beginPath();
+    g.arc(bx, by, br - 3.5 * u, 0, Math.PI * 2);
+    g.clip();
+    const glow = g.createRadialGradient(bx, by, 0, bx, by, br);
+    glow.addColorStop(0, holo ? 'rgba(255,255,255,0.35)' : hexA(color, 0.45));
+    glow.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = glow;
+    g.fillRect(bx - br, by - br, br * 2, br * 2);
+    g.drawImage(gemImg, bx - w / 2, by - h / 2, w, h);
+    g.restore();
+    return cv;
+  }
+
   // Stein: ganz in der Klassenfarbe gefüllt, darüber feine helle Facettenlinien
   const gw = 28 * u, gk = gw / 48, gx = bx - gw / 2, gy = by - gw * 0.46;
   const trace = (poly) => {
