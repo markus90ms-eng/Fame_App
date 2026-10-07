@@ -30,6 +30,9 @@ const store = {
   set(key, value) {
     try { localStorage.setItem('fame.' + key, JSON.stringify(value)); } catch { /* privat/blockiert */ }
   },
+  remove(key) {
+    try { localStorage.removeItem('fame.' + key); } catch { /* privat/blockiert */ }
+  },
 };
 
 // Konto: Summe aller Einzahlungen. Jede Einzahlung stellt eine neue Fame-Card mit Seriennummer aus.
@@ -145,6 +148,22 @@ function meEntry() {
 
 // ---- Screens ----------------------------------------------------------------
 
+// Testphase: alles auf diesem Gerät löschen und wieder bei 0 € anfangen
+const hasData = () => !!(state.user || state.account.total || state.account.cards?.length);
+const resetLink = () => (hasData() ? '<button class="link welcome-reset" type="button" data-reset>Alles zurücksetzen</button>' : '');
+function bindReset(el) {
+  el.querySelector('[data-reset]')?.addEventListener('click', () => {
+    if (!confirm('Alles zurücksetzen? Konto, Cards und Login auf diesem Gerät werden gelöscht.')) return;
+    ['user', 'account', 'amount', 'donation'].forEach((k) => store.remove(k));
+    state.user = null;
+    state.account = { total: 0, deposits: [], cards: [] };
+    state.amount = 100;
+    state.accepted = false;
+    toast('Alles zurückgesetzt – du startest wieder bei 0 €.');
+    render();
+  });
+}
+
 // Eingeloggt und schon eine Card: dann gibt es überall den schnellen Weg zur eigenen Card
 const hasCard = () => !!state.user && !!state.account.cards?.length;
 
@@ -161,8 +180,10 @@ function splash() {
         <div class="splash-login">${button('Meine Card', 'data-go="card"')}</div>
         <a class="link welcome-more" href="#/donate">Nochmal einzahlen</a>
         <button class="link welcome-logout" type="button" data-logout>Abmelden</button>
+        ${resetLink()}
       </section>`,
       mount(el) {
+        bindReset(el);
         el.querySelector('[data-logout]').addEventListener('click', () => {
           state.user = null;
           store.set('user', null);
@@ -183,7 +204,9 @@ function splash() {
       </a>
       <div class="splash-space splash-space--mid"></div>
       <div class="splash-login">${button('Login', 'data-go="login"')}</div>
+      ${resetLink()}
     </section>`,
+    mount(el) { bindReset(el); },
   };
 }
 
