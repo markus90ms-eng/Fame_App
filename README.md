@@ -84,6 +84,9 @@ Es gibt 99 Stufen, jede ist ein Edelstein: von **Stufe 1 Malachit** (ab 1 €) �
 - **Fame-Card im Design des Steins:**
   - Rahmen aus Metall passend zur Steinfarbe: Gold für warme Töne, Roségold für Rosa und Rot, Platin für kühle und farblose Steine. Die Legenden haben einen umlaufenden Holo-Schimmer.
   - Oben randlos das Foto des Steins (live 3D, wiegt sich leicht im Licht), es läuft weich ins Schwarz aus. Logo und Seriennummer liegen darüber.
+  - Hintergrund je Farbklasse: Samtglut + Prisma-Facetten (`js/cardfx.js`). Die Card glüht von unten in der Klassenfarbe, darüber liegen schattierte Facetten wie echte Schliffflächen. Je höher die Klasse, desto feiner und kontrastreicher; ab Rubellit brechen einzelne Facetten das Licht in Regenbogenfarben, Holo ganz prismatisch.
+  - Holo-Effekt: Ein Regenbogen und ein Lichtband laufen über die Facetten und folgen der Neigung der Card (Lagesensor am Handy, Maus am Computer, sonst langsame Eigenbewegung). Im Story-Bild ist der Schimmer eingefroren.
+  - Hinter Name, Spruch und Fuß liegt ein weicher Schatten, damit die Schrift in jeder Klasse ruhig bleibt.
   - Unter dem Stein steht nur der Name in Serifenschrift (Cormorant Garamond) mit Metall-Verlauf, dazu Zierlinie, Spruch und ein Echtheitssiegel. Keine Stufen-Zeile.
 - Oben rechts steht eine Seriennummer (`FM-XXXX-XXXX-P` mit Prüfzeichen) als Nachweis, dass die Card aus der App stammt.
 
@@ -129,6 +132,7 @@ Fame_App/
   js/diamond3d.js    Realistischer 3D-Diamant (three.js, liegt in vendor/)
   js/fx.js           Loot-Sounds und Vibration
   js/particles.js    Funken und Staub
+  js/cardfx.js       Card-Hintergrund je Farbklasse: Samtglut, Prisma-Facetten, Holo-Maske
   js/share.js        Story-Bild, Card-Sticker, Teilen zu Instagram/TikTok
   native/            Capacitor-Plugin für Instagram Stories und TikTok Share Kit (iOS/Android)
 ```

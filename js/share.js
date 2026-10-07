@@ -8,6 +8,7 @@
 
 import { LOGO_TEXT, APP_NAME, DIA } from './ui.js';
 import { GEM_COUNT } from './data.js';
+import { facetImages, holoStrength } from './cardfx.js';
 
 // Wohin der Link in der Story führt (Echtheits-Seite der Card). Vor dem Livegang anpassen.
 export const SHARE_BASE = 'https://fame.app/card/';
@@ -93,7 +94,7 @@ function drawDiamondGlyph(g, x, y, s, line, fill) {
 
 // ---- Die Card selbst (gleicher Look wie in der App) --------------------------------------
 
-export function drawCard(g, { x, y, w, h, tier, serial, insta, gem }) {
+export function drawCard(g, { x, y, w, h, tier, serial, insta, gem, facets }) {
   const c = tier.tone || tier.rarity.color;
   const metal = tier.metal || 'platinum';
   const line = METAL_LINE[metal];
@@ -122,20 +123,50 @@ export function drawCard(g, { x, y, w, h, tier, serial, insta, gem }) {
   roundRect(g, ix, iy, iw, ih, r - b);
   g.fill();
 
-  // Foto des Steins randlos oben, läuft weich ins Schwarz aus
+  // Samtglut + Prisma-Facetten (wie in der App, der Holo-Schimmer ist hier eingefroren)
+  g.save();
+  roundRect(g, ix, iy, iw, ih, r - b);
+  g.clip();
+  if (facets?.art) g.drawImage(facets.art, ix, iy, iw, ih);
+  if (facets?.mask) {
+    const hv = document.createElement('canvas');
+    hv.width = Math.round(iw);
+    hv.height = Math.round(ih);
+    const hg = hv.getContext('2d');
+    hg.drawImage(facets.mask, 0, 0, hv.width, hv.height);
+    hg.globalCompositeOperation = 'source-in';
+    const rb = hg.createLinearGradient(0, hv.height * 0.35, hv.width, hv.height);
+    ['#ff6b6b', '#ffb347', '#fff275', '#7dff9a', '#6ad8ff', '#8f8bff', '#e78bff'].forEach((col, i, a) => rb.addColorStop(i / (a.length - 1), col));
+    hg.fillStyle = rb;
+    hg.fillRect(0, 0, hv.width, hv.height);
+    g.globalCompositeOperation = 'screen';
+    g.globalAlpha = holoStrength(tier.cls ?? 0);
+    g.drawImage(hv, ix, iy, iw, ih);
+    g.globalAlpha = 1;
+    g.globalCompositeOperation = 'source-over';
+  }
+  g.restore();
+
+  // Foto des Steins randlos oben, läuft weich in den Hintergrund aus
   const photoH = 250 * s;
   if (gem) {
     const k = Math.max(iw / gem.width, photoH / gem.height);
     const gw = gem.width * k, gh = gem.height * k;
+    const pv = document.createElement('canvas');
+    pv.width = Math.round(iw);
+    pv.height = Math.round(photoH);
+    const pg = pv.getContext('2d');
+    pg.drawImage(gem, (iw - gw) / 2, (photoH - gh) / 2, gw, gh);
+    pg.globalCompositeOperation = 'destination-in';
+    const fade = pg.createLinearGradient(0, photoH * 0.62, 0, photoH);
+    fade.addColorStop(0, 'rgba(0,0,0,1)');
+    fade.addColorStop(1, 'rgba(0,0,0,0)');
+    pg.fillStyle = fade;
+    pg.fillRect(0, 0, pv.width, pv.height);
     g.save();
     roundRect(g, ix, iy, iw, ih, r - b);
     g.clip();
-    g.drawImage(gem, cx - gw / 2, iy + (photoH - gh) / 2, gw, gh);
-    const fade = g.createLinearGradient(0, iy + photoH * 0.62, 0, iy + photoH);
-    fade.addColorStop(0, 'rgba(11,10,13,0)');
-    fade.addColorStop(1, 'rgba(11,10,13,1)');
-    g.fillStyle = fade;
-    g.fillRect(ix, iy + photoH * 0.62, iw, photoH * 0.38 + 1);
+    g.drawImage(pv, ix, iy, iw, photoH);
     g.restore();
   }
 
@@ -164,6 +195,19 @@ export function drawCard(g, { x, y, w, h, tier, serial, insta, gem }) {
   g.fillStyle = 'rgba(255,255,255,0.8)';
   g.fillText(serialText, ix + iw - pad - 2 * s, iy + pad + 14.5 * s);
   const gemY = iy + 42 * s, gemH = 190 * s;
+
+  // weicher Schatten hinter Name und Spruch, damit die Schrift ruhig bleibt
+  const scrimY = gemY + gemH + 40 * s;
+  g.save();
+  g.translate(cx, scrimY);
+  g.scale(1, 0.42);
+  const scrim = g.createRadialGradient(0, 0, 0, 0, 0, iw * 0.62);
+  scrim.addColorStop(0, 'rgba(11,10,13,0.9)');
+  scrim.addColorStop(0.62, 'rgba(11,10,13,0.6)');
+  scrim.addColorStop(1, 'rgba(11,10,13,0)');
+  g.fillStyle = scrim;
+  g.fillRect(-iw, -iw, iw * 2, iw * 2);
+  g.restore();
 
   // Schild: Name in Serifenschrift mit Metall-Verlauf, Zierlinie, Spruch
   let ty = gemY + gemH + 34 * s;
@@ -250,6 +294,7 @@ async function fontsReady() {
 
 export async function renderStory(data) {
   await fontsReady();
+  data = { ...data, facets: await facetImages(data.tier.cls ?? 0) };
   const { tier } = data;
   const c = tier.tone || tier.rarity.color;
   const cv = document.createElement('canvas');
@@ -334,6 +379,7 @@ export async function renderStory(data) {
 // Nur die Card mit transparentem Rand – als Sticker für Instagram (natives Sharing to Stories).
 export async function renderSticker(data) {
   await fontsReady();
+  data = { ...data, facets: await facetImages(data.tier.cls ?? 0) };
   const w = 900, pad = 90;
   const cv = document.createElement('canvas');
   cv.width = w + pad * 2;
