@@ -93,7 +93,35 @@ export function holoScene() {
 // Ergibt satte Farben mit harten weißen Lichtkanten, wie auf Edelstein-Fotos.
 export function photoScene() {
   const s = new THREE.Scene();
-  s.add(new THREE.Mesh(new THREE.BoxGeometry(14, 14, 14), new THREE.MeshBasicMaterial({ color: 0x111114, side: THREE.BackSide })));
+  // Raum: Wände mit weichen Lichtstreifen unterschiedlicher Helligkeit, oben dunkel, unten warm.
+  // So sieht man durch die Tafel immer ein Muster aus hellen und dunklen Feldern (Kaleidoskop)
+  // statt einer flachen Fläche.
+  const wall = document.createElement('canvas');
+  wall.width = 512;
+  wall.height = 256;
+  const g = wall.getContext('2d');
+  const grd = g.createLinearGradient(0, 0, 0, 256);
+  grd.addColorStop(0, '#0b0b0e');
+  grd.addColorStop(0.55, '#1c1a1a');
+  grd.addColorStop(1, '#3a332c');
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 512, 256);
+  let seed = 11;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  g.filter = 'blur(3px)';
+  for (let i = 0; i < 22; i++) {
+    const x = rnd() * 512, w = 6 + rnd() * 26, v = Math.round(60 + rnd() * 170);
+    g.fillStyle = `rgb(${v},${Math.round(v * 0.96)},${Math.round(v * 0.9)})`;
+    g.fillRect(x, 20 + rnd() * 60, w, 90 + rnd() * 140);
+  }
+  for (let i = 0; i < 6; i++) {
+    const v = Math.round(40 + rnd() * 90);
+    g.fillStyle = `rgb(${v},${v},${v})`;
+    g.fillRect(0, 150 + rnd() * 90, 512, 3 + rnd() * 6);
+  }
+  const wallTex = new THREE.CanvasTexture(wall);
+  wallTex.colorSpace = THREE.SRGBColorSpace;
+  s.add(new THREE.Mesh(new THREE.BoxGeometry(14, 14, 14), new THREE.MeshBasicMaterial({ map: wallTex, side: THREE.BackSide })));
   const panel = (w, h, p, color, k) => {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h),
       new THREE.MeshBasicMaterial({ color: new THREE.Color(color).multiplyScalar(k), side: THREE.DoubleSide }));
@@ -101,7 +129,8 @@ export function photoScene() {
     m.lookAt(0, 0, 0);
     s.add(m);
   };
-  panel(5, 4, [0, 6, -1], '#ffffff', 6);          // Softbox oben
+  // Softbox oben als Raster mit Lücken: ergibt feine helle und dunkle Felder in der Tafel
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) panel(1.4, 1.7, [-1.6 + i * 1.6, 6, -1.9 + j * 1.9], '#ffffff', 5 + ((i + j) % 2) * 2);
   panel(9, 2.2, [0, 2.2, -6], '#fff1dc', 6);      // breites, warmes Licht hinten
   panel(1.2, 5, [-5.5, 1.5, 1.5], '#ffffff', 5);  // Striplights links und rechts
   panel(1.2, 5, [5.5, 1.5, 1.5], '#ffffff', 5);
@@ -110,12 +139,16 @@ export function photoScene() {
   panel(14, 14, [0, -6.5, 0], '#cfc2ae', 1.1);
   // Lichtstreifen auf dem Tisch hinter dem Stein: geben der Tafel Struktur statt einer flachen Fläche
   for (let i = 0; i < 6; i++) panel(0.9, 4.5, [-5 + i * 2, -1.8, -6.5], '#d8c6a8', 0.6 + (i % 3) * 0.35);
-  panel(4.5, 12, [-6.5, -1.8, 0], '#a99f92', 0.8); // seitlich etwas Raumlicht
-  panel(4.5, 12, [6.5, -1.8, 0], '#a99f92', 0.8);
+  // Raumlicht rundherum als schmale Streifen unterschiedlicher Helligkeit: viele feine Reflexe
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2 + 0.1;
+    panel(0.55, 3.2, [Math.cos(a) * 6.4, i % 2 ? 0.4 : -1.4, Math.sin(a) * 6.4], '#f2ece2', [0.35, 1.6, 0.8, 2.4][i % 4]);
+  }
   panel(6, 1.6, [0, -2.5, 5.5], '#ffffff', 3);       // Lichtkante vorne unten: Licht fällt durch den Stein zurück
-  [0xff3b3b, 0xffa02e, 0xfff23a, 0x46ff6a, 0x35d4ff, 0x6a5bff].forEach((c, i) => {
+  // zarte farbige Lichter für das Feuer – pastellig, damit keine grellen Farbflecken entstehen
+  ['#ffb3b3', '#ffd9a8', '#fff3b0', '#c4ffcf', '#b5ecff', '#cfc6ff'].forEach((c, i) => {
     const a = (i / 6) * Math.PI * 2 + 0.4;
-    panel(0.45, 0.45, [Math.cos(a) * 5.6, 2.8, Math.sin(a) * 5.6], c, 5);
+    panel(0.4, 0.4, [Math.cos(a) * 5.6, 2.8, Math.sin(a) * 5.6], c, 3.5);
   });
   return s;
 }
@@ -174,10 +207,12 @@ export function facetGeometry(tris, center = new THREE.Vector3()) {
 
 // Runder Brillant: Tafel, 8 Sterne, 8 Hauptfacetten, 16 obere und 16 untere Rundistenfacetten,
 // 8 Pavillonfacetten. Maße nach Tolkowsky (Tafel 56 %, Kronenwinkel ~34°, Pavillon ~41°).
-export function brilliantGeometry({ damage = 0 } = {}) {
+// depth: Tiefe des Pavillons (Unterteil). Steine mit geringerer Brechzahl brauchen einen tieferen
+// Pavillon, sonst fällt das Licht unten durch und die Tafel wirkt leer.
+export function brilliantGeometry({ damage = 0, depth = 0.86 } = {}) {
   const V = (r, a, y) => new THREE.Vector3(r * Math.cos(a), y, r * Math.sin(a));
   const n = 8, step = (Math.PI * 2) / n, half = step / 2;
-  const rT = 0.56, yT = 0.33, yG = 0.025, yGb = -0.025, depth = 0.86;
+  const rT = 0.56, yT = 0.33, yG = 0.025, yGb = -0.025;
   const rS = 0.78, yS = yG + ((1 - rS) / (1 - rT)) * (yT - yG) * 1.08;
   const rL = 0.2, yL = yGb - (1 - rL) * depth;
   const culet = new THREE.Vector3(0, yGb - depth, 0);

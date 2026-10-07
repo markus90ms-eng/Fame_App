@@ -50,13 +50,16 @@ const fragmentShader = /* glsl */`
   uniform float body;
   uniform float holo;
   uniform float contrast;
+  uniform float absorb;
   varying vec3 vWorldPosition;
   varying vec3 vNormal;
   varying mat4 vModelMatrixInverse;
   varying vec3 vTint;
 
-  vec3 traceInside(vec3 rd, vec3 n, float eta) {
+  // Liefert die Austrittsrichtung (xyz) und die Weglänge des Lichts im Stein (w)
+  vec4 traceInside(vec3 rd, vec3 n, float eta) {
     vec3 dir = refract(rd, n, 1.0 / eta);
+    float travelled = 0.0;
     vec3 ro = (vModelMatrixInverse * vec4(vWorldPosition + dir * 0.001, 1.0)).xyz;
     dir = normalize((vModelMatrixInverse * vec4(dir, 0.0)).xyz);
     for (float i = 0.0; i < 6.0; i++) {
@@ -68,22 +71,28 @@ const fragmentShader = /* glsl */`
       float dist = 0.0;
       bvhIntersectFirstHit(bvh, ro, dir, faceIndices, faceNormal, barycoord, side, dist);
       vec3 hit = ro + dir * max(dist - 0.001, 0.0);
+      travelled += dist;
       vec3 outDir = refract(dir, faceNormal, eta);
       if (length(outDir) != 0.0) { dir = outDir; break; }
       dir = reflect(dir, faceNormal);
       ro = hit + dir * 0.01;
     }
-    return normalize((modelMatrix * vec4(dir, 0.0)).xyz);
+    return vec4(normalize((modelMatrix * vec4(dir, 0.0)).xyz), travelled);
   }
 
   void main() {
     vec3 n = normalize(vNormal);
     vec3 rd = normalize(vWorldPosition - cameraPosition);
-    vec3 dirG = traceInside(rd, n, max(ior, 1.0));
-    vec3 dirR = traceInside(rd, n, max(ior * (1.0 - dispersion), 1.0));
-    vec3 dirB = traceInside(rd, n, max(ior * (1.0 + dispersion), 1.0));
+    vec4 tG = traceInside(rd, n, max(ior, 1.0));
+    vec3 dirG = tG.xyz;
+    vec3 dirR = traceInside(rd, n, max(ior * (1.0 - dispersion), 1.0)).xyz;
+    vec3 dirB = traceInside(rd, n, max(ior * (1.0 + dispersion), 1.0)).xyz;
     vec3 c = vec3(textureCube(envMap, dirR).r, textureCube(envMap, dirG).g, textureCube(envMap, dirB).b);
-    c *= color * vTint * exposure;
+    // Farbe wie in echtem Glas: je länger der Weg durch den Stein, desto tiefer die Farbe
+    // (Lambert-Beer). absorb = 0 färbt gleichmäßig wie bisher.
+    vec3 tint = color * vTint;
+    vec3 deep = pow(max(tint, vec3(0.02)), vec3(tG.w * absorb));
+    c *= mix(tint, deep, step(0.001, absorb)) * exposure;
     // Körperfarbe: auch wo kein Licht ankommt, leuchtet ein farbiger Stein leicht in seiner Farbe
     // Körperfarbe, im Foto-Look mit Helligkeit je Facette
     // Jede Facette bekommt je nach Austrittsrichtung des Lichts ihre eigene Helligkeit:
@@ -118,7 +127,7 @@ export function cubeFromScene(renderer, scene, size = 256) {
   return rt;
 }
 
-export function refractionMaterial(geometry, envCube, { color = '#ffffff', ior = 2.4, dispersion = 0.02, bounces = 4, exposure = 1.25, glow = 0, body = 0, holo = 0.5, contrast = 0, vertexColors = false } = {}) {
+export function refractionMaterial(geometry, envCube, { color = '#ffffff', ior = 2.4, dispersion = 0.02, bounces = 4, exposure = 1.25, glow = 0, body = 0, holo = 0.5, contrast = 0, absorb = 0, vertexColors = false } = {}) {
   const bvh = new MeshBVH(geometry);
   const bvhUniform = new MeshBVHUniformStruct();
   bvhUniform.updateFrom(bvh);
@@ -137,6 +146,7 @@ export function refractionMaterial(geometry, envCube, { color = '#ffffff', ior =
       body: { value: body },
       holo: { value: holo },
       contrast: { value: contrast },
+      absorb: { value: absorb },
     },
     vertexShader,
     fragmentShader,

@@ -82,15 +82,15 @@ function reshape(geo, fn) {
 }
 
 // Treppenschliff aus einem Umriss: gestufte Ringe in Krone und Pavillon, flache Tafel oben.
-function stepCut(outlinePts, { steps = 3 } = {}) {
+function stepCut(outlinePts, { steps = 3, depth = 1 } = {}) {
   const crown = steps === 4
     ? [[1, 0.03], [0.93, 0.1], [0.86, 0.17], [0.78, 0.23], [0.7, 0.28]]
     : [[1, 0.03], [0.91, 0.12], [0.81, 0.21], [0.71, 0.28]];
-  const pav = [[1, -0.03], [0.84, -0.2], [0.66, -0.37], [0.46, -0.53], [0.24, -0.66]];
+  const pav = [[1, -0.03], [0.84, -0.2], [0.66, -0.37], [0.46, -0.53], [0.24, -0.66]].map(([k, y]) => [k, y * depth]);
   const ring = (k, y) => outlinePts.map(([x, z]) => new THREE.Vector3(x * k, y, z * k));
   const rings = [...crown.reverse().map(([k, y]) => ring(k, y)), ...pav.map(([k, y]) => ring(k, y))];
   const top = new THREE.Vector3(0, crown[0][1], 0);
-  const culet = new THREE.Vector3(0, -0.74, 0);
+  const culet = new THREE.Vector3(0, -0.74 * depth, 0);
   const n = outlinePts.length;
   const t = [];
   for (let i = 0; i < n; i++) t.push(top, rings[0][i], rings[0][(i + 1) % n]);
@@ -181,8 +181,10 @@ function cutGeometry(spec) {
   if (spec.cut === 'rough') return roughGeometry(spec.name);
   if (isPebble(spec)) return pebbleGeometry(spec.name);
   if (spec.cut === 'cabochon') return cabochonGeometry();
-  if (STEP_OUTLINES[spec.cut]) return stepCut(STEP_OUTLINES[spec.cut](spec.ratio, spec.corner), { steps: spec.cut === 'asscher' ? 4 : 3 });
-  const geo = brilliantGeometry();
+  // Pavillon je nach Brechzahl: Diamant (2,42) wie gehabt, Quarz (1,54) gut ein Viertel tiefer
+  const depth = 1 + Math.max(0, 2.42 - (spec.ior ?? 2.42)) * 0.3;
+  if (STEP_OUTLINES[spec.cut]) return stepCut(STEP_OUTLINES[spec.cut](spec.ratio, spec.corner), { steps: spec.cut === 'asscher' ? 4 : 3, depth });
+  const geo = brilliantGeometry({ depth: 0.86 * depth });
   return OUTLINES[spec.cut] ? reshape(geo, radiusTable(OUTLINES[spec.cut](spec.ratio))) : geo;
 }
 
@@ -386,13 +388,16 @@ function photoLook(hex, lum) {
   const col = new THREE.Color(hex);
   const max = Math.max(col.r, col.g, col.b), min = Math.min(col.r, col.g, col.b);
   const sat = max ? (max - min) / max : 0;
-  if (sat < 0.12) return { body: 0.02, holo: 0, contrast: 0.3, exposure: 1.6 };
+  if (sat < 0.12) return { body: 0.02, holo: 0, contrast: 0.3, exposure: 1.6, absorb: 0.5 };
   const k = Math.min(1, (sat - 0.1) / 0.55);
   return {
     body: 0.24 * Math.max(0.15, k),
     holo: 0,
     contrast: Math.min(1, Math.max(0.5, (0.85 - lum) * 3)),
     exposure: 1.2 + 0.35 * k + Math.max(0, 0.5 - lum) * 1.4,
+    // Farbtiefe nach Weglänge im Stein (siehe refraction.js); zarte Farben etwas stärker,
+    // damit sie trotz hellem Grundton Tiefe zeigen
+    absorb: 0.45 + (1 - k) * 0.35,
   };
 }
 
