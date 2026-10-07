@@ -9,7 +9,7 @@ import {
   APP_NAME, LOGO_TEXT, esc, logo, logoInline, hl, dots, hero, button, backButton, diamondSvg,
   diamondShadowed, icons,
 } from './ui.js';
-import { tick, plink, stageTick, rarityDrop, buzz, unlockAudio, buildup, reveal } from './fx.js';
+import { tick, plink, stageTick, rarityDrop, classDrop, classReveal, buzz, unlockAudio, buildup } from './fx.js';
 import { createDiamond } from './diamond3d.js';
 import { particles } from './particles.js';
 import {
@@ -182,26 +182,48 @@ const hasCard = () => !!state.user && !!state.account.cards?.length;
 function splash() {
   // Wer schon eingezahlt hat, sieht direkt den Knopf zu seiner Card (ohne automatische Weiterleitung)
   if (hasCard()) {
-    const cls = classFor(state.account.total);
+    // Startseite in der eigenen Farbklasse: dunkel, mit dem eigenen Stein im Tresor.
+    // Mit jeder Klasse kommen Strahlen, Ring, Runen und Glanz dazu – die App wirkt wie neu.
+    const acc = state.account;
+    const cls = classFor(acc.total);
+    const last = acc.cards[acc.cards.length - 1];
+    const top = TIERS.find((t) => t.id === last.tier) || tierFor(last.total || acc.total);
+    const open = last.revealed !== false;
     return {
-      html: `<section class="screen screen--splash screen--welcome cls-${cls}" style="--rar:${CLASSES[cls].color}">
+      html: `<section class="screen screen--dark screen--splash screen--welcome cls-${cls}" style="--rar:${CLASSES[cls].color}">
+        <div class="donate-aura" aria-hidden="true"></div>
+        <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
         <div class="sweep" aria-hidden="true"></div>
-        <div class="splash-logo">${logo('xl')}</div>
-        <div class="splash-space"></div>
-        <p class="welcome-hi">Hey ${esc(firstName(state.user?.name) || 'du')} – deine Card wartet.</p>
-        <div class="splash-login">${button('Meine Card', 'data-go="card"')}</div>
+        <div class="splash-logo">${logo('lg')}</div>
+        <div class="vault welcome-vault">
+          <div class="vault-rays" aria-hidden="true"></div>
+          <div class="vault-ring" aria-hidden="true"></div>
+          <svg class="vault-runes" viewBox="0 0 200 200" aria-hidden="true"><defs><path id="welcomepath" d="M100 100m-84 0a84 84 0 1 1 168 0a84 84 0 1 1-168 0"/></defs>
+            <text><textPath href="#welcomepath">FAM€ ✦ THEN THE OTHERS ✦ FAM€ ✦ THEN THE OTHERS ✦ FAM€ ✦ THEN THE OTHERS ✦</textPath></text></svg>
+          <div class="vault-glow" aria-hidden="true"></div>
+          <div class="stage3d" data-diamond></div>
+        </div>
+        <p class="welcome-hi">Hey ${esc(firstName(state.user?.name) || 'du')} – ${open ? 'deine Card wartet.' : 'deine Card liegt noch verdeckt da.'}</p>
+        <p class="welcome-sub">Dein Konto <b>${money(acc.total)}</b></p>
+        <div class="splash-login">${button(open ? 'Meine Card' : 'Card aufdecken', 'data-go="card"')}</div>
         <a class="link welcome-more" href="#/donate">Nochmal einzahlen</a>
         <button class="link welcome-logout" type="button" data-logout>Abmelden</button>
         ${resetLink()}
       </section>`,
       mount(el) {
         bindReset(el);
+        const dia = createDiamond(el.querySelector('[data-diamond]'), {
+          gem: open ? top : null, mystery: !open, rim: CLASSES[cls].color, glow: 0.4 + cls * 0.06, interactive: true,
+        });
+        const fx = particles(el.querySelector('[data-fx]'), { color: CLASSES[cls].color, mode: 'embers', density: 0.25 + cls * 0.15 });
+        const t = setTimeout(() => { dia.pulse(); classDrop(cls); }, 900);
         el.querySelector('[data-logout]').addEventListener('click', () => {
           state.user = null;
           store.set('user', null);
           toast('Du bist abgemeldet.');
           render();
         });
+        return () => { clearTimeout(t); dia.dispose(); fx.dispose(); };
       },
     };
   }
@@ -338,7 +360,7 @@ function intro2() {
         progress.style.transition = `width ${PERK_MS}ms linear`;
         progress.style.width = '100%';
         el.style.setProperty('--rar', rarity.color);
-        fx.setColor(rarity.color);
+        fx.setColor(clsColor);
         fx.setDensity(0.6 + it.level * 0.5);
         if (sound) rarityDrop(it.level);
       };
@@ -558,7 +580,7 @@ function donate() {
       let nudgeTarget = 0;
 
       const tierChanged = (tier, up) => {
-        rarityDrop(tier.level);
+        classDrop(tier.cls);
         dia.pulse();
         flash.classList.remove('is-on');
         void flash.offsetWidth;
@@ -727,11 +749,13 @@ function card() {
   const tier = TIERS.find((t) => t.id === c.tier) || TIERS[c.stage - 1] || tierFor(c.total || acc.total);
   const isNew = !collectedStages().has(tier.stage);
   // Akzentfarbe aus dem Stein selbst – Card, Licht und Funken passen zum Edelstein
+  // Seite in der Farbe der Klasse (Kontostand), Funken und Licht im Ton des Steins
   const rarity = { ...tier.rarity, color: tier.tone };
+  const clsColor = CLASSES[tier.cls].color;
   const insta = state.user?.insta || '';
   const hidden = c.revealed === false;
   return {
-    html: `<section class="screen screen--dark screen--card lvl-${tier.level}${hidden ? ' is-hidden' : ' is-open'}" style="--rar:${rarity.color}">
+    html: `<section class="screen screen--dark screen--card lvl-${tier.level} cls-${tier.cls}${hidden ? ' is-hidden' : ' is-open'}" style="--rar:${clsColor}">
       <div class="loot-bg" aria-hidden="true">
         <div class="loot-rays"></div>
         <svg class="loot-runes" viewBox="0 0 200 200"><defs><path id="runepath" d="M100 100m-80 0a80 80 0 1 1 160 0a80 80 0 1 1-160 0"/></defs>
@@ -811,7 +835,7 @@ function card() {
       });
       const canvas = el.querySelector('[data-fx]');
       const fx = particles(canvas, {
-        color: hidden ? '#3dfa74' : rarity.color,
+        color: clsColor,
         mode: tier.level >= 2 && !hidden ? 'embers' : 'dust',
         density: hidden ? 0.5 : 0.4 + tier.level * 0.45,
       });
@@ -844,9 +868,9 @@ function card() {
         if (phase !== 'hidden') return;
         phase = 'charging';
         el.classList.add('is-charging');
-        fx.setColor(rarity.color);
+        fx.setColor(clsColor);
         fx.setDensity(2 + tier.level);
-        const dur = buildup(tier.level);
+        const dur = buildup(tier.cls * 0.45);
         // Wackeln wird immer stärker
         const t0 = performance.now();
         const grow = setInterval(() => {
@@ -863,7 +887,7 @@ function card() {
           el.classList.remove('is-charging', 'is-hidden');
           el.classList.add('is-open', 'is-revealing');
           flash.classList.add('is-on');
-          reveal(tier.level);
+          classReveal(tier.cls);
           dia.pulse();
           const [x, y] = centerIn(canvas, flip);
           fx.burst(x, y, 40 + tier.level * 40, rarity.color);

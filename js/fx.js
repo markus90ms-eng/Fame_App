@@ -126,6 +126,78 @@ export function rarityDrop(level) {
   }
 }
 
+// Klang je Farbklasse (0 = Kiesel … 9 = Diamant-Holo): jede Klasse hat ihren eigenen Sound,
+// von dumpf und kurz bis zu Einschlag, Glockenakkord und Glitzerregen.
+export function classDrop(cls) {
+  switch (cls) {
+    case 0: // Kiesel: dumpfer Plopp
+      tone(150, { dur: 0.18, vol: 0.09, slideTo: 90 });
+      noise({ dur: 0.08, vol: 0.03, from: 2000, to: 600 });
+      buzz(12);
+      break;
+    case 1: // Mint: zwei weiche, helle Töne
+      [880, 1175].forEach((f, i) => tone(f, { at: i * 0.09, dur: 0.3, vol: 0.05 }));
+      buzz([8, 30, 8]);
+      break;
+    case 2: // Aquamarin: perlend wie Wasser
+      [988, 1319, 1760].forEach((f, i) => tone(f, { at: i * 0.07, dur: 0.35, vol: 0.04, type: 'triangle' }));
+      noise({ at: 0.04, dur: 0.35, vol: 0.012, from: 4000, to: 9000 });
+      buzz([10, 30, 10, 30]);
+      break;
+    case 3: // Saphir: klare Glocke
+      [659, 831, 988].forEach((f) => tone(f, { dur: 1, vol: 0.035, attack: 0.02 }));
+      tone(1976, { at: 0.05, dur: 0.6, vol: 0.02, type: 'triangle' });
+      buzz([14, 30, 14, 30, 20]);
+      break;
+    case 4: // Amethyst: Arpeggio mit Schimmer
+      [784, 988, 1175, 1568].forEach((f, i) => tone(f, { at: i * 0.06, dur: 0.45, vol: 0.045, type: 'triangle' }));
+      noise({ at: 0.05, dur: 0.5, vol: 0.015, from: 3000, to: 9000 });
+      buzz([14, 30, 14, 30, 24]);
+      break;
+    case 5: // Rubellit: verspielter Akkord mit Glitzer
+      [523, 659, 784].forEach((f) => tone(f, { dur: 1, vol: 0.03, attack: 0.03 }));
+      [1568, 1976, 2349, 3136].forEach((f, i) => tone(f, { at: 0.08 + i * 0.06, dur: 0.4, vol: 0.025, type: 'triangle' }));
+      buzz([16, 30, 16, 30, 30]);
+      break;
+    case 6: // Rubin: tiefer Akzent und warmer Glockenakkord
+      tone(196, { dur: 0.4, vol: 0.08, slideTo: 98 });
+      [440, 523, 659, 784].forEach((f) => tone(f, { at: 0.05, dur: 1.2, vol: 0.03, attack: 0.04 }));
+      [1319, 1568, 1976, 2637].forEach((f, i) => tone(f, { at: 0.15 + i * 0.07, dur: 0.6, vol: 0.03, type: 'triangle' }));
+      noise({ dur: 0.9, vol: 0.02, from: 1500, to: 8000 });
+      buzz([20, 40, 20, 40, 60]);
+      break;
+    case 7: // Feuer: Einschlag mit aufsteigendem Rauschen
+      tone(130, { dur: 0.6, vol: 0.12, slideTo: 45 });
+      noise({ dur: 0.8, vol: 0.05, from: 200, to: 7000 });
+      [587, 740, 880, 1175].forEach((f, i) => tone(f, { at: 0.15 + i * 0.08, dur: 0.5, vol: 0.04, type: 'square' }));
+      buzz([30, 40, 30, 40, 90]);
+      break;
+    case 8: // Gold: Einschlag, großer Glockenakkord und Münzklimpern
+      tone(120, { dur: 0.7, vol: 0.14, slideTo: 38, attack: 0.01 });
+      noise({ dur: 0.7, vol: 0.05, from: 300, to: 6000 });
+      [523, 659, 784, 1046].forEach((f) => tone(f, { at: 0.12, dur: 1.8, vol: 0.035, attack: 0.02 }));
+      for (let i = 0; i < 12; i++) tone(2600 + Math.random() * 1800, { at: 0.3 + i * 0.06, dur: 0.06, vol: 0.02, type: 'triangle' });
+      buzz([40, 40, 40, 40, 120]);
+      break;
+    default: // Diamant-Holo: Einschlag, schwebendes Arpeggio über mehrere Oktaven, Glitzerregen
+      tone(110, { dur: 0.9, vol: 0.15, slideTo: 33, attack: 0.01 });
+      noise({ dur: 1, vol: 0.05, from: 200, to: 9000 });
+      [523, 659, 784, 988, 1175, 1568, 1976, 2349, 3136].forEach((f, i) => tone(f, { at: 0.1 + i * 0.07, dur: 1.4, vol: 0.026, attack: 0.02 }));
+      for (let i = 0; i < 26; i++) tone(2400 + Math.random() * 2600, { at: 0.6 + i * 0.045, dur: 0.05, vol: 0.02, type: 'triangle' });
+      buzz([50, 40, 50, 40, 160]);
+  }
+}
+
+// Aufdecken je Farbklasse: Klassen-Sound, ab Amethyst ein Gewinn-Jingle (je höher, desto öfter)
+export function classReveal(cls) {
+  classDrop(cls);
+  const runs = Math.max(0, Math.floor((cls - 2) / 2));
+  const scale = [523, 659, 784, 1046, 1318, 1568];
+  for (let r = 0; r < runs; r++) {
+    scale.forEach((f, i) => tone(f, { at: 0.3 + r * 0.36 + i * 0.05, dur: 0.12, vol: 0.035, type: 'square' }));
+  }
+}
+
 export function fanfare() {
   [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, { at: i * 0.09, dur: 0.22, vol: 0.05, type: 'square' }));
   buzz([30, 50, 30, 50, 80]);
