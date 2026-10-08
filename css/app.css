@@ -2162,3 +2162,92 @@ button, input { font: inherit; color: inherit; }
 .st-new .o { color: #ff8a1f; }
 .st-divider { display: block; width: 70%; height: 1px; margin: 16px auto; background: linear-gradient(90deg, transparent, #ff8a1f, transparent); }
 .st-quote .hl { font-size: inherit; }
+
+/* Story: Marker im Fließtext, großes „Fake?“, Preisspanne ohne Umbruch */
+.st-p .hl { padding: 0.02em 0.25em; box-shadow: none; }
+.st-big { display: inline-block; margin-bottom: 0.18em; font-size: 1.4em; line-height: 1; }
+.nowrap { white-space: nowrap; }
+
+/* Startseite: „Code prüfen“ kleiner, mittig zwischen „Neu hier?“ und „Login“ */
+.screen--splash .check-teaser { max-width: 250px; margin: 0 auto; padding: 7px 10px; gap: 9px; box-shadow: 4px 4px 0 var(--green); }
+.screen--splash .check-teaser .seal { width: 30px; height: 30px; font-size: 5.2px; }
+.screen--splash .check-teaser-text { font-size: 10.5px; }
+.screen--splash .check-teaser-text b { font-size: 13px; }
+.screen--splash .check-teaser-go { font-size: 15px; }
+
+/* Übersicht nach dem Login: drei Kacheln unter dem Hauptknopf */
+.hub { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: calc(100% - 2 * var(--gutter)); max-width: 380px; margin: 2px auto 0; }
+.hub-tile {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 12px 6px 10px; text-align: center; text-decoration: none; color: var(--ink);
+  background: #fff; border: 2px solid var(--dark);
+  box-shadow: 4px 4px 0 var(--rar);
+  animation: rise 0.5s ease both;
+}
+.hub-tile:nth-child(2) { animation-delay: 0.08s; }
+.hub-tile:nth-child(3) { animation-delay: 0.16s; }
+.hub-tile:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--rar); }
+.hub-tile b { font-size: 12.5px; }
+.hub-tile small { font-size: 9.5px; line-height: 1.3; color: #6f6e69; }
+.hub-ico { display: grid; place-items: center; height: 32px; }
+.hub-ico .ico { width: 26px; height: 26px; stroke: color-mix(in srgb, var(--rar) 70%, #000); }
+.hub-ico .seal { width: 30px; height: 30px; font-size: 5.2px; }
+.screen--welcome .splash-login { padding-bottom: 16px; }
+
+/* Bedingungen (Platzhalter) */
+.screen--terms { padding: max(104px, calc(env(safe-area-inset-top) + 84px)) var(--gutter) 30px; }
+.terms-title { margin: 0 0 14px; font-size: 30px; font-weight: 800; }
+.terms-text { margin: 0; font-size: 14px; line-height: 1.6; color: #d8d6d0; }
+
+/* ---- Card: Lichtsäule wie beim Loot-Fund (Diablo) und horizontaler Lichtstreif beim Aufdecken ----
+   Die Säule steht hinter der Card und wird mit jeder Klasse heller und breiter. */
+.loot-beam {
+  position: absolute; left: 50%; top: -5%; bottom: 12%;
+  width: calc(70px + var(--lux, 0) * 90px);
+  transform: translateX(-50%);
+  transform-origin: 50% 100%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--rar) 55%, transparent) 30%,
+    color-mix(in srgb, var(--rar) 35%, #fff) 50%, color-mix(in srgb, var(--rar) 55%, transparent) 70%, transparent);
+  -webkit-mask-image: linear-gradient(transparent, #000 20%, #000 88%, transparent);
+  mask-image: linear-gradient(transparent, #000 20%, #000 88%, transparent);
+  filter: blur(6px);
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+/* heller Kern in der Mitte der Säule */
+.loot-beam i {
+  position: absolute; left: 50%; top: 0; bottom: 0; width: 14%;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, #fff, transparent);
+  filter: blur(2px);
+}
+.screen--card.is-open .loot-beam { opacity: calc(0.22 + var(--lux, 0) * 0.6); animation: beam-pulse 2.6s ease-in-out infinite; }
+.screen--card.is-revealing .loot-beam { animation: beam-drop 1.6s cubic-bezier(.2, .8, .2, 1) both, beam-pulse 2.6s ease-in-out 1.6s infinite; }
+@keyframes beam-drop {
+  0% { transform: translateX(-50%) scaleY(0) scaleX(0.3); opacity: 0; }
+  18% { transform: translateX(-50%) scaleY(1.05) scaleX(1.6); opacity: 1; }
+  100% { transform: translateX(-50%) scaleY(1) scaleX(1); opacity: calc(0.22 + var(--lux, 0) * 0.6); }
+}
+.reveal-streak {
+  position: absolute; left: -10%; right: -10%; top: 44%;
+  height: calc(14px + var(--lux, 0) * 22px);
+  z-index: 7; pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--rar) 80%, transparent) 20%, #fff 50%,
+    color-mix(in srgb, var(--rar) 80%, transparent) 80%, transparent);
+  filter: blur(3px);
+  box-shadow: 0 0 60px 20px color-mix(in srgb, var(--rar) 70%, transparent), 0 0 16px 4px #fff;
+  opacity: 0;
+  transform: scaleX(0);
+}
+.screen--card.is-revealing .reveal-streak { animation: streak 2.2s ease-out forwards; }
+@keyframes streak {
+  0% { opacity: 0; transform: scaleX(0) scaleY(1); }
+  12% { opacity: 1; transform: scaleX(1.1) scaleY(2.2); }
+  55% { opacity: 0.9; transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1.2) scaleY(0.2); }
+}
+/* Strahlen und Licht allgemein kräftiger, je höher die Klasse */
+.screen--card[class*="cls-"] .loot-rays { opacity: calc(0.2 + var(--lux) * 0.65); }
+.screen--card[class*="cls-"] .loot-ground { opacity: calc(0.4 + var(--lux) * 0.6); }
+.screen--card.is-revealing .loot-rays { animation: rays-spin calc(44s - var(--lux) * 30s) linear infinite, rays-boom 1.8s ease-out both; }
+@keyframes rays-boom { 0% { filter: brightness(3); } 100% { filter: brightness(1); } }

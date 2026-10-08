@@ -71,6 +71,7 @@ const routes = {
   donate: donate,
   card: card,
   check: () => checkPage(''),
+  terms: terms,
   ranking: () => rankingPage(state.user?.region ? 'region' : 'country'),
   'ranking/region': () => rankingPage('region'),
   'ranking/country': () => rankingPage('country'),
@@ -182,15 +183,18 @@ function bindReset(el) {
 const hasCard = () => !!state.user && !!state.account.cards?.length;
 
 function splash() {
-  // Wer schon eingezahlt hat, sieht direkt den Knopf zu seiner Card (ohne automatische Weiterleitung)
-  if (hasCard()) {
-    // Startseite in der eigenen Farbklasse: weißer Grund, Akzente in der Klassenfarbe, eigener Stein im Tresor.
-    // Mit jeder Klasse kommen Strahlen, Ring, Runen und Glanz dazu – die App wirkt wie neu.
+  // Eingeloggt: Übersicht statt direkt bezahlen – Card, Fame steigern, Ranking und Code prüfen auf einen Blick.
+  // Weißer Grund, Akzente in der eigenen Farbklasse, eigener Stein im Tresor (vor der ersten Card verdeckt).
+  if (state.user) {
     const acc = state.account;
+    const own = hasCard();
     const cls = classFor(acc.total);
-    const last = acc.cards[acc.cards.length - 1];
-    const top = TIERS.find((t) => t.id === last.tier) || tierFor(last.total || acc.total);
-    const open = last.revealed !== false;
+    const last = own ? acc.cards[acc.cards.length - 1] : null;
+    const top = last ? TIERS.find((t) => t.id === last.tier) || tierFor(last.total || acc.total) : null;
+    const open = !!last && last.revealed !== false;
+    const hi = !own ? 'hol dir deine erste Card.' : open ? 'deine Card wartet.' : 'deine Card liegt noch verdeckt da.';
+    const main = !own ? button('Erste Card holen', 'data-go="donate"') : button(open ? 'Meine Card' : 'Card aufdecken', 'data-go="card"');
+    const tile = (go, icon, title, sub) => `<a class="hub-tile" href="#/${go}"><span class="hub-ico">${icon}</span><b>${title}</b><small>${sub}</small></a>`;
     return {
       html: `<section class="screen screen--splash screen--welcome cls-${cls}" style="--rar:${CLASSES[cls].color}">
         <div class="donate-aura" aria-hidden="true"></div>
@@ -205,11 +209,14 @@ function splash() {
           <div class="vault-glow" aria-hidden="true"></div>
           <div class="stage3d" data-diamond></div>
         </div>
-        <p class="welcome-hi">Hey ${esc(firstName(state.user?.name) || 'du')} – ${open ? 'deine Card wartet.' : 'deine Card liegt noch verdeckt da.'}</p>
-        <p class="welcome-sub">Dein Konto <b>${money(acc.total)}</b></p>
-        <div class="splash-login">${button(open ? 'Meine Card' : 'Card aufdecken', 'data-go="card"')}</div>
-        <a class="link welcome-more" href="#/donate">Fame steigern</a>
-        <a class="link welcome-more" href="#/check">Code prüfen</a>
+        <p class="welcome-hi">Hey ${esc(firstName(state.user?.name) || 'du')} – ${hi}</p>
+        <p class="welcome-sub">${own ? `Dein Konto <b>${money(acc.total)}</b> · Klasse <b>${CLASSES[cls].name}</b>` : 'Noch kein Fame auf deinem Konto'}</p>
+        <div class="splash-login">${main}</div>
+        <nav class="hub" aria-label="Übersicht">
+          ${tile('donate', icons.cash, own ? 'Fame steigern' : 'Einzahlen', own ? 'Leg nach, steig auf' : 'Betrag wählen')}
+          ${tile('ranking', icons.trophy, 'Ranking', 'Wer hat den meisten Fame?')}
+          ${tile('check', '<span class="seal" aria-hidden="true">ECHT<br>FAM€</span>', 'Code prüfen', 'Ist eine Card echt?')}
+        </nav>
         <button class="link welcome-logout" type="button" data-logout>Abmelden</button>
         ${resetLink()}
       </section>`,
@@ -219,7 +226,7 @@ function splash() {
           gem: open ? top : null, mystery: !open, rim: CLASSES[cls].color, glow: 0.4 + cls * 0.06, interactive: true,
         });
         const fx = particles(el.querySelector('[data-fx]'), { color: CLASSES[cls].color, mode: 'embers', density: 0.25 + cls * 0.15 });
-        const t = setTimeout(() => { dia.pulse(); classDrop(cls); }, 900);
+        const t = setTimeout(() => { dia.pulse(); if (own) classDrop(cls); }, 900);
         el.querySelector('[data-logout]').addEventListener('click', () => {
           state.user = null;
           store.set('user', null);
@@ -241,6 +248,7 @@ function splash() {
       </a>
       <div class="splash-space splash-space--mid"></div>
       ${checkTeaser()}
+      <div class="splash-space splash-space--mid"></div>
       <div class="splash-login">${button('Login', 'data-go="login"')}</div>
       ${resetLink()}
     </section>`,
@@ -335,22 +343,22 @@ const myCardButton = () => (hasCard()
 // welcher es wird, zeigt erst die eigene Card.
 const STORY = [
   { cls: 0, tag: 'Real Talk', h: `Reden kann ${hl('jeder.')}`,
-    p: 'Jeder ist plötzlich rich. Jeder hat die Uhr, den Wagen, das Leben. Aber mal ehrlich: Wie viel davon ist echt – und wie viel nur Filter und Fake-Flex?' },
+    p: `Jeder ist plötzlich rich. Jeder hat die Uhr, den Wagen, das Leben. ${hl('Aber mal ehrlich:')} Wie viel davon ist real und wie viel nur Fake-Flex?` },
   { cls: 2, tag: 'Beweis statt Bluff', h: 'Ab jetzt zählt, was du <span class="g">beweisen</span> kannst.',
-    p: 'Mit Fame zeigst du schwarz auf weiß, wie groß dein Flex wirklich ist. Kein Gelaber. Keine Mietwagen-Story. Nur dein echter Status.' },
+    p: `Mit Fame zeigst du schwarz auf weiß, wie groß dein Flex wirklich ist. Kein Gelaber. Keine Mietwagen-Story. Nur dein ${hl('echter Status')}.` },
   { cls: 4, tag: 'Dein Level', h: 'Deine Card.<br>Dein Level.', extra: 'cardback',
-    p: 'Welcher Stein es wird, siehst du erst, wenn du deine Card aufdeckst. Du entscheidest, wie hoch du gehst. Jede Card ein Unikat.' },
+    p: 'Welcher Stein es wird, hängt von deinem Geldbeutel ab. Du entscheidest, wie hoch du gehst. Jede Card ein Unikat.' },
   { cls: 5, tag: 'Für immer', h: 'Einmal Fame,<br><span class="g">immer Fame.</span>', extra: 'ladder',
-    p: 'Dein Status bleibt. Für immer. Leg nach, steig auf, schalte neue Stufen und Abzeichen frei. Runter geht’s nie wieder.' },
-  { cls: 6, tag: 'Echtheit', h: `Fake?<br>${hl('Nicht mit uns.')}`,
-    p: 'Jemand prahlt mit seinem Level? Check die Seriennummer und du weißt in Sekunden, ob die Card echt ist – oder ob da nur einer blufft.' },
-  { cls: 8, tag: 'Erst Fame', h: 'Die anderen reden.<br><span class="g">Du hast Fame.</span>', p: 'Erst Fame, dann die anderen. 💎' },
+    p: 'Dein Status bleibt. Für immer. Leg nach, steig auf, schalte eine neue Stufe und Abzeichen frei. Runter geht’s nie wieder.' },
+  { cls: 6, tag: 'Echtheit', h: `<span class="st-big">Fake?</span><br>${hl('Nicht mit uns.')}`,
+    p: `Jemand prahlt mit seinem Level? Check die ${hl('Seriennummer')} und du weißt in Sekunden, ob die Card ${hl('echt ist')} – oder ob da nur einer blufft.` },
+  { cls: 8, tag: 'Erst Fame', h: 'Die anderen reden.<br><span class="g">Du hast Fame.</span>', p: '' },
   { cls: 9, tag: 'Der Vergleich', h: '#Real_story, BRO', extra: 'story', p: '' },
 ];
 
 // Letzte Slide: der Vergleich Club-Flasche gegen Fame
 const storyQuote = () => `<blockquote class="st-quote">
-  <p class="st-old">Eine Belvedere Flasche kostet im Club <b>300€ – 3.000€</b>,</p>
+  <p class="st-old">Eine Belvedere Flasche kostet im Club <b class="nowrap">300€ – 3.000€</b>,</p>
   <p class="st-old">der ${hl('Fame')} hält maximal <b>einen Abend</b>,</p>
   <p class="st-old">die Reichweite begrenzt sich auf den Club.</p>
   <span class="st-divider" aria-hidden="true"></span>
@@ -459,7 +467,7 @@ function login() {
       <form class="login-form" novalidate>
         <div class="login-icon">${diamondShadowed()}</div>
         <h1 class="headline">Werde ${LOGO_TEXT}</h1>
-        <p class="sub">Leg dein Profil an und sichere dir deinen Platz im Ranking.</p>
+        <p class="sub">Leg dein Profil an und sichere dir deinen Platz.</p>
         <label class="field"><span>Name</span>
           <input id="login-name" name="name" autocomplete="given-name" required value="${esc(u.name)}" placeholder="Max"></label>
         <label class="field"><span>Instagram</span>
@@ -494,7 +502,7 @@ function login() {
         }
         state.user = { name, insta: cleanHandle(form.insta.value), country: form.country.value, region: form.region.value };
         store.set('user', state.user);
-        const next = state.after || (hasCard() ? 'card' : 'donate');
+        const next = state.after || '';
         state.after = null;
         go(next);
       });
@@ -505,6 +513,17 @@ function login() {
       });
       return () => dia.dispose();
     },
+  };
+}
+
+// Bedingungen: Platzhalter, der Text folgt
+function terms() {
+  return {
+    html: `<section class="screen screen--dark screen--terms" style="--rar:#3dfa74">
+      ${backButton('back--dark')}
+      <h1 class="terms-title">Bedingungen</h1>
+      <p class="terms-text">Hier stehen bald die Teilnahmebedingungen von ${LOGO_TEXT}.</p>
+    </section>`,
   };
 }
 
@@ -573,7 +592,7 @@ function donate() {
         <label class="check">
           <input id="donate-accept" type="checkbox" data-accept ${state.accepted ? 'checked' : ''}>
           <span class="check-box" aria-hidden="true"></span>
-          <span>Ich akzeptiere die <a href="#" data-terms>Bedingungen</a></span>
+          <span>Ich akzeptiere die <a href="#/terms">Bedingungen</a></span>
         </label>
         <div class="screen-foot">
           ${button('I´m awesome', 'data-awesome')}
@@ -726,10 +745,6 @@ function donate() {
 
       const syncBtn = () => { btn.disabled = !accept.checked; };
       accept.addEventListener('change', () => { state.accepted = accept.checked; syncBtn(); buzz(8); });
-      $('[data-terms]').addEventListener('click', (e) => {
-        e.preventDefault();
-        toast('Die Teilnahmebedingungen folgen in Kürze.');
-      });
 
       btn.addEventListener('click', async () => {
         if (!accept.checked) return;
@@ -788,9 +803,11 @@ function card() {
           <circle cx="100" cy="100" r="92"/><circle cx="100" cy="100" r="68"/>
           <text><textPath href="#runepath">FAM€ ✦ THEN THE OTHERS ✦ FAM€ ✦ THEN THE OTHERS ✦ FAM€ ✦</textPath></text></svg>
         <div class="loot-pillar"></div>
+        <div class="loot-beam"><i></i></div>
         <div class="loot-ground"></div>
       </div>
       <div class="reveal-flash" data-flash aria-hidden="true"></div>
+      <div class="reveal-streak" aria-hidden="true"></div>
       <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
       ${backButton('back--dark')}
       <div class="card-wrap" data-tiltwrap>
