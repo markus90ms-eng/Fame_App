@@ -6,10 +6,10 @@ import {
   MAX_AMOUNT, MIN_AMOUNT,
 } from './data.js';
 import {
-  APP_NAME, LOGO_TEXT, esc, logo, logoInline, hl, dots, hero, button, backButton, diamondSvg,
+  APP_NAME, LOGO_TEXT, DIA, esc, logo, hl, hero, button, backButton, diamondSvg,
   diamondShadowed, icons,
 } from './ui.js';
-import { tick, plink, stageTick, rarityDrop, classDrop, classReveal, buzz, unlockAudio, buildup } from './fx.js';
+import { tick, plink, stageTick, classDrop, classReveal, buzz, unlockAudio, buildup } from './fx.js';
 import { createDiamond } from './diamond3d.js';
 import { facetArt, facetMask, svgUrl, holoStrength } from './cardfx.js';
 import { particles } from './particles.js';
@@ -64,9 +64,9 @@ let cleanup = null;
 
 const routes = {
   '': splash,
-  'intro/1': intro1,
-  'intro/2': intro2,
-  'intro/3': intro3,
+  'intro/1': introStory,
+  'intro/2': introStory,
+  'intro/3': introStory,
   login: login,
   donate: donate,
   card: card,
@@ -330,175 +330,105 @@ const myCardButton = () => (hasCard()
   ? `<button class="mycard-btn" type="button" data-go="card">${icons.share}<span>Meine Card</span></button>`
   : '');
 
-// 1. Loot-Drop: der Diamant fällt in einer Lichtsäule herunter.
-function intro1() {
-  const legendary = RARITIES[4];
-  return {
-    html: `<section class="screen screen--dark screen--loot1" style="--rar:${legendary.color}">
-      <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
-      <div class="loot1-logo">${logo('md')}</div>
-      <div class="drop-stage">
-        <div class="beam" aria-hidden="true"></div>
-        <div class="drop-floor" aria-hidden="true"></div>
-        <div class="drop-gem" data-gem><div class="stage3d" data-diamond></div></div>
-      </div>
-      <h1 class="claim claim--loot">Zeig was Du dir <em>leisten kannst</em> und tue dabei <strong>GUTES</strong>.</h1>
-      <div class="screen-foot">
-        ${dots(0)}
-        ${button('Zeig mir mehr', 'data-go="intro/2"')}
-      </div>
-    </section>`,
-    mount(el) {
-      const dia = createDiamond(el.querySelector('[data-diamond]'), { level: 4, glow: 0.9, rim: '#ff8a1f', interactive: false });
-      const canvas = el.querySelector('[data-fx]');
-      const fx = particles(canvas, { color: '#ff9a3c', mode: 'embers', density: 0.6 });
-      const gem = el.querySelector('[data-gem]');
-      const timer = setTimeout(() => {
-        rarityDrop(4);
-        dia.pulse();
-        const [x, y] = centerIn(canvas, gem);
-        fx.burst(x, y + 30, 60, '#ffb35c');
-        fx.setDensity(1.2);
-        el.classList.add('is-landed');
-      }, 820);
-      return () => { clearTimeout(timer); fx.dispose(); dia.dispose(); };
-    },
-  };
-}
-
-// 2. Übersicht: vier Belohnungen. Der Text steht im Fokus, das Foto ist nur ein Begleiter.
-const LOOT = [
-  {
-    level: 0, icon: 'cash', img: 'assets/img/cash.jpg', alt: 'Ein Bündel Dollarscheine',
-    lead: `${hl('Ca$h')} ist für dich nichts?`,
-    sub: `Beweise es und ${hl('zeig´s der Welt')}.`,
-  },
-  {
-    level: 2, icon: 'crown', img: 'assets/img/ranking.jpg', alt: 'Siegerpodest mit Strichmännchen auf Platz 1',
-    lead: `Steig im ${hl('Ranking')} auf.`,
-    sub: 'Jeder Euro bringt dich höher – im Bundesland, im Land, weltweit.',
-  },
-  {
-    level: 3, icon: 'pin', img: 'assets/img/pin.jpg', alt: 'Neon-Hand mit Diamant',
-    lead: `Verdiene dir deinen ${hl('Diamant Pin')}.`,
-    sub: `Echt, zum Anstecken. Ab ${money(PIN_FROM)}.`,
-  },
-  {
-    level: 4, icon: 'heart', img: 'assets/img/animals.jpg', alt: 'Hund und Katze auf dem Sofa',
-    lead: `${hl('Hilf')} damit auch Menschen und Tieren in Not.`,
-    sub: 'Angeben und Gutes tun. Beides geht.',
-  },
+// „Zeig mir mehr“: 6 Story-Slides zum Durchtippen wie eine Instagram-Story. Jede Slide hat eine
+// Klassenfarbe – beim Durchtippen steigt man von Kiesel bis Diamant-Holo auf. Kein Stein ist sichtbar:
+// welcher es wird, zeigt erst die eigene Card.
+const STORY = [
+  { cls: 0, tag: 'Real Talk', h: `Reden kann ${hl('jeder.')}`,
+    p: 'Jeder ist plötzlich rich. Jeder hat die Uhr, den Wagen, das Leben. Aber mal ehrlich: Wie viel davon ist echt – und wie viel nur Filter und Fake-Flex?' },
+  { cls: 2, tag: 'Beweis statt Bluff', h: 'Ab jetzt zählt, was du <span class="g">beweisen</span> kannst.',
+    p: 'Mit Fame zeigst du schwarz auf weiß, wie groß dein Flex wirklich ist. Kein Gelaber. Keine Mietwagen-Story. Nur dein echter Status.' },
+  { cls: 4, tag: 'Dein Level', h: 'Deine Card.<br>Dein Level.', extra: 'cardback',
+    p: 'Welcher Stein es wird, siehst du erst, wenn du deine Card aufdeckst. Du entscheidest, wie hoch du gehst. Jede Card ein Unikat.' },
+  { cls: 6, tag: 'Für immer', h: 'Einmal Fame,<br><span class="g">immer Fame.</span>', extra: 'ladder',
+    p: 'Dein Status bleibt. Für immer. Leg nach, steig auf, schalte neue Stufen und Abzeichen frei. Runter geht’s nie wieder.' },
+  { cls: 8, tag: 'Echtheit', h: `Fake?<br>${hl('Nicht mit uns.')}`,
+    p: 'Jemand prahlt mit seinem Level? Check die Seriennummer und du weißt in Sekunden, ob die Card echt ist – oder ob da nur einer blufft.' },
+  { cls: 9, tag: 'Erst Fame', h: 'Die anderen reden.<br><span class="g">Du hast Fame.</span>', p: 'Erst Fame, dann die anderen. 💎' },
 ];
-const PERK_MS = 4800;
 
-function intro2() {
-  return {
-    html: `<section class="screen screen--dark screen--loot2" style="--rar:${RARITIES[0].color}">
-      <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
-      ${backButton('back--dark')}
-      <header class="loot-head"><h1 class="loot-title">Das holst du dir bei ${LOGO_TEXT}</h1></header>
-      <article class="perk" data-perk>
-        <div class="perk-photo">${LOOT.map((it, i) => `<img class="perk-img${i === 0 ? ' is-active' : ''}" src="${it.img}" alt="${it.alt}" draggable="false">`).join('')}</div>
-        <div class="perk-count"><b data-idx>01</b> / ${String(LOOT.length).padStart(2, '0')}</div>
-        <div class="perk-text" data-perktext aria-live="polite"></div>
-        <div class="perk-progress" aria-hidden="true"><i data-progress></i></div>
-      </article>
-      <div class="inventory" role="tablist" aria-label="Belohnungen">
-        ${LOOT.map((it, i) => `<button class="slot" type="button" role="tab" data-i="${i}"
-          style="--rar:${RARITIES[it.level].color}; --d:${i * 0.18 + 0.2}s" aria-label="Belohnung ${i + 1}">
-          ${icons[it.icon]}</button>`).join('')}
-      </div>
-      <div class="screen-foot">
-        ${dots(1)}
-        ${button('Noch mehr!', 'data-go="intro/3"')}
-      </div>
-    </section>`,
-    mount(el) {
-      const slotEls = [...el.querySelectorAll('.slot')];
-      const perk = el.querySelector('[data-perk]');
-      const text = el.querySelector('[data-perktext]');
-      const imgs = [...el.querySelectorAll('.perk-img')];
-      const idx = el.querySelector('[data-idx]');
-      const progress = el.querySelector('[data-progress]');
-      const fx = particles(el.querySelector('[data-fx]'), { mode: 'dust', color: RARITIES[0].color });
-      let i = -1;
-      const show = (n, { sound = false } = {}) => {
-        i = (n + LOOT.length) % LOOT.length;
-        const it = LOOT[i];
-        const rarity = RARITIES[it.level];
-        slotEls.forEach((s, k) => s.setAttribute('aria-selected', k === i));
-        imgs.forEach((im, k) => im.classList.toggle('is-active', k === i));
-        perk.className = `perk perk--${rarity.id}`;
-        idx.textContent = String(i + 1).padStart(2, '0');
-        text.innerHTML = `<p class="perk-lead">${it.lead}</p><p class="perk-sub">${it.sub}</p>`;
-        text.classList.remove('is-in');
-        void text.offsetWidth;
-        text.classList.add('is-in');
-        // Fortschrittsbalken bis zum nächsten automatischen Wechsel
-        progress.style.transition = 'none';
-        progress.style.width = '0%';
-        void progress.offsetWidth;
-        progress.style.transition = `width ${PERK_MS}ms linear`;
-        progress.style.width = '100%';
-        el.style.setProperty('--rar', rarity.color);
-        fx.setColor(clsColor);
-        fx.setDensity(0.6 + it.level * 0.5);
-        if (sound) rarityDrop(it.level);
-      };
-      const drops = slotEls.map((_, k) => setTimeout(() => plink(k), 200 + k * 180));
-      show(0);
-      let timer = setInterval(() => show(i + 1), PERK_MS);
-      slotEls.forEach((s, k) => s.addEventListener('click', () => {
-        clearInterval(timer);
-        show(k, { sound: true });
-        timer = setInterval(() => show(i + 1), PERK_MS);
-      }));
-      return () => { clearInterval(timer); drops.forEach(clearTimeout); fx.dispose(); };
-    },
-  };
+// Farbleiter: der Logo-Diamant in allen 10 Klassenfarben, von links nach rechts größer
+function classLadder() {
+  const path = (poly) => `M${poly.map((q) => q.join(' ')).join('L')}Z`;
+  const outline = path(DIA.outline), crown = path(DIA.crown), facets = DIA.facets.map(path).join(' ');
+  const HOLO = ['#ff9ad5', '#9fd0ff', '#fff3a8', '#b6ffd9', '#c6b6ff'];
+  return `<div class="st-ladder" aria-hidden="true">${CLASSES.map((k, i) => {
+    const id = `stl${i}`, w = 20 + i * 2.4, holo = i === CLASSES.length - 1;
+    const stops = holo
+      ? HOLO.map((h, j) => `<stop offset="${j / (HOLO.length - 1)}" stop-color="${h}"/>`).join('')
+      : `<stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="${k.color}"/><stop offset="1" stop-color="${k.color}" stop-opacity=".55"/>`;
+    return `<svg viewBox="0 0 48 40" style="--c:${holo ? '#c6b6ff' : k.color};width:${w}px;height:${(w * 0.84).toFixed(1)}px">
+      <defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1">${stops}</linearGradient></defs>
+      <path d="${outline}" fill="url(#${id})" fill-opacity=".55"/><path d="${crown}" fill="url(#${id})"/>
+      <path d="${facets}" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+  }).join('')}</div>`;
 }
 
-// 3. Die Geschichte des Gründers – mittig im Spotlight, Zeile für Zeile.
-function intro3() {
-  const lines = [
-    ['old', 'Eine Belvedere Flasche kostet im Club <b>300€ – 3.000€</b>,'],
-    ['old', `der ${hl('Fame')} hält maximal <b>einen Abend</b>,`],
-    ['old', 'die Reichweite begrenzt sich auf den Club.'],
-    ['new', `Bei ${logoInline()} bestimmst du deine Kosten,`],
-    ['new', `der ${hl('Fame')} hält dein ${hl('Leben lang')}`],
-    ['new', 'und die Reichweite ist <b>grenzenlos</b>.'],
-  ];
+// verdeckte Card: Rückseite mit Muster, Stein-Silhouette und „?“
+const storyCardBack = () => `<div class="st-cardback" aria-hidden="true">
+  <b>${LOGO_TEXT}</b><span class="st-cardback-q">${diamondSvg({ cls: 'st-cardback-dia' })}<i>?</i></span><small>Welcher Stein? Deiner.</small>
+</div>`;
+
+function introStory() {
+  const n = STORY.length;
   return {
-    html: `<section class="screen screen--dark screen--story" style="--rar:${RARITIES[4].color}">
+    html: `<section class="screen screen--dark screen--slides" style="--rar:${CLASSES[0].color}">
+      <div class="st-rays" aria-hidden="true"></div>
       <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
-      ${backButton('back--dark')}
-      <div class="story-stage">
-        <div class="spotlight" aria-hidden="true"></div>
-        <h1 class="story-title">#Real_story, BRO</h1>
-        <blockquote class="story-quote">
-          <span class="story-mark" aria-hidden="true">“</span>
-          ${lines.map(([kind, t], i) => `${i === 3 ? '<span class="story-divider" aria-hidden="true"></span>' : ''}
-            <p class="story-line story-line--${kind}" style="--i:${i + (i >= 3 ? 1 : 0)}">${t}</p>`).join('')}
-          <footer class="story-line" style="--i:8">${APP_NAME} Gründer</footer>
-        </blockquote>
+      <div class="st-bars" aria-hidden="true">${STORY.map(() => '<i><b></b></i>').join('')}</div>
+      <div class="st-top"><span class="st-logo">${LOGO_TEXT}</span><span class="st-num" data-num>1/${n}</span>
+        <button class="st-close" type="button" data-back aria-label="Schließen">×</button></div>
+      <div class="st-stack" data-stack>
+        ${STORY.map((s, i) => `<article class="st-slide${i === 0 ? ' is-on' : ''}" data-slide="${i}" style="--c:${CLASSES[s.cls].color}" aria-hidden="${i !== 0}">
+          <span class="st-tag">${s.tag}</span>
+          <h1 class="st-h">${s.h}</h1>
+          <p class="st-p">${s.p}</p>
+          ${s.extra === 'cardback' ? storyCardBack() : ''}${s.extra === 'ladder' ? classLadder() : ''}
+        </article>`).join('')}
       </div>
-      <div class="screen-foot">
-        ${dots(2)}
-        ${button('Fang an – JETZT', 'data-go="login"')}
+      <div class="st-foot">
+        <span class="st-tap" data-tap>Tippen für weiter →</span>
+        <div class="st-cta" data-cta hidden>${button('Fang an – JETZT', 'data-go="login"')}</div>
       </div>
     </section>`,
     mount(el) {
-      const canvas = el.querySelector('[data-fx]');
-      const fx = particles(canvas, { color: '#ff9a3c', mode: 'embers', density: 0.4 });
-      // Wenn der Fame-Teil erscheint: Licht, Funken, Sound
-      const timer = setTimeout(() => {
-        el.classList.add('is-lit');
-        rarityDrop(4);
-        const [x, y] = centerIn(canvas, el.querySelector('.story-divider'));
-        fx.burst(x, y, 50, '#ffb35c');
-        fx.setDensity(1);
-      }, 1700);
-      return () => { clearTimeout(timer); fx.dispose(); };
+      const slides = [...el.querySelectorAll('[data-slide]')];
+      const bars = [...el.querySelectorAll('.st-bars i')];
+      const fx = particles(el.querySelector('[data-fx]'), { color: CLASSES[0].color, mode: 'dust', density: 0.4 });
+      let idx = 0;
+      const show = (i, sound = true) => {
+        idx = Math.max(0, Math.min(n - 1, i));
+        const s = STORY[idx], color = CLASSES[s.cls].color;
+        slides.forEach((sl, j) => { sl.classList.toggle('is-on', j === idx); sl.setAttribute('aria-hidden', String(j !== idx)); });
+        bars.forEach((b, j) => b.classList.toggle('is-done', j <= idx));
+        el.style.setProperty('--rar', color);
+        el.querySelector('[data-num]').textContent = `${idx + 1}/${n}`;
+        const last = idx === n - 1;
+        el.querySelector('[data-tap]').hidden = last;
+        el.querySelector('[data-cta]').hidden = !last;
+        fx.setColor(s.cls === CLASSES.length - 1 ? '#ffffff' : color);
+        fx.setDensity(0.4 + s.cls * 0.12);
+        if (sound) classDrop(s.cls);
+      };
+      // Tippen: rechte Seite weiter, linke Seite zurück (wie bei Instagram); Wischen ebenso
+      let sx = null;
+      const stack = el.querySelector('[data-stack]');
+      el.addEventListener('pointerdown', (e) => { sx = e.clientX; });
+      el.addEventListener('pointerup', (e) => {
+        if (sx == null || e.target.closest('button, a')) { sx = null; return; }
+        const dx = e.clientX - sx;
+        sx = null;
+        if (Math.abs(dx) > 40) show(idx + (dx < 0 ? 1 : -1));
+        else show(idx + (e.clientX < el.clientWidth * 0.3 ? -1 : 1));
+      });
+      const onKey = (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); show(idx + 1); }
+        if (e.key === 'ArrowLeft') show(idx - 1);
+      };
+      document.addEventListener('keydown', onKey);
+      stack.setAttribute('aria-live', 'polite');
+      show(0, false);
+      return () => { document.removeEventListener('keydown', onKey); fx.dispose(); };
     },
   };
 }

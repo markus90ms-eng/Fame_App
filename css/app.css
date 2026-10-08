@@ -2066,3 +2066,81 @@ button, input { font: inherit; color: inherit; }
 .check-facts .mono { font-family: "Source Code Pro", monospace; letter-spacing: 0.04em; }
 .check-dot { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; background: var(--c); vertical-align: 0; box-shadow: 0 0 8px var(--c); }
 .check-note { margin: 18px var(--gutter) 0; font-size: 11px; line-height: 1.45; color: #77767a; text-align: center; }
+
+/* ---- Zeig mir mehr: Story-Slides ---------------------------------------------------------- */
+.screen--slides { overflow: hidden; user-select: none; -webkit-user-select: none; cursor: pointer; transition: background 0.5s; }
+.st-rays {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  width: 180%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--rar) 30%, transparent) 0 4deg, transparent 4deg 15deg);
+  -webkit-mask-image: radial-gradient(circle, #000 5%, transparent 50%);
+  mask-image: radial-gradient(circle, #000 5%, transparent 50%);
+  opacity: 0.6;
+  pointer-events: none;
+  animation: rays-spin 60s linear infinite;
+  transition: background 0.5s;
+}
+.st-bars { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 12px; right: 12px; z-index: 3; display: flex; gap: 4px; }
+.st-bars i { flex: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.28); overflow: hidden; }
+.st-bars i b { display: block; height: 100%; width: 0; background: #fff; transition: width 0.35s ease; }
+.st-bars i.is-done b { width: 100%; }
+.st-top { position: absolute; top: max(26px, calc(env(safe-area-inset-top) + 14px)); left: 16px; right: 10px; z-index: 3; display: flex; align-items: center; gap: 10px; }
+.st-logo { font-size: 17px; font-weight: 800; color: #fff; text-shadow: 2px 2px 0 var(--green); }
+.st-num { margin-left: auto; font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, 0.6); }
+.st-close { width: 36px; height: 36px; border: 0; background: transparent; color: #fff; font-size: 26px; line-height: 1; cursor: pointer; }
+.st-stack { position: relative; flex: 1; z-index: 2; }
+.st-slide {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  top: 26%;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: none;
+}
+.st-slide.is-on { opacity: 1; transform: none; }
+.st-tag { display: inline-block; margin-bottom: 12px; font-family: Inter, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--c); }
+.st-h { margin: 0 0 18px; font-size: clamp(32px, 10vw, 42px); font-weight: 800; line-height: 1.12; letter-spacing: -0.01em; }
+.st-h .g { color: var(--green); }
+.st-p { margin: 0; font-size: 15px; line-height: 1.55; color: #e2e0da; }
+.st-foot { position: relative; z-index: 3; padding: 0 var(--gutter) max(26px, env(safe-area-inset-bottom)); display: flex; justify-content: center; min-height: 72px; align-items: flex-end; }
+.st-tap { font-family: Inter, sans-serif; font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, 0.55); animation: nudge 1.4s ease-in-out infinite; }
+.st-cta { animation: rise 0.5s ease both; }
+.st-ladder { display: flex; align-items: flex-end; justify-content: center; gap: 2px; margin-top: 50px; }
+.st-ladder svg { filter: drop-shadow(0 0 5px var(--c)); }
+.st-cardback {
+  position: relative;
+  width: 132px;
+  height: 172px;
+  margin: 34px auto 0;
+  border: 2px solid var(--c);
+  border-radius: 12px;
+  background: radial-gradient(ellipse at 50% 40%, #1c1d1f, #0b0b0d 75%);
+  transform: rotate(-6deg);
+  box-shadow: 7px 8px 0 color-mix(in srgb, var(--c) 45%, #000), 0 0 34px color-mix(in srgb, var(--c) 45%, transparent);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.st-cardback::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--c) 14%, transparent) 0 2px, transparent 2px 10px),
+    repeating-linear-gradient(-45deg, color-mix(in srgb, var(--c) 14%, transparent) 0 2px, transparent 2px 10px);
+}
+.st-cardback > * { position: relative; }
+.st-cardback b { font-size: 16px; font-weight: 800; color: #fff; text-shadow: 1px 1px 0 var(--green); }
+.st-cardback .st-cardback-dia { width: 60px; height: 50px; color: #fff; filter: drop-shadow(0 0 8px var(--c)); }
+.st-cardback .dia-line { stroke-width: 1.8; }
+.st-cardback-q { position: relative; display: grid; place-items: center; }
+.st-cardback-q i { position: absolute; top: 4px; font-size: 34px; font-weight: 800; font-style: normal; color: var(--c); text-shadow: 0 0 14px var(--c), 0 0 2px #000; line-height: 1; }
+.st-cardback small { margin-top: 10px; padding: 2px 6px; background: var(--c); color: #0b0b0c; font-size: 8px; font-weight: 800; }

@@ -22,7 +22,7 @@ Mit Fame zeigst du schwarz auf weiß, wie groß dein Flex wirklich ist. Kein Gel
 Du entscheidest, wie hoch du gehst. Hol dir die Stufe, die zu deinem Geldbeutel passt – vom ersten Stein bis zur Legende. Jede Card ist ein Unikat mit eigener Seriennummer, nur für dich.
 
 **Einmal Fame, immer Fame.**
-Dein Status bleibt. Für immer. Du kannst nur noch nach oben: Leg nach, steig auf, schalte neue Steine, Farben und Abzeichen frei. Runter geht's nie wieder.
+Dein Status bleibt. Für immer. Du kannst nur noch nach oben: Leg nach, steig auf, schalte neue Stufen und Abzeichen frei. Runter geht's nie wieder.
 
 **Fake? Nicht mit uns.**
 Jemand prahlt mit seinem Level? Check die Seriennummer und du weißt in Sekunden, ob die Card echt ist – oder ob da nur einer blufft.
