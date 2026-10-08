@@ -597,7 +597,6 @@ function donate() {
         <div class="gem-grid">
           ${TIERS.map((t) => `<i class="gcell${collected.has(t.stage) ? ' is-found' : ''}" data-cell="${t.stage}" style="--c:${t.css}"></i>`).join('')}
         </div>
-        <span class="collection-label"><b>${collected.size}</b> von ${GEM_COUNT} Edelsteinen entdeckt</span>
       </div>
       <div class="donate-body">
         ${acc.total ? `<div class="account">Dein Konto <b>${money(acc.total)}</b> → danach <b data-after></b></div>` : ''}
@@ -817,7 +816,6 @@ function card() {
     return { html: '<section class="screen"></section>' };
   }
   const tier = TIERS.find((t) => t.id === c.tier) || TIERS[c.stage - 1] || tierFor(c.total || acc.total);
-  const isNew = !collectedStages().has(tier.stage);
   // Akzentfarbe aus dem Stein selbst – Card, Licht und Funken passen zum Edelstein
   // Seite in der Farbe der Klasse (Kontostand), Funken und Licht im Ton des Steins
   const rarity = { ...tier.rarity, color: tier.tone };
@@ -1007,7 +1005,6 @@ function card() {
           fx.setDensity(0.4 + tier.level * 0.45);
           c.revealed = true;
           c.stage = tier.stage;
-          if (isNew) timers.push(setTimeout(() => toast(`Neu in deiner Sammlung: ${collectedStages().size} von ${GEM_COUNT} Edelsteinen`), 1400));
           saveAccount();
           flip.setAttribute('aria-label', tier.name);
           if (needsFrame()) timers.push(setTimeout(showFrameNudge, 1800));
@@ -1378,7 +1375,7 @@ function rankingPage(mode) {
         ${mine
           ? `<div><b>Platz ${fmt(mine.rank)}</b> in ${esc(region || country.name)}<small>${money(mine.amount)} · Stufe ${tierFor(mine.amount).stage}</small></div>`
           : `<div><b>${state.user ? 'Noch nicht dabei' : 'Du fehlst noch'}</b><small>Zahl ein und steig ins Ranking ein</small></div>`}
-        ${button(mine ? 'Höher steigen' : 'Steig ein', 'data-go="donate"')}
+        ${button(mine ? 'Fame steigern' : 'Steig ein', 'data-go="donate"')}
       </div>
     </section>`,
     mount(el) {
