@@ -476,13 +476,13 @@ export async function saveImage(data, assets) {
 // ---- Profilbild mit Rahmen (Instagram, TikTok) ------------------------------------------
 // Wachsender Glasbogen aus Milchglas in der Farbe der Klasse: Er beginnt links neben dem Stein
 // (läuft dort schräg aus), unten sitzt der eigene Edelstein, und mit jeder erreichten Klasse
-// wächst der Bogen weiter Richtung rechte Mitte. Ab Klasse 2 kommt pro Klasse eine
-// Facetten-Medaille in ihrer Farbe dazu. Alles liegt im Kreis, weil beide Apps rund zuschneiden.
+// wächst der Bogen weiter Richtung rechte Mitte. Ab Klasse 2 kommt pro Klasse ein
+// Logo-Diamant in ihrer Farbe dazu. Alles liegt im Kreis, weil beide Apps rund zuschneiden.
 
 const AVATAR = 1080;
 const HOLO_RING = ['#ff9ad5', '#9fd0ff', '#fff3a8', '#b6ffd9', '#c6b6ff', '#ff9ad5'];
 const RO = 99, RI = 88, RM = (RO + RI) / 2, BW = RO - RI; // Bogen ganz am Rand (Einheiten von 200)
-const STEP = (Math.PI / 2 - 0.24 - 0.14) / 8;              // Abstand der Medaillen
+const STEP = (Math.PI / 2 - 0.24 - 0.14) / 8;              // Abstand der Abzeichen
 const TAIL = 0.72;                                          // Stück links neben dem Stein
 const arcEnd = (cls) => (cls === 0 ? Math.PI / 2 - 0.3 : Math.PI / 2 - (0.24 + (cls - 1) * STEP + 0.14));
 
@@ -519,6 +519,36 @@ function softPhoto(photo, S, view) {
   const r = photoRect(photo, small.width, { ...view, zoom: (view.zoom || 1) * 1.04 });
   small.getContext('2d').drawImage(photo, r.x, r.y, r.w, r.h);
   return small;
+}
+
+// Abzeichen im Design des Logo-Diamanten: Krone gefüllt, feine helle Facettenlinien, leichtes Leuchten
+function logoBadge(g, x, y, r, color, holo, u) {
+  const w = 2.3 * r, k = w / 48, ox = x - w / 2, oy = y - w * 0.43;
+  const trace = (poly) => {
+    g.beginPath();
+    poly.forEach(([px, py], j) => (j ? g.lineTo(ox + px * k, oy + py * k) : g.moveTo(ox + px * k, oy + py * k)));
+    g.closePath();
+  };
+  const fill = g.createLinearGradient(ox, oy, ox + w, oy + w);
+  if (holo) HOLO_RING.forEach((c, j) => fill.addColorStop(j / (HOLO_RING.length - 1), c));
+  else [[0, shade(color, 1.35)], [0.45, color], [1, shade(color, 0.85)]].forEach(([o, c]) => fill.addColorStop(o, c));
+  g.save();
+  g.shadowColor = hexA(holo ? '#ffffff' : color, 0.9);
+  g.shadowBlur = 3 * u;
+  g.fillStyle = fill;
+  g.globalAlpha = 0.85;
+  trace(DIA.outline); g.fill();
+  g.globalAlpha = 1;
+  trace(DIA.crown); g.fill();
+  g.restore();
+  g.strokeStyle = 'rgba(255,255,255,0.7)';
+  g.lineWidth = Math.max(0.5, 1.1 * k);
+  g.lineJoin = 'round';
+  DIA.facets.forEach((f) => { trace(f); g.stroke(); });
+  trace(DIA.outline);
+  g.strokeStyle = 'rgba(0,0,0,0.35)';
+  g.lineWidth = 1.2 * k;
+  g.stroke();
 }
 
 // cls: Farbklasse (0..9), photo: geladenes Bild (wird mittig quadratisch zugeschnitten)
@@ -594,32 +624,11 @@ export function renderAvatar(photo, cls, gemImg = null, view = {}, size = AVATAR
   g.strokeStyle = 'rgba(255,255,255,0.9)';
   g.stroke();
 
-  // Medaillen der erreichten Klassen (Mint … Holo), mit festem Abstand auf dem Bogen
+  // Abzeichen der erreichten Klassen (Mint … Holo) als Logo-Diamanten, mit festem Abstand auf dem Bogen
   for (let i = 0; i < cls; i++) {
     const a = Math.PI / 2 - 0.24 - i * STEP;
-    const x = C + RM * u * Math.cos(a), y = C + RM * u * Math.sin(a), r = 5.2 * u;
-    const mc = i + 1 === CLASSES.length - 1 ? '#e9e4ff' : CLASSES[i + 1].color;
-    g.save();
-    g.shadowColor = 'rgba(0,0,0,0.45)';
-    g.shadowBlur = 2 * u;
-    g.fillStyle = '#121115';
-    g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
-    g.restore();
-    g.lineWidth = 1.4 * u;
-    g.strokeStyle = i + 1 === CLASSES.length - 1 ? holoFill(g, x, y, r) : mc;
-    g.beginPath(); g.arc(x, y, r - 0.7 * u, 0, Math.PI * 2); g.stroke();
-    for (let f = 0; f < 8; f++) {
-      const fa = (f / 8) * Math.PI * 2;
-      g.fillStyle = hexA(mc, f % 2 ? 0.95 : 0.55);
-      g.beginPath();
-      g.moveTo(x, y);
-      g.lineTo(x + Math.cos(fa) * r * 0.62, y + Math.sin(fa) * r * 0.62);
-      g.lineTo(x + Math.cos(fa + Math.PI / 4) * r * 0.62, y + Math.sin(fa + Math.PI / 4) * r * 0.62);
-      g.closePath();
-      g.fill();
-    }
-    g.fillStyle = 'rgba(255,255,255,0.85)';
-    g.beginPath(); g.arc(x - r * 0.25, y - r * 0.3, r * 0.15, 0, Math.PI * 2); g.fill();
+    const holoBadge = i + 1 === CLASSES.length - 1;
+    logoBadge(g, C + RM * u * Math.cos(a), C + RM * u * Math.sin(a), 5.2 * u, holoBadge ? '#e9e4ff' : CLASSES[i + 1].color, holoBadge, u);
   }
 
   // Abzeichen mit dem eigenen Stein: unten in der Mitte, auf dem Bogen
