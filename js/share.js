@@ -57,6 +57,25 @@ function metalFill(g, metal, x, y, w, h) {
   return grd;
 }
 
+// Plattform-Symbole für die Card im Bild (gleiche Formen wie in der App, Raster 24 × 24)
+const GLYPH = {
+  tt: 'M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5 M14 3c.4 2.6 2.2 4.4 5 4.6',
+  sc: 'M12 3.5c-3 0-5 2.2-5 5v2.3l-1.8.6c-.5.2-.5.8 0 1l1.6.6c-.5 1.6-1.7 2.8-3.3 3.4.4.8 1.6 1 2.6 1.2.2.6.4 1.1.9 1.1.7 0 1.5-.5 2.6-.2 1 .3 1.6 1.4 2.4 1.4s1.4-1.1 2.4-1.4c1.1-.3 1.9.2 2.6.2.5 0 .7-.5.9-1.1 1-.2 2.2-.4 2.6-1.2-1.6-.6-2.8-1.8-3.3-3.4l1.6-.6c.5-.2.5-.8 0-1l-1.8-.6V8.5c0-2.8-2-5-5-5z',
+};
+function drawGlyph(g, id, x, y, s, color) {
+  if (!GLYPH[id] || typeof Path2D === 'undefined') { drawInstaGlyph(g, x, y, s, color); return; }
+  g.save();
+  g.translate(x, y);
+  g.scale(s / 18, s / 18);
+  g.translate(-3, -3);
+  g.strokeStyle = color;
+  g.lineWidth = 1.9;
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
+  g.stroke(new Path2D(GLYPH[id]));
+  g.restore();
+}
+
 function drawInstaGlyph(g, x, y, s, color) {
   g.save();
   g.strokeStyle = color;
@@ -94,7 +113,7 @@ function drawDiamondGlyph(g, x, y, s, line, fill) {
 
 // ---- Die Card selbst (gleicher Look wie in der App) --------------------------------------
 
-export function drawCard(g, { x, y, w, h, tier, serial, insta, gem, facets }) {
+export function drawCard(g, { x, y, w, h, tier, serial, acct, gem, facets }) {
   const c = tier.tone || tier.rarity.color;
   const metal = tier.metal || 'platinum';
   const line = METAL_LINE[metal];
@@ -244,11 +263,11 @@ export function drawCard(g, { x, y, w, h, tier, serial, insta, gem, facets }) {
   // Fuß: Instagram links, Echtheitssiegel rechts
   const fy = iy + ih - 26 * s;
   g.textAlign = 'left';
-  if (insta) {
+  if (acct?.handle) {
     g.font = font(600, 12 * s);
-    drawInstaGlyph(g, ix + pad, fy - 11 * s, 13 * s, '#f8f8f6');
+    drawGlyph(g, acct.id, ix + pad, fy - 11 * s, 13 * s, '#f8f8f6');
     g.fillStyle = '#f8f8f6';
-    g.fillText(`@${insta}`, ix + pad + 19 * s, fy);
+    g.fillText(`@${acct.handle}`, ix + pad + 19 * s, fy);
   }
   const sx = ix + iw - pad - 19 * s, sy = fy - 6 * s, sr = 19 * s;
   const seal = g.createConicGradient ? g.createConicGradient(0.5, sx, sy) : '#e8e8f0';
@@ -457,6 +476,15 @@ export async function shareToTikTok(data, assets) {
   if (r === 'cancelled') return { how: 'cancelled' };
   download(blob, 'fame-tiktok.png');
   return { how: 'saved', hint: 'Bild gespeichert. In TikTok: + → Hochladen → Foto wählen.' };
+}
+
+export async function shareToSnapchat(data, assets) {
+  const blob = await toBlob(await assets.story());
+  const r = await webShare(blob, data, 'fame-snap.png');
+  if (r === 'shared') return { how: 'sheet' };
+  if (r === 'cancelled') return { how: 'cancelled' };
+  download(blob, 'fame-snap.png');
+  return { how: 'saved', hint: 'Bild gespeichert. In Snapchat: Kamera → Erinnerungen → Bild wählen → Meine Story.' };
 }
 
 export async function shareElsewhere(data, assets) {

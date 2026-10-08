@@ -3,18 +3,18 @@
 import {
   TIERS, GEM_COUNT, RARITIES, CLASSES, classFor, PIN_FROM, COUNTRIES, countryById, tierFor, nextTier, fmt, money,
   amountFromPos, posFromAmount, rankFor, standings, groupTotals, makeSerial, lookupSerial, normalizeSerial, sampleSerial,
-  MAX_AMOUNT, MIN_AMOUNT,
+  MAX_AMOUNT, MIN_AMOUNT, PLATFORMS, normalizeUser, mainAccount,
 } from './data.js';
 import {
   APP_NAME, LOGO_TEXT, DIA, esc, logo, logoInline, hl, hero, button, backButton, diamondSvg,
-  diamondShadowed, icons,
+  diamondShadowed, icons, platformIcon,
 } from './ui.js';
 import { tick, plink, stageTick, classDrop, classReveal, buzz, unlockAudio, buildup } from './fx.js';
 import { createDiamond } from './diamond3d.js';
 import { facetArt, facetMask, svgUrl, holoStrength } from './cardfx.js';
 import { particles } from './particles.js';
 import {
-  renderStory, renderSticker, shareToInstagramStory, shareToTikTok, shareElsewhere, saveImage, renderAvatar, saveAvatar, photoRect,
+  renderStory, renderSticker, shareToInstagramStory, shareToTikTok, shareToSnapchat, shareElsewhere, saveImage, renderAvatar, saveAvatar, photoRect,
 } from './share.js';
 
 // ---- Zustand (lokal gespeichert, bis ein Backend existiert) -----------------
@@ -47,7 +47,7 @@ function loadAccount() {
 }
 
 const state = {
-  user: store.get('user'),            // { name, insta, country, region } wenn registriert
+  user: normalizeUser(store.get('user')), // { name, accounts, main, insta (= Name des Haupt-Accounts), country, region }
   amount: store.get('amount', 100),   // gewählter Einzahlungsbetrag
   accepted: false,
   account: loadAccount(),
@@ -217,8 +217,8 @@ function splash() {
           ${tile('ranking', icons.trophy, 'Ranking', 'Wer hat den meisten Fame?')}
           ${tile('check', '<span class="seal" aria-hidden="true">ECHT<br>FAM€</span>', 'Code prüfen', 'Ist eine Card echt?')}
         </nav>
-        <button class="link welcome-logout" type="button" data-logout>Abmelden</button>
         ${resetLink()}
+        <button class="link welcome-logout" type="button" data-logout>Abmelden</button>
       </section>`,
       mount(el) {
         bindReset(el);
@@ -460,6 +460,7 @@ function regionOptions(countryId, selected) {
 
 function login() {
   const u = state.user || {};
+  const accs = { ...(u.accounts || {}) };
   const country = u.country || 'DE';
   return {
     html: `<section class="screen screen--login">
@@ -470,8 +471,16 @@ function login() {
         <p class="sub">Leg dein Profil an und sichere dir deinen Platz.</p>
         <label class="field"><span>Name</span>
           <input id="login-name" name="name" autocomplete="given-name" required value="${esc(u.name)}" placeholder="Max"></label>
-        <label class="field"><span>Instagram</span>
-          <input id="login-insta" name="insta" autocomplete="off" autocapitalize="off" value="${esc(u.insta ? '@' + u.insta : '')}" placeholder="@deinname"></label>
+        <fieldset class="accounts">
+          <legend>Deine Accounts <small>Wo bist du unterwegs? Mehrere möglich.</small></legend>
+          <div class="acc-chips">${PLATFORMS.map((p) => `<button type="button" class="acc-chip${accs[p.id] != null ? ' is-on' : ''}" data-chip="${p.id}" aria-pressed="${accs[p.id] != null}">${platformIcon(p.id)}<span>${p.name}</span></button>`).join('')}</div>
+          ${PLATFORMS.map((p) => `<div class="acc-row" data-row="${p.id}"${accs[p.id] != null ? '' : ' hidden'}>
+            <span class="acc-ico">${platformIcon(p.id)}</span>
+            <input name="acc-${p.id}" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(accs[p.id] ? '@' + accs[p.id] : '')}" placeholder="@dein ${p.name}-Name" aria-label="${p.name}-Name">
+            <label class="acc-main" title="Dieser Name steht auf deiner Card"><input type="radio" name="main" value="${p.id}"${u.main === p.id ? ' checked' : ''}><span>Auf die Card</span></label>
+          </div>`).join('')}
+          <p class="acc-note" data-accnote hidden>Der markierte Account steht auf deiner Card.</p>
+        </fieldset>
         <div class="field-row">
           <label class="field"><span>Land</span>
             <select id="login-country" name="country">${COUNTRIES.map((c) =>
@@ -491,6 +500,28 @@ function login() {
       form.country.addEventListener('change', () => {
         form.region.innerHTML = regionOptions(form.country.value);
       });
+      // Plattformen an- und abwählen; der erste gewählte Account wird automatisch Haupt-Account
+      const rows = (id) => form.querySelector(`[data-row="${id}"]`);
+      const syncMain = () => {
+        const on = PLATFORMS.filter((p) => !rows(p.id).hidden);
+        const radios = [...form.querySelectorAll('input[name="main"]')];
+        if (!radios.some((r) => r.checked && !rows(r.value).hidden)) {
+          radios.forEach((r) => { r.checked = false; });
+          if (on[0]) form.querySelector(`input[name="main"][value="${on[0].id}"]`).checked = true;
+        }
+        form.classList.toggle('has-multi', on.length > 1);
+        form.querySelector('[data-accnote]').hidden = on.length < 2;
+      };
+      form.querySelectorAll('[data-chip]').forEach((chip) => chip.addEventListener('click', () => {
+        const row = rows(chip.dataset.chip);
+        row.hidden = !row.hidden;
+        chip.classList.toggle('is-on', !row.hidden);
+        chip.setAttribute('aria-pressed', String(!row.hidden));
+        if (!row.hidden) row.querySelector('input[name^="acc-"]').focus();
+        buzz(8);
+        syncMain();
+      }));
+      syncMain();
       form.addEventListener('submit', (e) => {
         e.preventDefault();
         const name = form.name.value.trim();
@@ -500,7 +531,9 @@ function login() {
           buzz(30);
           return;
         }
-        state.user = { name, insta: cleanHandle(form.insta.value), country: form.country.value, region: form.region.value };
+        const accounts = {};
+        PLATFORMS.forEach((p) => { const h = cleanHandle(form[`acc-${p.id}`].value); if (!rows(p.id).hidden && h) accounts[p.id] = h; });
+        state.user = normalizeUser({ name, accounts, main: form.querySelector('input[name="main"]:checked')?.value, country: form.country.value, region: form.region.value });
         store.set('user', state.user);
         const next = state.after || '';
         state.after = null;
@@ -790,7 +823,8 @@ function card() {
   // Seite in der Farbe der Klasse (Kontostand), Funken und Licht im Ton des Steins
   const rarity = { ...tier.rarity, color: tier.tone };
   const clsColor = CLASSES[tier.cls].color;
-  const insta = state.user?.insta || '';
+  const acct = mainAccount(state.user);
+  const myAccts = PLATFORMS.map((p) => mainAccount(state.user, p.id)).filter(Boolean);
   const hidden = c.revealed === false;
   // Aufstieg in eine neue Farbklasse mit dieser Card? (Vergleich mit der Card davor)
   const prevCard = acc.cards.length > 1 ? acc.cards[acc.cards.length - 2] : null;
@@ -830,9 +864,9 @@ function card() {
                 <p class="famecard-flavor">${tier.flavor}</p>
               </div>
               <div class="famecard-foot">
-                <div class="famecard-insta">${icons.insta}
-                  ${insta
-                    ? `<span>${esc(insta)}</span>`
+                <div class="famecard-insta" data-cardacct>${acct ? platformIcon(acct.id) : icons.insta}
+                  ${acct
+                    ? `<span>${esc(acct.handle)}</span>`
                     : `<input id="card-insta" data-insta placeholder="dein Instagram" autocomplete="off" autocapitalize="off" aria-label="Instagram-Name">`}
                 </div>
                 <span class="seal" title="Echtheitssiegel">ECHT<br>FAM€</span>
@@ -856,6 +890,7 @@ function card() {
         <div class="quick-share">
           <button class="qs qs--ig" type="button" data-share="ig">${icons.insta}<span>Story</span></button>
           <button class="qs qs--tt" type="button" data-share="tt">${icons.tiktok}<span>TikTok</span></button>
+          <button class="qs qs--sc" type="button" data-share="sc">${icons.snap}<span>Snap</span></button>
           <button class="qs" type="button" data-open-sheet>${icons.share}<span>Mehr</span></button>
         </div>
         <div class="foot-links">
@@ -868,15 +903,17 @@ function card() {
         <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="Card teilen">
           <div class="sheet-grip" aria-hidden="true"></div>
           <h2 class="sheet-title">Zeig´s der Welt</h2>
+          ${myAccts.length > 1 ? `<div class="acc-switch" role="radiogroup" aria-label="Name auf dem Bild">${myAccts.map((a) => `<button type="button" class="acc-chip${a.id === acct.id ? ' is-on' : ''}" data-acct="${a.id}" role="radio" aria-checked="${a.id === acct.id}">${platformIcon(a.id)}<span>@${esc(a.handle)}</span></button>`).join('')}</div>` : ''}
           <div class="sheet-preview"><img data-preview alt="Vorschau deiner Story"><span class="sheet-loading" data-loading>Story wird gebaut…</span></div>
           <div class="sheet-actions">
             <button class="share-btn share-btn--ig" type="button" data-share="ig">${icons.insta}<span>Instagram Story</span></button>
             <button class="share-btn share-btn--tt" type="button" data-share="tt">${icons.tiktok}<span>TikTok</span></button>
-            <button class="share-btn" type="button" data-share="more">${icons.share}<span>Weitere Apps</span></button>
+            <button class="share-btn share-btn--sc" type="button" data-share="sc">${icons.snap}<span>Snapchat</span></button>
+            <button class="share-btn" type="button" data-share="more">${icons.whatsapp}<span>WhatsApp &amp; mehr</span></button>
             <button class="share-btn" type="button" data-share="save">${icons.download}<span>Bild speichern</span></button>
             <button class="share-btn share-btn--avatar" type="button" data-avatar>${icons.user}<span>Profilbild-Rahmen</span></button>
           </div>
-          <p class="sheet-note">Format 9:16 – passt für Instagram Story, TikTok und WhatsApp-Status.</p>
+          <p class="sheet-note">Format 9:16 – passt für Instagram Story, TikTok, Snapchat und WhatsApp-Status.</p>
         </div>
       </div>
       <div class="sheet avatar-sheet" data-avsheet hidden>
@@ -884,7 +921,7 @@ function card() {
         <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="Profilbild mit Rahmen">
           <div class="sheet-grip" aria-hidden="true"></div>
           <h2 class="sheet-title">Dein Profilbild</h2>
-          <p class="avatar-hint">Wähl ein Foto – wir legen den Rahmen deiner Klasse darüber. Danach in Instagram oder TikTok als Profilbild einstellen.</p>
+          <p class="avatar-hint">Wähl ein Foto – wir legen den Rahmen deiner Klasse darüber. Danach in Instagram, TikTok oder Snapchat als Profilbild einstellen.</p>
           <div class="avatar-preview"><canvas data-avimg width="600" height="600" role="img" aria-label="Profilbild mit Rahmen – ziehen zum Verschieben, Zoom mit zwei Fingern oder Regler"></canvas></div>
           <div class="avatar-zoom" data-avzoomrow hidden>
             <span aria-hidden="true">−</span>
@@ -983,7 +1020,8 @@ function card() {
 
       instaInput?.addEventListener('change', () => {
         if (state.user) {
-          state.user.insta = cleanHandle(instaInput.value);
+          const h = cleanHandle(instaInput.value);
+          state.user = normalizeUser({ ...state.user, accounts: { ...state.user.accounts, ig: h }, main: h ? 'ig' : state.user.main });
           store.set('user', state.user);
         }
       });
@@ -1001,11 +1039,13 @@ function card() {
       wrap.addEventListener('pointermove', onMove);
 
       // Sharing-Bilder werden erst gebaut, wenn sie gebraucht werden, und dann wiederverwendet.
-      const shareData = () => ({ tier, serial: c.serial, insta: state.user?.insta || '', gem: dia.snapshot(900, 760) });
+      // Name auf dem Bild: Haupt-Account, im Teilen-Fenster umschaltbar (Instagram, TikTok, Snapchat)
+      let shareAcct = acct;
+      const shareData = () => ({ tier, serial: c.serial, acct: shareAcct || mainAccount(state.user), gem: dia.snapshot(900, 760) });
       let cache = {};
       const memo = (key, make) => () => (cache[key] ||= make(shareData()));
       const assets = { story: memo('story', renderStory), sticker: memo('sticker', renderSticker) };
-      instaInput?.addEventListener('change', () => { cache = {}; });
+      instaInput?.addEventListener('change', () => { cache = {}; shareAcct = mainAccount(state.user); });
 
       const sheet = el.querySelector('[data-sheet]');
       const preview = el.querySelector('[data-preview]');
@@ -1025,16 +1065,25 @@ function card() {
         setTimeout(() => { sheet.hidden = true; }, 300);
       };
       el.querySelector('[data-open-sheet]').addEventListener('click', openSheet);
+      el.querySelectorAll('[data-acct]').forEach((b) => b.addEventListener('click', () => {
+        shareAcct = mainAccount(state.user, b.dataset.acct);
+        el.querySelectorAll('[data-acct]').forEach((x) => { x.classList.toggle('is-on', x === b); x.setAttribute('aria-checked', String(x === b)); });
+        cache = {};
+        previewUrl = '';
+        el.querySelector('[data-loading]').hidden = false;
+        buzz(8);
+        openSheet();
+      }));
       el.querySelector('[data-close-sheet]').addEventListener('click', closeSheet);
 
-      const ACTIONS = { ig: shareToInstagramStory, tt: shareToTikTok, more: shareElsewhere, save: saveImage };
+      const ACTIONS = { ig: shareToInstagramStory, tt: shareToTikTok, sc: shareToSnapchat, more: shareElsewhere, save: saveImage };
       let busy = false;
       el.querySelectorAll('[data-share]').forEach((b) => b.addEventListener('click', async () => {
         if (busy) return;
         busy = true;
         b.classList.add('is-busy');
         try {
-          const data = { tier, serial: c.serial, insta: state.user?.insta || '' };
+          const data = { tier, serial: c.serial, acct: shareAcct || mainAccount(state.user) };
           const res = await ACTIONS[b.dataset.share](data, assets);
           if (res.how === 'native' || res.how === 'sheet') { closeSheet(); buzz(15); }
           if (res.hint) toast(res.hint);

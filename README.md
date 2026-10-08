@@ -23,7 +23,7 @@ python3 -m http.server 8080
 | `#/intro/1` | Loot-Drop: ein Perfekter Diamant fällt in einer Lichtsäule herunter, dazu der Claim |
 | `#/intro/2` | Übersicht: vier Belohnungen, der Text steht groß im Fokus, darüber ein kleines Foto aus dem Design. Wechselt automatisch (Fortschrittsbalken) oder per Antippen |
 | `#/intro/3` | „#Real_story, BRO“: das Zitat des Gründers mittig im Spotlight, Zeile für Zeile. Beim Fame-Teil leuchtet es auf. „Fang an – JETZT“ führt zum Login |
-| `#/login` | „Werde Fam€“: Name, Instagram, Land und Bundesland |
+| `#/login` | „Werde Fam€“: Name, Accounts (Instagram, TikTok, Snapchat), Land und Bundesland |
 | `#/donate` | Einzahlen: Diamanten, die man noch nicht besitzt, sind nur als leuchtende Silhouette mit „?“ zu sehen. Sammlung (x von 5 entdeckt), Betrag per Eintippen, +/− oder Regler, Hinweis „Nur noch X € bis …“ mit Freischalten-Knopf |
 | `#/card` | Fame-Card liegt verdeckt da. Antippen baut Spannung auf (Wackeln, Glühen, steigende Töne), dann dreht sie sich mit Lichtblitz, Funken und Gewinn-Sound um. Je höher die Stufe, desto größer der Moment |
 | `#/ranking/region` | Ranking im Bundesland: Kennzahlen, Podest mit Avataren, Rangliste, Deutschland-Kachelkarte (antippbar) und Bundesländer-Duell, eigene Platzierung unten fixiert |
@@ -95,7 +95,10 @@ Es gibt 99 Stufen, jede ist ein Edelstein: von **Stufe 1 Malachit** (ab 1 €) �
 ## Konto und mehrfaches Einzahlen
 
 Jede Einzahlung wird dem Konto gutgeschrieben. Stufe und Rang hängen an der **Summe aller Einzahlungen**, wer nochmal einzahlt, steigt also weiter auf. Die Einzahl-Seite zeigt „Dein Konto → danach“, mit jeder Einzahlung gibt es eine neue Fame-Card mit neuer Seriennummer.
-- Auf der Card steht automatisch der Instagram-Name, wenn man registriert ist, sonst gibt es ein Eingabefeld.
+- **Accounts:** Bei der Anmeldung tippt man an, wo man unterwegs ist (Instagram, TikTok, Snapchat – mehrere möglich), und trägt je Plattform den Namen ein. Bei mehreren Accounts wählt man mit „Auf die Card“ den Haupt-Account (`normalizeUser`/`mainAccount` in `js/data.js`). Er steht mit Plattform-Symbol auf der Card, im Ranking und bei der Code-Prüfung. Im Teilen-Fenster lässt sich umschalten, welcher Name auf dem Story-Bild steht. Ohne Account gibt es auf der Card ein Eingabefeld für Instagram.
+- **Übersicht nach dem Login:** Statt direkt zu bezahlen landet man auf der Startseite in der eigenen Klasse: Hauptknopf (Erste Card holen / Card aufdecken / Meine Card), darunter Kacheln für Einzahlen bzw. Fame steigern, Ranking und Code prüfen; Abmelden ganz unten.
+- **Teilen:** Instagram Story, TikTok, Snapchat, „WhatsApp & mehr“ (System-Teilen), Bild speichern, Profilbild-Rahmen.
+- **Bedingungen:** `#/terms`, vorerst ein Platzhalter.
 
 ## Card teilen: Instagram Story & TikTok
 

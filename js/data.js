@@ -312,3 +312,28 @@ export function lookupSerial(input, { account = null, user = null } = {}) {
 
 // Ein Beispiel-Code zum Ausprobieren (eine Card aus dem Ranking)
 export const sampleSerial = () => leaderboard()[3].serial;
+
+// ---- Social-Accounts ------------------------------------------------------------------------
+// Jeder wählt selbst, welche Plattformen er nutzt. Ein Account ist der Haupt-Account:
+// sein Name steht auf der Card, im Ranking und bei der Code-Prüfung.
+export const PLATFORMS = [
+  { id: 'ig', name: 'Instagram' },
+  { id: 'tt', name: 'TikTok' },
+  { id: 'sc', name: 'Snapchat' },
+];
+
+// Alte Profile hatten nur ein Instagram-Feld: in die neue Form übernehmen
+export function normalizeUser(u) {
+  if (!u) return u;
+  const accounts = { ...(u.accounts || {}) };
+  if (!u.accounts && u.insta) accounts.ig = u.insta;
+  const main = accounts[u.main] ? u.main : PLATFORMS.find((p) => accounts[p.id])?.id || '';
+  return { ...u, accounts, main, insta: accounts[main] || '' };
+}
+
+// Haupt-Account { id, name, handle } oder null
+export function mainAccount(u, id = u?.main) {
+  const handle = u?.accounts?.[id];
+  const p = PLATFORMS.find((x) => x.id === id);
+  return handle && p ? { ...p, handle } : null;
+}
