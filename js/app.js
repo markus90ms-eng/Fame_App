@@ -912,6 +912,16 @@ function card() {
           <p class="sheet-note">Format 9:16 – passt für Instagram Story, TikTok, Snapchat und WhatsApp-Status.</p>
         </div>
       </div>
+      <div class="imgview" data-imgview hidden role="dialog" aria-modal="true" aria-label="Bild speichern">
+        <button class="imgview-close" type="button" data-imgclose aria-label="Schließen">×</button>
+        <h2 class="imgview-title" data-imgtitle></h2>
+        <div class="imgview-pic"><img data-imgpic alt="Dein Fame-Bild"></div>
+        <ol class="imgview-steps" data-imgsteps></ol>
+        <div class="imgview-actions">
+          <button class="share-btn" type="button" data-imgshare hidden>${icons.share}<span>Teilen …</span></button>
+          <a class="share-btn" data-imgdl download="fame.png">${icons.download}<span>Herunterladen</span></a>
+        </div>
+      </div>
       <div class="sheet avatar-sheet" data-avsheet hidden>
         <div class="sheet-backdrop" data-close-av></div>
         <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="Profilbild mit Rahmen">
@@ -1076,6 +1086,40 @@ function card() {
       }));
       el.querySelector('[data-close-sheet]').addEventListener('click', closeSheet);
 
+      // Bildansicht: Bild groß zeigen, gedrückt halten zum Sichern, dazu die Schritte für die Plattform
+      const imgView = el.querySelector('[data-imgview]');
+      const HOLD = 'Halte das Bild gedrückt und tipp auf <b>„Zu Fotos hinzufügen“</b> (iPhone) bzw. <b>„Bild herunterladen“</b> (Android).';
+      const GUIDE = {
+        save: { title: 'Bild speichern', steps: [HOLD] },
+        ig: { title: 'In deine Instagram Story', steps: [HOLD, 'Öffne Instagram, wisch nach rechts oder tipp auf <b>+ → Story</b>.', 'Wähl das Bild aus deiner Galerie und tipp auf <b>Deine Story</b>.'] },
+        tt: { title: 'Auf TikTok posten', steps: [HOLD, 'Öffne TikTok und tipp auf <b>+ → Hochladen</b>.', 'Wähl das Foto, schreib was dazu und poste es.'] },
+        sc: { title: 'In deine Snapchat Story', steps: [HOLD, 'Öffne Snapchat und wisch nach oben zu den <b>Erinnerungen → Kamerarolle</b>.', 'Wähl das Bild, tipp auf <b>Senden an → Meine Story</b>.'] },
+        more: { title: 'WhatsApp & mehr', steps: [HOLD, 'Öffne WhatsApp und tipp auf <b>Status → Foto</b> – oder schick es direkt an Freunde.'] },
+        avatar: { title: 'Dein Profilbild', steps: [HOLD, 'Instagram: <b>Profil → Profil bearbeiten → Bild ändern</b>.', 'TikTok: <b>Profil → Profil bearbeiten → Foto ändern</b>. Snapchat: <b>Profil → Profilbild</b>.'] },
+      };
+      let imgUrl = '';
+      const openImageView = async (cv, kind, name) => {
+        const g = GUIDE[kind] || GUIDE.save;
+        el.querySelector('[data-imgtitle]').textContent = g.title;
+        el.querySelector('[data-imgsteps]').innerHTML = g.steps.map((t) => `<li>${t}</li>`).join('');
+        el.querySelector('[data-imgpic]').src = cv.toDataURL('image/png');
+        const shareBtn = el.querySelector('[data-imgshare]');
+        shareBtn.hidden = true;
+        imgView.hidden = false;
+        requestAnimationFrame(() => imgView.classList.add('is-open'));
+        const blob = await new Promise((r) => cv.toBlob(r, 'image/png'));
+        if (imgUrl) URL.revokeObjectURL(imgUrl);
+        imgUrl = URL.createObjectURL(blob);
+        const dl = el.querySelector('[data-imgdl]');
+        dl.href = imgUrl;
+        dl.download = name;
+        const file = new File([blob], name, { type: 'image/png' });
+        shareBtn.hidden = !navigator.canShare?.({ files: [file] });
+        shareBtn.onclick = () => navigator.share({ files: [file], title: APP_NAME }).catch((err) => { if (err?.name !== 'AbortError') toast('Teilen geht hier nicht – halte das Bild gedrückt zum Sichern.'); });
+      };
+      const closeImageView = () => { imgView.classList.remove('is-open'); setTimeout(() => { imgView.hidden = true; }, 250); };
+      el.querySelector('[data-imgclose]').addEventListener('click', closeImageView);
+
       const ACTIONS = { ig: shareToInstagramStory, tt: shareToTikTok, sc: shareToSnapchat, more: shareElsewhere, save: saveImage };
       let busy = false;
       el.querySelectorAll('[data-share]').forEach((b) => b.addEventListener('click', async () => {
@@ -1086,6 +1130,7 @@ function card() {
           const data = { tier, serial: c.serial, accts: shareAccts() };
           const res = await ACTIONS[b.dataset.share](data, assets);
           if (res.how === 'native' || res.how === 'sheet') { closeSheet(); buzz(15); }
+          if (res.how === 'manual') { closeSheet(); await openImageView(await assets.story(), res.platform, `fame-${c.serial}.png`); }
           if (res.hint) toast(res.hint);
         } catch {
           toast('Teilen hat nicht geklappt. Speicher das Bild und lade es selbst hoch.');
@@ -1239,12 +1284,13 @@ function card() {
       });
       avSave.addEventListener('click', async () => {
         if (!avPhoto) return;
-        const how = await saveAvatar(renderAvatar(avPhoto, avCls, gemCutout(), view), c.serial);
+        const cv = renderAvatar(avPhoto, avCls, gemCutout(), view);
+        const how = await saveAvatar(cv, c.serial);
         if (how !== 'cancelled') {
           store.set('frameCls', avCls);
           nudgeBtn.hidden = true;
         }
-        if (how === 'saved') toast('Profilbild gespeichert – jetzt in Instagram oder TikTok einstellen.');
+        if (how === 'manual') openImageView(cv, 'avatar', `fame-profilbild-${c.serial}.png`);
       });
 
       return () => {

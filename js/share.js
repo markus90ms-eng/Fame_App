@@ -465,8 +465,7 @@ export async function shareToInstagramStory(data, assets) {
   const r = await webShare(blob, data, 'fame-story.png');
   if (r === 'shared') return { how: 'sheet' };
   if (r === 'cancelled') return { how: 'cancelled' };
-  download(blob, 'fame-story.png');
-  return { how: 'saved', hint: 'Story-Bild gespeichert. In Instagram: Story → Bild aus der Galerie wählen.' };
+  return { how: 'manual', platform: 'ig' };
 }
 
 export async function shareToTikTok(data, assets) {
@@ -480,8 +479,7 @@ export async function shareToTikTok(data, assets) {
   const r = await webShare(blob, data, 'fame-tiktok.png');
   if (r === 'shared') return { how: 'sheet' };
   if (r === 'cancelled') return { how: 'cancelled' };
-  download(blob, 'fame-tiktok.png');
-  return { how: 'saved', hint: 'Bild gespeichert. In TikTok: + → Hochladen → Foto wählen.' };
+  return { how: 'manual', platform: 'tt' };
 }
 
 export async function shareToSnapchat(data, assets) {
@@ -489,8 +487,7 @@ export async function shareToSnapchat(data, assets) {
   const r = await webShare(blob, data, 'fame-snap.png');
   if (r === 'shared') return { how: 'sheet' };
   if (r === 'cancelled') return { how: 'cancelled' };
-  download(blob, 'fame-snap.png');
-  return { how: 'saved', hint: 'Bild gespeichert. In Snapchat: Kamera → Erinnerungen → Bild wählen → Meine Story.' };
+  return { how: 'manual', platform: 'sc' };
 }
 
 export async function shareElsewhere(data, assets) {
@@ -498,13 +495,13 @@ export async function shareElsewhere(data, assets) {
   const r = await webShare(blob, data, 'fame-card.png');
   if (r === 'shared') return { how: 'sheet' };
   if (r === 'cancelled') return { how: 'cancelled' };
-  download(blob, 'fame-card.png');
-  return { how: 'saved', hint: 'Bild gespeichert.' };
+  return { how: 'manual', platform: 'more' };
 }
 
-export async function saveImage(data, assets) {
-  download(await toBlob(await assets.story()), `fame-${data.serial}.png`);
-  return { how: 'saved', hint: 'Story-Bild gespeichert.' };
+// Speichern: Bildansicht öffnen (gedrückt halten → in Fotos sichern). Ein direkter Download
+// klappt auf dem Handy und in eingebetteten Ansichten oft nicht.
+export async function saveImage() {
+  return { how: 'manual', platform: 'save' };
 }
 
 // ---- Profilbild mit Rahmen (Instagram, TikTok) ------------------------------------------
@@ -707,6 +704,5 @@ export async function saveAvatar(cv, serial) {
       if (err?.name === 'AbortError') return 'cancelled';
     }
   }
-  download(blob, file.name);
-  return 'saved';
+  return 'manual';
 }

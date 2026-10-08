@@ -2305,3 +2305,30 @@ button, input { font: inherit; color: inherit; }
 .famecard-accts .famecard-insta { margin: 0; }
 .famecard-accts.is-multi .famecard-insta { font-size: 10px; gap: 5px; }
 .famecard-accts.is-multi .ico { width: 13px; height: 13px; }
+
+/* Bildansicht zum Speichern: Bild gedrückt halten → in Fotos sichern, dazu die Schritte je Plattform */
+.imgview {
+  position: absolute; inset: 0; z-index: 30;
+  display: flex; flex-direction: column; align-items: center;
+  padding: max(54px, calc(env(safe-area-inset-top) + 34px)) var(--gutter) max(20px, env(safe-area-inset-bottom));
+  background: rgba(8, 8, 10, 0.94); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  color: #fff; overflow-y: auto;
+  opacity: 0; transition: opacity 0.25s;
+}
+.imgview.is-open { opacity: 1; }
+.imgview-close { position: absolute; top: max(14px, env(safe-area-inset-top)); right: 12px; width: 44px; height: 44px; border: 0; background: none; color: #fff; font-size: 30px; line-height: 1; cursor: pointer; }
+.imgview-title { margin: 0 0 12px; font-size: 18px; font-weight: 800; text-align: center; }
+.imgview-pic { flex: 0 1 auto; display: flex; justify-content: center; min-height: 0; }
+.imgview-pic img {
+  display: block; max-width: 100%; max-height: 48vh; border-radius: 12px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.12);
+  -webkit-touch-callout: default; user-select: auto;
+}
+.imgview-steps { width: 100%; max-width: 360px; margin: 16px 0 14px; padding: 0 0 0 22px; font-size: 13px; line-height: 1.5; color: #d8d6d0; }
+.imgview-steps li { margin-bottom: 6px; }
+.imgview-steps li::marker { color: var(--rar, var(--green)); font-weight: 800; }
+.imgview-steps b { color: #fff; }
+.imgview-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; max-width: 360px; }
+.imgview-actions .share-btn { text-decoration: none; }
+.imgview-actions .share-btn[hidden] { display: none; }
+.imgview-actions:has([data-imgshare][hidden]) { grid-template-columns: 1fr; }
