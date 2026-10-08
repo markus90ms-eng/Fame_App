@@ -14,7 +14,7 @@ import { createDiamond } from './diamond3d.js';
 import { facetArt, facetMask, svgUrl, holoStrength } from './cardfx.js';
 import { particles } from './particles.js';
 import {
-  renderStory, renderSticker, shareToInstagramStory, shareToTikTok, shareElsewhere, saveImage, renderAvatar, saveAvatar,
+  renderStory, renderSticker, shareToInstagramStory, shareToTikTok, shareElsewhere, saveImage, renderAvatar, saveAvatar, photoRect,
 } from './share.js';
 
 // ---- Zustand (lokal gespeichert, bis ein Backend existiert) -----------------
@@ -868,7 +868,14 @@ function card() {
           <div class="sheet-grip" aria-hidden="true"></div>
           <h2 class="sheet-title">Dein Profilbild</h2>
           <p class="avatar-hint">Wähl ein Foto – wir legen den Rahmen deiner Klasse darüber. Danach in Instagram oder TikTok als Profilbild einstellen.</p>
-          <div class="avatar-preview"><img data-avimg alt="Profilbild mit Rahmen"></div>
+          <div class="avatar-preview"><canvas data-avimg width="600" height="600" role="img" aria-label="Profilbild mit Rahmen – ziehen zum Verschieben, Zoom mit zwei Fingern oder Regler"></canvas></div>
+          <div class="avatar-zoom" data-avzoomrow hidden>
+            <span aria-hidden="true">−</span>
+            <input type="range" min="1" max="4" step="0.01" value="1" data-avzoom aria-label="Zoom">
+            <span aria-hidden="true">+</span>
+            <button class="link" type="button" data-avreset>Zurücksetzen</button>
+          </div>
+          <p class="avatar-tip" data-avtip hidden>Ziehen zum Verschieben · zwei Finger oder Regler zum Zoomen</p>
           <input type="file" accept="image/*" data-avfile hidden>
           <div class="sheet-actions">
             <button class="share-btn" type="button" data-avpick>${icons.download}<span>Foto wählen</span></button>
@@ -1028,7 +1035,7 @@ function card() {
       const avFile = el.querySelector('[data-avfile]');
       const avSave = el.querySelector('[data-avsave]');
       const avCls = classFor(acc.total);
-      let avCanvas = null;
+      let avReady = false;
       let avGem = null;
       // Eigener Stein fürs Abzeichen: einmal im Foto-Licht ohne Bühne rendern und freistellen
       const gemCutout = () => {
@@ -1070,16 +1077,84 @@ function card() {
         plink(tier.level);
       };
       if (!hidden && needsFrame()) showFrameNudge();
+      // Ausschnitt: verschieben (ziehen), zoomen (zwei Finger, Mausrad oder Regler)
+      let avPhoto = null;
+      const view = { zoom: 1, x: 0, y: 0 };
+      const zoomInput = el.querySelector('[data-avzoom]');
+      let drawQueued = false;
+      const drawPreview = () => {
+        if (drawQueued) return;
+        drawQueued = true;
+        requestAnimationFrame(() => {
+          drawQueued = false;
+          const prev = renderAvatar(avPhoto, avCls, gemCutout(), view, avImg.width);
+          avImg.getContext('2d').clearRect(0, 0, avImg.width, avImg.height);
+          avImg.getContext('2d').drawImage(prev, 0, 0);
+        });
+      };
+      const clampView = () => {
+        if (!avPhoto) return;
+        view.zoom = Math.max(1, Math.min(4, view.zoom));
+        const r = photoRect(avPhoto, 1, view);
+        view.x = Math.max(-r.mx, Math.min(r.mx, view.x));
+        view.y = Math.max(-r.my, Math.min(r.my, view.y));
+        zoomInput.value = view.zoom;
+      };
       const showAvatar = (photo) => {
-        avCanvas = renderAvatar(photo, avCls, gemCutout());
-        avImg.src = avCanvas.toDataURL('image/jpeg', 0.9);
+        avPhoto = photo;
+        Object.assign(view, { zoom: 1, x: 0, y: 0 });
+        zoomInput.value = 1;
+        el.querySelector('[data-avzoomrow]').hidden = !photo;
+        el.querySelector('[data-avtip]').hidden = !photo;
+        avImg.classList.toggle('is-movable', !!photo);
+        avReady = true;
+        drawPreview();
         avSave.disabled = !photo;
       };
+      const pointers = new Map();
+      let pinch = null;
+      avImg.addEventListener('pointerdown', (e) => {
+        if (!avPhoto) return;
+        avImg.setPointerCapture?.(e.pointerId);
+        pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (pointers.size === 2) {
+          const [a, b] = [...pointers.values()];
+          pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), zoom: view.zoom };
+        }
+      });
+      avImg.addEventListener('pointermove', (e) => {
+        const prev = pointers.get(e.pointerId);
+        if (!prev || !avPhoto) return;
+        const cur = { x: e.clientX, y: e.clientY };
+        pointers.set(e.pointerId, cur);
+        const box = avImg.getBoundingClientRect().width;
+        if (pointers.size === 2 && pinch) {
+          const [a, b] = [...pointers.values()];
+          view.zoom = pinch.zoom * (Math.hypot(a.x - b.x, a.y - b.y) / pinch.d);
+        } else if (pointers.size === 1) {
+          view.x += (cur.x - prev.x) / box;
+          view.y += (cur.y - prev.y) / box;
+        }
+        clampView();
+        drawPreview();
+      });
+      const release = (e) => { pointers.delete(e.pointerId); if (pointers.size < 2) pinch = null; };
+      avImg.addEventListener('pointerup', release);
+      avImg.addEventListener('pointercancel', release);
+      avImg.addEventListener('wheel', (e) => {
+        if (!avPhoto) return;
+        e.preventDefault();
+        view.zoom *= e.deltaY < 0 ? 1.08 : 1 / 1.08;
+        clampView();
+        drawPreview();
+      }, { passive: false });
+      zoomInput.addEventListener('input', () => { view.zoom = +zoomInput.value; clampView(); drawPreview(); });
+      el.querySelector('[data-avreset]').addEventListener('click', () => { Object.assign(view, { zoom: 1, x: 0, y: 0 }); zoomInput.value = 1; drawPreview(); });
       const openAvatar = () => {
         closeSheet();
         avSheet.hidden = false;
         requestAnimationFrame(() => avSheet.classList.add('is-open'));
-        if (!avCanvas) showAvatar(null);
+        if (!avReady) showAvatar(null);
       };
       el.querySelector('[data-avatar]').addEventListener('click', openAvatar);
       nudgeBtn.addEventListener('click', openAvatar);
@@ -1097,8 +1172,8 @@ function card() {
         img.src = URL.createObjectURL(f);
       });
       avSave.addEventListener('click', async () => {
-        if (!avCanvas) return;
-        const how = await saveAvatar(avCanvas, c.serial);
+        if (!avPhoto) return;
+        const how = await saveAvatar(renderAvatar(avPhoto, avCls, gemCutout(), view), c.serial);
         if (how !== 'cancelled') {
           store.set('frameCls', avCls);
           nudgeBtn.hidden = true;

@@ -500,19 +500,32 @@ function holoFill(g, cx, cy, r, alpha = 1) {
 }
 
 // Weichzeichnen ohne ctx.filter (fehlt in manchen Safari-Versionen): klein rechnen und wieder vergrößern
-function softPhoto(photo, S) {
+// Ausschnitt des Fotos: view = { zoom (1 = füllt den Kreis), x, y (Verschiebung, Anteil der Bildgröße) }.
+// Liefert die Zeichen-Position so, dass das Foto den Kreis immer ganz ausfüllt.
+export function photoRect(photo, S, view = {}) {
+  const zoom = Math.max(1, view.zoom || 1);
+  const k = Math.max(S / photo.width, S / photo.height) * zoom;
+  const w = photo.width * k, h = photo.height * k;
+  const mx = (w - S) / 2, my = (h - S) / 2;
+  const x = Math.max(-mx, Math.min(mx, (view.x || 0) * S));
+  const y = Math.max(-my, Math.min(my, (view.y || 0) * S));
+  return { x: (S - w) / 2 + x, y: (S - h) / 2 + y, w, h, mx: mx / S, my: my / S };
+}
+
+// Weichzeichnen ohne ctx.filter (fehlt in manchen Safari-Versionen): klein rechnen und wieder vergrößern
+function softPhoto(photo, S, view) {
   const small = document.createElement('canvas');
   small.width = small.height = Math.round(S / 14);
-  const sg = small.getContext('2d');
-  const k = Math.max(small.width / photo.width, small.height / photo.height) * 1.04;
-  sg.drawImage(photo, (small.width - photo.width * k) / 2, (small.height - photo.height * k) / 2, photo.width * k, photo.height * k);
+  const r = photoRect(photo, small.width, { ...view, zoom: (view.zoom || 1) * 1.04 });
+  small.getContext('2d').drawImage(photo, r.x, r.y, r.w, r.h);
   return small;
 }
 
 // cls: Farbklasse (0..9), photo: geladenes Bild (wird mittig quadratisch zugeschnitten)
 // gemImg (optional): freigestelltes Bild des eigenen Steins fürs Abzeichen
-export function renderAvatar(photo, cls, gemImg = null) {
-  const S = AVATAR, u = S / 200, C = S / 2;
+// view: Ausschnitt (siehe photoRect), size: Kantenlänge in Pixel (klein für die Live-Vorschau)
+export function renderAvatar(photo, cls, gemImg = null, view = {}, size = AVATAR) {
+  const S = size, u = S / 200, C = S / 2;
   const holo = cls === CLASSES.length - 1;
   const color = CLASSES[cls].color;
   const deep = holo ? '#8f7fd6' : color;
@@ -528,8 +541,8 @@ export function renderAvatar(photo, cls, gemImg = null) {
   g.fillStyle = '#d9dee6';
   g.fillRect(0, 0, S, S);
   if (photo) {
-    const k = Math.max(S / photo.width, S / photo.height);
-    g.drawImage(photo, (S - photo.width * k) / 2, (S - photo.height * k) / 2, photo.width * k, photo.height * k);
+    const r = photoRect(photo, S, view);
+    g.drawImage(photo, r.x, r.y, r.w, r.h);
   }
   g.restore();
 
@@ -553,7 +566,7 @@ export function renderAvatar(photo, cls, gemImg = null) {
   g.save();
   band();
   g.clip();
-  if (photo) g.drawImage(softPhoto(photo, S), 0, 0, S, S);
+  if (photo) g.drawImage(softPhoto(photo, S, view), 0, 0, S, S);
   g.fillStyle = holo ? holoFill(g, C, C, C, 0.55) : hexA(color, 0.55);
   g.fillRect(0, 0, S, S);
   const rg = g.createRadialGradient(C, C, RI * u, C, C, RO * u);
