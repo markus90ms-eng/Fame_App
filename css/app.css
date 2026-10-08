@@ -2144,3 +2144,15 @@ button, input { font: inherit; color: inherit; }
 .st-cardback-q { position: relative; display: grid; place-items: center; }
 .st-cardback-q i { position: absolute; top: 4px; font-size: 34px; font-weight: 800; font-style: normal; color: var(--c); text-shadow: 0 0 14px var(--c), 0 0 2px #000; line-height: 1; }
 .st-cardback small { margin-top: 10px; padding: 2px 6px; background: var(--c); color: #0b0b0c; font-size: 8px; font-weight: 800; }
+
+/* letzte Story-Slide: #Real_story, BRO */
+.st-slide[data-slide="6"] { top: 20%; }
+.st-slide[data-slide="6"] .st-h { color: var(--green); }
+.st-quote { margin: 0; text-align: center; }
+.st-quote p { margin: 0 0 6px; font-size: 13.5px; line-height: 1.55; }
+.st-old { color: #b9b7b0; }
+.st-old b { color: #fff; }
+.st-new { color: #fff; font-weight: 700; font-size: 15px !important; }
+.st-new .o { color: #ff8a1f; }
+.st-divider { display: block; width: 70%; height: 1px; margin: 16px auto; background: linear-gradient(90deg, transparent, #ff8a1f, transparent); }
+.st-quote .hl { font-size: inherit; }

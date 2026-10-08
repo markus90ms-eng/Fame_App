@@ -6,7 +6,7 @@ import {
   MAX_AMOUNT, MIN_AMOUNT,
 } from './data.js';
 import {
-  APP_NAME, LOGO_TEXT, DIA, esc, logo, hl, hero, button, backButton, diamondSvg,
+  APP_NAME, LOGO_TEXT, DIA, esc, logo, logoInline, hl, hero, button, backButton, diamondSvg,
   diamondShadowed, icons,
 } from './ui.js';
 import { tick, plink, stageTick, classDrop, classReveal, buzz, unlockAudio, buildup } from './fx.js';
@@ -340,12 +340,24 @@ const STORY = [
     p: 'Mit Fame zeigst du schwarz auf weiß, wie groß dein Flex wirklich ist. Kein Gelaber. Keine Mietwagen-Story. Nur dein echter Status.' },
   { cls: 4, tag: 'Dein Level', h: 'Deine Card.<br>Dein Level.', extra: 'cardback',
     p: 'Welcher Stein es wird, siehst du erst, wenn du deine Card aufdeckst. Du entscheidest, wie hoch du gehst. Jede Card ein Unikat.' },
-  { cls: 6, tag: 'Für immer', h: 'Einmal Fame,<br><span class="g">immer Fame.</span>', extra: 'ladder',
+  { cls: 5, tag: 'Für immer', h: 'Einmal Fame,<br><span class="g">immer Fame.</span>', extra: 'ladder',
     p: 'Dein Status bleibt. Für immer. Leg nach, steig auf, schalte neue Stufen und Abzeichen frei. Runter geht’s nie wieder.' },
-  { cls: 8, tag: 'Echtheit', h: `Fake?<br>${hl('Nicht mit uns.')}`,
+  { cls: 6, tag: 'Echtheit', h: `Fake?<br>${hl('Nicht mit uns.')}`,
     p: 'Jemand prahlt mit seinem Level? Check die Seriennummer und du weißt in Sekunden, ob die Card echt ist – oder ob da nur einer blufft.' },
-  { cls: 9, tag: 'Erst Fame', h: 'Die anderen reden.<br><span class="g">Du hast Fame.</span>', p: 'Erst Fame, dann die anderen. 💎' },
+  { cls: 8, tag: 'Erst Fame', h: 'Die anderen reden.<br><span class="g">Du hast Fame.</span>', p: 'Erst Fame, dann die anderen. 💎' },
+  { cls: 9, tag: 'Der Vergleich', h: '#Real_story, BRO', extra: 'story', p: '' },
 ];
+
+// Letzte Slide: der Vergleich Club-Flasche gegen Fame
+const storyQuote = () => `<blockquote class="st-quote">
+  <p class="st-old">Eine Belvedere Flasche kostet im Club <b>300€ – 3.000€</b>,</p>
+  <p class="st-old">der ${hl('Fame')} hält maximal <b>einen Abend</b>,</p>
+  <p class="st-old">die Reichweite begrenzt sich auf den Club.</p>
+  <span class="st-divider" aria-hidden="true"></span>
+  <p class="st-new">Bei ${logoInline()} bestimmst du deine Kosten,</p>
+  <p class="st-new">der ${hl('Fame')} hält dein ${hl('Leben lang')}</p>
+  <p class="st-new">und die Reichweite ist <b class="o">grenzenlos</b>.</p>
+</blockquote>`;
 
 // Farbleiter: der Logo-Diamant in allen 10 Klassenfarben, von links nach rechts größer
 function classLadder() {
@@ -382,8 +394,8 @@ function introStory() {
         ${STORY.map((s, i) => `<article class="st-slide${i === 0 ? ' is-on' : ''}" data-slide="${i}" style="--c:${CLASSES[s.cls].color}" aria-hidden="${i !== 0}">
           <span class="st-tag">${s.tag}</span>
           <h1 class="st-h">${s.h}</h1>
-          <p class="st-p">${s.p}</p>
-          ${s.extra === 'cardback' ? storyCardBack() : ''}${s.extra === 'ladder' ? classLadder() : ''}
+          ${s.p ? `<p class="st-p">${s.p}</p>` : ''}
+          ${s.extra === 'cardback' ? storyCardBack() : ''}${s.extra === 'ladder' ? classLadder() : ''}${s.extra === 'story' ? storyQuote() : ''}
         </article>`).join('')}
       </div>
       <div class="st-foot">
