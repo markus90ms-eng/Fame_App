@@ -214,6 +214,8 @@ export function leaderboard() {
     const c = pickCountry();
     return { handle, amount, country: c.id, region: c.regions[Math.floor(rnd() * c.regions.length)] };
   }).sort((a, b) => b.amount - a.amount);
+  // Jede Ranking-Card bekommt eine feste Seriennummer (für die Code-Prüfung im Prototyp)
+  board.forEach((r, i) => { r.serial = makeSerial(`board|${r.handle}|${i}`); r.at = Date.UTC(2026, 0, 1) + i * 37_000_000; });
   return board;
 }
 
@@ -277,3 +279,36 @@ export function isValidSerial(serial) {
   const m = /^FM-([0-9A-Z]{4})-([0-9A-Z]{4})-([0-9A-Z])$/.exec(serial || '');
   return !!m && checkChar(m[1] + m[2]) === m[3];
 }
+
+// ---- Code-Prüfung ------------------------------------------------------------------------
+// Bringt eine Eingabe in die Form FM-XXXX-XXXX-X (Groß, ohne Leerzeichen, Bindestriche gesetzt).
+export function normalizeSerial(input) {
+  const raw = String(input || '').toUpperCase().replace(/[^0-9A-Z]/g, '').replace(/^FM/, '');
+  if (raw.length !== 9) return String(input || '').trim().toUpperCase();
+  return `FM-${raw.slice(0, 4)}-${raw.slice(4, 8)}-${raw.slice(8)}`;
+}
+
+// Sucht den Code im Verzeichnis. Im Prototyp gibt es noch keinen Server: Bekannt sind die Cards
+// auf diesem Gerät und die Cards der Ranking-Spieler. Mit Backend fragt diese Funktion den Server.
+// Ergebnis: { status: 'invalid' | 'unknown' | 'valid', serial, owner?, tier?, amount?, at?, own? }
+export function lookupSerial(input, { account = null, user = null } = {}) {
+  const serial = normalizeSerial(input);
+  if (!isValidSerial(serial)) return { status: 'invalid', serial };
+  const mine = account?.cards?.find((c) => c.serial === serial);
+  if (mine) {
+    return {
+      status: 'valid', serial, own: true, amount: mine.total, at: mine.at,
+      tier: TIERS.find((t) => t.id === mine.tier) || tierFor(mine.total),
+      owner: { handle: user?.insta || user?.name || 'du', country: user?.country || 'DE', region: user?.region || '' },
+      revealed: mine.revealed !== false,
+    };
+  }
+  const r = leaderboard().find((e) => e.serial === serial);
+  if (r) {
+    return { status: 'valid', serial, own: false, amount: r.amount, at: r.at, tier: tierFor(r.amount), owner: { handle: r.handle, country: r.country, region: r.region }, revealed: true };
+  }
+  return { status: 'unknown', serial };
+}
+
+// Ein Beispiel-Code zum Ausprobieren (eine Card aus dem Ranking)
+export const sampleSerial = () => leaderboard()[3].serial;

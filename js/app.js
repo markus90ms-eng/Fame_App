@@ -2,7 +2,7 @@
 
 import {
   TIERS, GEM_COUNT, RARITIES, CLASSES, classFor, PIN_FROM, COUNTRIES, countryById, tierFor, nextTier, fmt, money,
-  amountFromPos, posFromAmount, rankFor, standings, groupTotals, makeSerial,
+  amountFromPos, posFromAmount, rankFor, standings, groupTotals, makeSerial, lookupSerial, normalizeSerial, sampleSerial,
   MAX_AMOUNT, MIN_AMOUNT,
 } from './data.js';
 import {
@@ -70,6 +70,7 @@ const routes = {
   login: login,
   donate: donate,
   card: card,
+  check: () => checkPage(''),
   ranking: () => rankingPage(state.user?.region ? 'region' : 'country'),
   'ranking/region': () => rankingPage('region'),
   'ranking/country': () => rankingPage('country'),
@@ -79,7 +80,7 @@ export const go = (path) => { location.hash = '#/' + path; };
 
 function render() {
   const path = location.hash.replace(/^#\/?/, '');
-  const screen = routes[path] || splash;
+  const screen = routes[path] || (path.startsWith('check/') ? () => checkPage(decodeURIComponent(path.slice(6))) : splash);
   cleanup?.();
   cleanup = null;
   const { html, mount } = screen();
@@ -208,6 +209,7 @@ function splash() {
         <p class="welcome-sub">Dein Konto <b>${money(acc.total)}</b></p>
         <div class="splash-login">${button(open ? 'Meine Card' : 'Card aufdecken', 'data-go="card"')}</div>
         <a class="link welcome-more" href="#/donate">Fame steigern</a>
+        <a class="link welcome-more" href="#/check">Code prüfen</a>
         <button class="link welcome-logout" type="button" data-logout>Abmelden</button>
         ${resetLink()}
       </section>`,
@@ -238,10 +240,88 @@ function splash() {
         <span class="newhere-go">Zeig mir mehr <span aria-hidden="true">→</span></span>
       </a>
       <div class="splash-space splash-space--mid"></div>
+      ${checkTeaser()}
       <div class="splash-login">${button('Login', 'data-go="login"')}</div>
       ${resetLink()}
     </section>`,
     mount(el) { bindReset(el); },
+  };
+}
+
+// Kasten auf der Startseite: Echtheit einer Fame-Card prüfen
+const checkTeaser = () => `<a class="check-teaser" href="#/check">
+  <span class="seal" aria-hidden="true">ECHT<br>FAM€</span>
+  <span class="check-teaser-text"><b>Code prüfen</b>Ist eine Fame-Card echt? Seriennummer eingeben.</span>
+  <span class="check-teaser-go" aria-hidden="true">→</span>
+</a>`;
+
+// Code-Prüfung: Seriennummer eingeben, Prüfzeichen und Verzeichnis prüfen, Besitzer anzeigen.
+function checkPage(initial) {
+  const fmtDate = (t) => new Date(t).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return {
+    html: `<section class="screen screen--dark screen--check" style="--rar:#3dfa74">
+      ${backButton('back--dark')}
+      <header class="check-head">
+        <span class="seal check-seal" aria-hidden="true">ECHT<br>FAM€</span>
+        <h1 class="check-title">Code prüfen</h1>
+        <p class="check-sub">Jede Fame-Card hat oben rechts eine Seriennummer. Gib sie ein und prüf, ob die Card echt ist und wem sie gehört.</p>
+      </header>
+      <form class="check-form" data-form autocomplete="off">
+        <label class="check-field">
+          <span class="sr-only">Seriennummer</span>
+          <input data-code inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="FM-XXXX-XXXX-X" maxlength="20" value="${esc(initial)}">
+        </label>
+        ${button('Prüfen', 'type="submit" data-submit')}
+        <button class="link check-sample" type="button" data-sample>Beispiel-Code ausprobieren</button>
+      </form>
+      <div class="check-result" data-result aria-live="polite"></div>
+      <p class="check-note">Prototyp: Geprüft werden die Prüfziffer und das Verzeichnis dieses Geräts (deine Cards und die Ranking-Spieler). In der fertigen App fragt Fame den Code beim Fame-Server ab.</p>
+    </section>`,
+    mount(el) {
+      const input = el.querySelector('[data-code]');
+      const out = el.querySelector('[data-result]');
+      const show = (res) => {
+        out.className = `check-result is-${res.status}`;
+        out.style.removeProperty('--c');
+        if (res.status === 'invalid') {
+          buzz([30, 40, 30]);
+          out.innerHTML = `<div class="check-badge">✕</div><h2>Kein gültiger Code</h2>
+            <p><b>${esc(res.serial || '–')}</b> ist keine Fame-Seriennummer. Prüf die Schreibweise: FM-XXXX-XXXX-X. Ist sie richtig abgeschrieben, ist die Card nicht echt.</p>`;
+          return;
+        }
+        if (res.status === 'unknown') {
+          buzz(20);
+          out.innerHTML = `<div class="check-badge">?</div><h2>Nicht im Verzeichnis</h2>
+            <p><b>${esc(res.serial)}</b> hat ein gültiges Format, ist aber keiner Card zugeordnet. Vorsicht – das kann eine nachgemachte Card sein.</p>`;
+          return;
+        }
+        const t = res.tier;
+        const cls = classFor(res.amount);
+        const c = countryById(res.owner.country);
+        classDrop(cls);
+        out.style.setProperty('--c', CLASSES[cls].color);
+        out.innerHTML = `<div class="check-badge">✓</div><h2>Echt – verifizierte Fame-Card</h2>
+          <dl class="check-facts">
+            <div><dt>Gehört zu</dt><dd>@${esc(res.owner.handle)}${res.own ? ' <small>(dein Account)</small>' : ''}</dd></div>
+            <div><dt>Edelstein</dt><dd>${res.revealed ? esc(t.name) : 'noch verdeckt'} <small>Stufe ${t.stage}</small></dd></div>
+            <div><dt>Klasse</dt><dd><i class="check-dot"></i>${CLASSES[cls].name}</dd></div>
+            <div><dt>Herkunft</dt><dd>${c ? `${c.flag} ` : ''}${esc(res.owner.region || c?.name || '')}</dd></div>
+            <div><dt>Ausgestellt</dt><dd>${fmtDate(res.at)}</dd></div>
+            <div><dt>Seriennummer</dt><dd class="mono">${esc(res.serial)}</dd></div>
+          </dl>`;
+      };
+      const run = () => {
+        const v = normalizeSerial(input.value);
+        input.value = v;
+        if (!v) { input.focus(); return; }
+        show(lookupSerial(v, { account: state.account, user: state.user }));
+      };
+      el.querySelector('[data-form]').addEventListener('submit', (e) => { e.preventDefault(); run(); });
+      el.querySelector('[data-submit]').addEventListener('click', (e) => { e.preventDefault(); run(); });
+      el.querySelector('[data-sample]').addEventListener('click', () => { input.value = sampleSerial(); run(); });
+      input.addEventListener('blur', () => { if (input.value) input.value = normalizeSerial(input.value); });
+      if (initial) run();
+    },
   };
 }
 

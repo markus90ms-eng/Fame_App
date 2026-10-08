@@ -1974,3 +1974,95 @@ button, input { font: inherit; color: inherit; }
 .frame-nudge-text { flex: 1; font-size: 12px; line-height: 1.35; color: #d8d6d0; }
 .frame-nudge-text b { display: block; font-size: 13.5px; color: #fff; }
 .frame-nudge-go { font-weight: 800; color: var(--rar); animation: nudge 1.4s ease-in-out infinite; }
+
+/* ---- Code prüfen: Kasten auf der Startseite und Prüfseite --------------------------------- */
+.check-teaser {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: calc(100% - 2 * var(--gutter));
+  max-width: 340px;
+  margin: 0 auto 18px;
+  padding: 10px 14px;
+  border: 2px solid var(--dark);
+  background: #fff;
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 5px 5px 0 var(--green);
+  animation: rise 0.6s ease 1.4s both;
+}
+.check-teaser .seal { flex: 0 0 auto; animation: seal-turn 6s linear infinite; }
+.check-teaser-text { flex: 1; font-size: 12px; line-height: 1.35; color: #4a4a4f; }
+.check-teaser-text b { display: block; font-size: 15px; color: var(--ink); }
+.check-teaser-go { font-weight: 800; font-size: 18px; animation: nudge 1.4s ease-in-out 2s infinite; }
+.check-teaser:focus-visible { outline: 3px solid var(--pink); outline-offset: 4px; }
+
+.screen--check { padding-bottom: 28px; }
+.check-head { padding: max(70px, calc(env(safe-area-inset-top) + 50px)) var(--gutter) 6px; text-align: center; }
+.check-seal { width: 64px; height: 64px; font-size: 10px; margin: 0 auto 12px; }
+.check-title { margin: 0; font-family: "Cormorant Garamond", Georgia, serif; font-size: 36px; font-weight: 700; }
+.check-sub { margin: 8px auto 0; max-width: 330px; font-size: 13px; line-height: 1.45; color: #b9b7b0; }
+.check-form { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 18px var(--gutter) 0; }
+.check-field { width: 100%; max-width: 330px; }
+.check-field input {
+  width: 100%;
+  height: 58px;
+  border: 2px solid var(--green);
+  background: #fff;
+  color: var(--ink);
+  font: 800 21px "Source Code Pro", ui-monospace, monospace;
+  letter-spacing: 0.06em;
+  text-align: center;
+  text-transform: uppercase;
+  box-shadow: 5px 5px 0 var(--green);
+  outline: none;
+}
+.check-field input::placeholder { color: #b8b8bd; font-weight: 600; }
+.check-field input:focus { box-shadow: 5px 5px 0 var(--pink), 0 0 0 4px rgba(255, 47, 214, 0.2); }
+.check-sample { color: #b9b7b0; font-size: 12px; }
+
+.check-result { margin: 18px var(--gutter) 0; }
+.check-result:empty { display: none; }
+.check-result {
+  --c: #3dfa74;
+  position: relative;
+  padding: 18px 18px 14px;
+  border: 1.5px solid var(--c);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--c) 9%, #0e0e10);
+  box-shadow: 0 0 30px color-mix(in srgb, var(--c) 25%, transparent);
+  animation: rise 0.4s ease both;
+}
+.check-result.is-invalid { --c: #ff5a5f; }
+.check-result.is-valid .check-badge { background: #3dfa74; box-shadow: 0 0 14px #3dfa74; }
+.check-result.is-unknown { --c: #ffb020; }
+.check-result h2 { margin: 0 0 8px; padding-right: 44px; font-size: 17px; font-weight: 800; color: #fff; }
+.check-result p { margin: 0; font-size: 13px; line-height: 1.5; color: #d6d4cd; }
+.check-result p b { font-family: "Source Code Pro", monospace; color: #fff; }
+.check-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--c);
+  color: #0b0b0c;
+  font-weight: 900;
+  box-shadow: 0 0 14px var(--c);
+  font-size: 18px;
+}
+.check-facts { margin: 6px 0 0; display: grid; gap: 8px; }
+.check-facts div { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 7px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.check-facts div:last-child { border-bottom: 0; }
+.check-facts dt { font-size: 12px; color: #9a9893; }
+.check-facts dd { margin: 0; text-align: right; font-size: 13.5px; font-weight: 700; color: #fff; }
+.check-facts dd small { font-weight: 500; color: #9a9893; margin-left: 4px; }
+.check-facts .mono { font-family: "Source Code Pro", monospace; letter-spacing: 0.04em; }
+.check-dot { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; background: var(--c); vertical-align: 0; box-shadow: 0 0 8px var(--c); }
+.check-note { margin: 18px var(--gutter) 0; font-size: 11px; line-height: 1.45; color: #77767a; text-align: center; }

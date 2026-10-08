@@ -89,6 +89,7 @@ Es gibt 99 Stufen, jede ist ein Edelstein: von **Stufe 1 Malachit** (ab 1 €) �
   - Hinter Name, Spruch und Fuß liegt ein weicher Schatten, damit die Schrift in jeder Klasse ruhig bleibt.
   - Unter dem Stein steht nur der Name in Serifenschrift (Cormorant Garamond) mit Metall-Verlauf, dazu Zierlinie, Spruch und ein Echtheitssiegel. Keine Stufen-Zeile.
 - Oben rechts steht eine Seriennummer (`FM-XXXX-XXXX-P` mit Prüfzeichen) als Nachweis, dass die Card aus der App stammt.
+- **Code prüfen:** Auf der Startseite zwischen „Neu hier?“ und „Login“ (eingeloggt als Link unter „Fame steigern“) führt „Code prüfen“ zu `#/check`. Dort gibt man eine Seriennummer ein (Schreibweise egal, wird zu `FM-XXXX-XXXX-X` ergänzt). Ergebnis: **Echt** mit Besitzer (@Instagram-Name), Edelstein und Stufe, Klasse, Herkunft und Ausstellungsdatum, **Nicht im Verzeichnis** (Prüfzeichen stimmt, aber keine Card dazu – Vorsicht, Fälschung möglich) oder **Kein gültiger Code** (Prüfzeichen falsch). Direkter Link: `#/check/<Seriennummer>`. Im Prototyp kennt das Verzeichnis die Cards auf dem Gerät und die Ranking-Spieler (`lookupSerial` in `js/data.js`); mit Backend fragt dieselbe Funktion den Fame-Server.
 
 ## Konto und mehrfaches Einzahlen
 
