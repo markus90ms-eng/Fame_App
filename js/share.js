@@ -113,7 +113,7 @@ function drawDiamondGlyph(g, x, y, s, line, fill) {
 
 // ---- Die Card selbst (gleicher Look wie in der App) --------------------------------------
 
-export function drawCard(g, { x, y, w, h, tier, serial, acct, gem, facets }) {
+export function drawCard(g, { x, y, w, h, tier, serial, accts = [], gem, facets }) {
   const c = tier.tone || tier.rarity.color;
   const metal = tier.metal || 'platinum';
   const line = METAL_LINE[metal];
@@ -263,11 +263,17 @@ export function drawCard(g, { x, y, w, h, tier, serial, acct, gem, facets }) {
   // Fuß: Instagram links, Echtheitssiegel rechts
   const fy = iy + ih - 26 * s;
   g.textAlign = 'left';
-  if (acct?.handle) {
-    g.font = font(600, 12 * s);
-    drawGlyph(g, acct.id, ix + pad, fy - 11 * s, 13 * s, '#f8f8f6');
+  // Accounts unten links: einer in normaler Größe, mehrere kleiner übereinander
+  if (accts.length) {
+    const n = accts.length;
+    const fs = n > 1 ? 10 : 12, gs = n > 1 ? 11 : 13, lh = 14 * s;
+    g.font = font(600, fs * s);
     g.fillStyle = '#f8f8f6';
-    g.fillText(`@${acct.handle}`, ix + pad + 19 * s, fy);
+    accts.forEach((a, i) => {
+      const ly = fy - (n - 1 - i) * lh + (n > 1 ? 4 * s : 0);
+      drawGlyph(g, a.id, ix + pad, ly - (gs - 2) * s, gs * s, '#f8f8f6');
+      g.fillText(`@${a.handle}`, ix + pad + (gs + 5) * s, ly);
+    });
   }
   const sx = ix + iw - pad - 19 * s, sy = fy - 6 * s, sr = 19 * s;
   const seal = g.createConicGradient ? g.createConicGradient(0.5, sx, sy) : '#e8e8f0';

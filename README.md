@@ -95,10 +95,12 @@ Es gibt 99 Stufen, jede ist ein Edelstein: von **Stufe 1 Malachit** (ab 1 €) �
 ## Konto und mehrfaches Einzahlen
 
 Jede Einzahlung wird dem Konto gutgeschrieben. Stufe und Rang hängen an der **Summe aller Einzahlungen**, wer nochmal einzahlt, steigt also weiter auf. Die Einzahl-Seite zeigt „Dein Konto → danach“, mit jeder Einzahlung gibt es eine neue Fame-Card mit neuer Seriennummer.
-- **Accounts:** Bei der Anmeldung tippt man an, wo man unterwegs ist (Instagram, TikTok, Snapchat – mehrere möglich), und trägt je Plattform den Namen ein. Bei mehreren Accounts wählt man mit „Auf die Card“ den Haupt-Account (`normalizeUser`/`mainAccount` in `js/data.js`). Er steht mit Plattform-Symbol auf der Card, im Ranking und bei der Code-Prüfung. Im Teilen-Fenster lässt sich umschalten, welcher Name auf dem Story-Bild steht. Ohne Account gibt es auf der Card ein Eingabefeld für Instagram.
+- **Accounts:** Bei der Anmeldung tippt man an, wo man unterwegs ist (Instagram, TikTok, Snapchat – mehrere möglich), und trägt je Plattform den Namen ein. Mit „Auf die Card“ wählt man, welche Accounts auf der Card stehen – einer oder alle (`onCard`, `normalizeUser`/`cardAccounts` in `js/data.js`); der erste davon gilt fürs Ranking und die Code-Prüfung. Im Teilen-Fenster lassen sich die Accounts fürs Story-Bild an- und abwählen. Ohne Account gibt es auf der Card ein Eingabefeld für Instagram.
 - **Übersicht nach dem Login:** Statt direkt zu bezahlen landet man auf der Startseite in der eigenen Klasse: Hauptknopf (Erste Card holen / Card aufdecken / Meine Card), darunter Kacheln für Einzahlen bzw. Fame steigern, Ranking und Code prüfen; Abmelden ganz unten.
 - **Teilen:** Instagram Story, TikTok, Snapchat, „WhatsApp & mehr“ (System-Teilen), Bild speichern, Profilbild-Rahmen.
 - **Bedingungen:** `#/terms`, vorerst ein Platzhalter.
+- **Card-Seite:** oben rechts ein Haus-Knopf zurück zur Übersicht.
+- **Sound beim Aufdecken** (`buildup`/`classReveal` in `js/fx.js`): Spannung wie am Spielautomaten (ratternde Walzen, Herzschlag, steigendes Rauschen), dann der Fund wie bei WoW/Diablo: Einschlag, Loot-Glocke mit Hall und Glitzer-Schweif; ab Amethyst ein Chor, ab Rubellit ein Gewinnzähler mit Ding-Ding-Ding, ab Feuer zweiter Einschlag und Fanfare, ab Gold Münzregen.
 
 ## Card teilen: Instagram Story & TikTok
 

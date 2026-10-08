@@ -322,18 +322,25 @@ export const PLATFORMS = [
   { id: 'sc', name: 'Snapchat' },
 ];
 
-// Alte Profile hatten nur ein Instagram-Feld: in die neue Form übernehmen
+// Alte Profile hatten nur ein Instagram-Feld: in die neue Form übernehmen.
+// onCard: welche Accounts auf der Card stehen (einer oder mehrere); der erste davon ist der
+// Haupt-Account für Ranking und Code-Prüfung.
 export function normalizeUser(u) {
   if (!u) return u;
   const accounts = { ...(u.accounts || {}) };
   if (!u.accounts && u.insta) accounts.ig = u.insta;
-  const main = accounts[u.main] ? u.main : PLATFORMS.find((p) => accounts[p.id])?.id || '';
-  return { ...u, accounts, main, insta: accounts[main] || '' };
+  let onCard = (u.onCard || (u.main ? [u.main] : [])).filter((id) => accounts[id]);
+  if (!onCard.length) { const first = PLATFORMS.find((p) => accounts[p.id]); if (first) onCard = [first.id]; }
+  const main = onCard[0] || '';
+  return { ...u, accounts, onCard, main, insta: accounts[main] || '' };
 }
 
-// Haupt-Account { id, name, handle } oder null
+// Ein Account { id, name, handle } (ohne id: der Haupt-Account) oder null
 export function mainAccount(u, id = u?.main) {
   const handle = u?.accounts?.[id];
   const p = PLATFORMS.find((x) => x.id === id);
   return handle && p ? { ...p, handle } : null;
 }
+
+// Alle Accounts, die auf der Card stehen sollen
+export const cardAccounts = (u) => (u?.onCard || []).map((id) => mainAccount(u, id)).filter(Boolean);

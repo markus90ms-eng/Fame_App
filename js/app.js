@@ -3,7 +3,7 @@
 import {
   TIERS, GEM_COUNT, RARITIES, CLASSES, classFor, PIN_FROM, COUNTRIES, countryById, tierFor, nextTier, fmt, money,
   amountFromPos, posFromAmount, rankFor, standings, groupTotals, makeSerial, lookupSerial, normalizeSerial, sampleSerial,
-  MAX_AMOUNT, MIN_AMOUNT, PLATFORMS, normalizeUser, mainAccount,
+  MAX_AMOUNT, MIN_AMOUNT, PLATFORMS, normalizeUser, mainAccount, cardAccounts,
 } from './data.js';
 import {
   APP_NAME, LOGO_TEXT, DIA, esc, logo, logoInline, hl, hero, button, backButton, diamondSvg,
@@ -477,9 +477,9 @@ function login() {
           ${PLATFORMS.map((p) => `<div class="acc-row" data-row="${p.id}"${accs[p.id] != null ? '' : ' hidden'}>
             <span class="acc-ico">${platformIcon(p.id)}</span>
             <input name="acc-${p.id}" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(accs[p.id] ? '@' + accs[p.id] : '')}" placeholder="@dein ${p.name}-Name" aria-label="${p.name}-Name">
-            <label class="acc-main" title="Dieser Name steht auf deiner Card"><input type="radio" name="main" value="${p.id}"${u.main === p.id ? ' checked' : ''}><span>Auf die Card</span></label>
+            <label class="acc-main" title="Dieser Name steht auf deiner Card"><input type="checkbox" name="oncard" value="${p.id}"${(u.onCard || []).includes(p.id) ? ' checked' : ''}><span>Auf die Card</span></label>
           </div>`).join('')}
-          <p class="acc-note" data-accnote hidden>Der markierte Account steht auf deiner Card.</p>
+          <p class="acc-note" data-accnote hidden>Die markierten Accounts stehen auf deiner Card – einer oder alle.</p>
         </fieldset>
         <div class="field-row">
           <label class="field"><span>Land</span>
@@ -500,15 +500,13 @@ function login() {
       form.country.addEventListener('change', () => {
         form.region.innerHTML = regionOptions(form.country.value);
       });
-      // Plattformen an- und abwählen; der erste gewählte Account wird automatisch Haupt-Account
+      // Plattformen an- und abwählen; mindestens ein gewählter Account kommt auf die Card
       const rows = (id) => form.querySelector(`[data-row="${id}"]`);
       const syncMain = () => {
         const on = PLATFORMS.filter((p) => !rows(p.id).hidden);
-        const radios = [...form.querySelectorAll('input[name="main"]')];
-        if (!radios.some((r) => r.checked && !rows(r.value).hidden)) {
-          radios.forEach((r) => { r.checked = false; });
-          if (on[0]) form.querySelector(`input[name="main"][value="${on[0].id}"]`).checked = true;
-        }
+        const boxes = [...form.querySelectorAll('input[name="oncard"]')];
+        boxes.forEach((b) => { if (rows(b.value).hidden) b.checked = false; });
+        if (!boxes.some((b) => b.checked) && on[0]) form.querySelector(`input[name="oncard"][value="${on[0].id}"]`).checked = true;
         form.classList.toggle('has-multi', on.length > 1);
         form.querySelector('[data-accnote]').hidden = on.length < 2;
       };
@@ -521,6 +519,7 @@ function login() {
         buzz(8);
         syncMain();
       }));
+      form.querySelectorAll('input[name="oncard"]').forEach((b) => b.addEventListener('change', syncMain));
       syncMain();
       form.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -533,7 +532,7 @@ function login() {
         }
         const accounts = {};
         PLATFORMS.forEach((p) => { const h = cleanHandle(form[`acc-${p.id}`].value); if (!rows(p.id).hidden && h) accounts[p.id] = h; });
-        state.user = normalizeUser({ name, accounts, main: form.querySelector('input[name="main"]:checked')?.value, country: form.country.value, region: form.region.value });
+        state.user = normalizeUser({ name, accounts, onCard: [...form.querySelectorAll('input[name="oncard"]:checked')].map((b) => b.value), country: form.country.value, region: form.region.value });
         store.set('user', state.user);
         const next = state.after || '';
         state.after = null;
@@ -823,7 +822,7 @@ function card() {
   // Seite in der Farbe der Klasse (Kontostand), Funken und Licht im Ton des Steins
   const rarity = { ...tier.rarity, color: tier.tone };
   const clsColor = CLASSES[tier.cls].color;
-  const acct = mainAccount(state.user);
+  const onCard = cardAccounts(state.user);
   const myAccts = PLATFORMS.map((p) => mainAccount(state.user, p.id)).filter(Boolean);
   const hidden = c.revealed === false;
   // Aufstieg in eine neue Farbklasse mit dieser Card? (Vergleich mit der Card davor)
@@ -844,6 +843,7 @@ function card() {
       <div class="reveal-streak" aria-hidden="true"></div>
       <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
       ${backButton('back--dark')}
+      <button class="home-btn" type="button" data-go="" aria-label="Zur Startseite">${icons.home}</button>
       <div class="card-wrap" data-tiltwrap>
         <div class="flip" data-flip role="button" tabindex="0" aria-label="${hidden ? 'Karte aufdecken' : tier.name}">
           <article class="famecard metal-${tier.metal}${tier.legend ? ' is-legend' : ''} flip-front" data-card style="--gem:${tier.tone}">
@@ -864,11 +864,9 @@ function card() {
                 <p class="famecard-flavor">${tier.flavor}</p>
               </div>
               <div class="famecard-foot">
-                <div class="famecard-insta" data-cardacct>${acct ? platformIcon(acct.id) : icons.insta}
-                  ${acct
-                    ? `<span>${esc(acct.handle)}</span>`
-                    : `<input id="card-insta" data-insta placeholder="dein Instagram" autocomplete="off" autocapitalize="off" aria-label="Instagram-Name">`}
-                </div>
+                ${onCard.length
+                  ? `<div class="famecard-accts${onCard.length > 1 ? ' is-multi' : ''}">${onCard.map((a) => `<span class="famecard-insta">${platformIcon(a.id)}<span>${esc(a.handle)}</span></span>`).join('')}</div>`
+                  : `<div class="famecard-insta">${icons.insta}<input id="card-insta" data-insta placeholder="dein Instagram" autocomplete="off" autocapitalize="off" aria-label="Instagram-Name"></div>`}
                 <span class="seal" title="Echtheitssiegel">ECHT<br>FAM€</span>
               </div>
             </div>
@@ -903,7 +901,7 @@ function card() {
         <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="Card teilen">
           <div class="sheet-grip" aria-hidden="true"></div>
           <h2 class="sheet-title">Zeig´s der Welt</h2>
-          ${myAccts.length > 1 ? `<div class="acc-switch" role="radiogroup" aria-label="Name auf dem Bild">${myAccts.map((a) => `<button type="button" class="acc-chip${a.id === acct.id ? ' is-on' : ''}" data-acct="${a.id}" role="radio" aria-checked="${a.id === acct.id}">${platformIcon(a.id)}<span>@${esc(a.handle)}</span></button>`).join('')}</div>` : ''}
+          ${myAccts.length > 1 ? `<div class="acc-switch" aria-label="Accounts auf dem Bild">${myAccts.map((a) => { const on = onCard.some((x) => x.id === a.id); return `<button type="button" class="acc-chip${on ? ' is-on' : ''}" data-acct="${a.id}" aria-pressed="${on}">${platformIcon(a.id)}<span>@${esc(a.handle)}</span></button>`; }).join('')}</div>` : ''}
           <div class="sheet-preview"><img data-preview alt="Vorschau deiner Story"><span class="sheet-loading" data-loading>Story wird gebaut…</span></div>
           <div class="sheet-actions">
             <button class="share-btn share-btn--ig" type="button" data-share="ig">${icons.insta}<span>Instagram Story</span></button>
@@ -1021,7 +1019,7 @@ function card() {
       instaInput?.addEventListener('change', () => {
         if (state.user) {
           const h = cleanHandle(instaInput.value);
-          state.user = normalizeUser({ ...state.user, accounts: { ...state.user.accounts, ig: h }, main: h ? 'ig' : state.user.main });
+          state.user = normalizeUser({ ...state.user, accounts: { ...state.user.accounts, ig: h }, onCard: h ? ['ig'] : state.user.onCard });
           store.set('user', state.user);
         }
       });
@@ -1039,13 +1037,14 @@ function card() {
       wrap.addEventListener('pointermove', onMove);
 
       // Sharing-Bilder werden erst gebaut, wenn sie gebraucht werden, und dann wiederverwendet.
-      // Name auf dem Bild: Haupt-Account, im Teilen-Fenster umschaltbar (Instagram, TikTok, Snapchat)
-      let shareAcct = acct;
-      const shareData = () => ({ tier, serial: c.serial, acct: shareAcct || mainAccount(state.user), gem: dia.snapshot(900, 760) });
+      // Accounts auf dem Bild: wie auf der Card, im Teilen-Fenster an- und abwählbar (Instagram, TikTok, Snapchat)
+      let shareIds = onCard.map((a) => a.id);
+      const shareAccts = () => shareIds.map((id) => mainAccount(state.user, id)).filter(Boolean);
+      const shareData = () => ({ tier, serial: c.serial, accts: shareAccts(), gem: dia.snapshot(900, 760) });
       let cache = {};
       const memo = (key, make) => () => (cache[key] ||= make(shareData()));
       const assets = { story: memo('story', renderStory), sticker: memo('sticker', renderSticker) };
-      instaInput?.addEventListener('change', () => { cache = {}; shareAcct = mainAccount(state.user); });
+      instaInput?.addEventListener('change', () => { cache = {}; shareIds = cardAccounts(state.user).map((a) => a.id); });
 
       const sheet = el.querySelector('[data-sheet]');
       const preview = el.querySelector('[data-preview]');
@@ -1066,8 +1065,12 @@ function card() {
       };
       el.querySelector('[data-open-sheet]').addEventListener('click', openSheet);
       el.querySelectorAll('[data-acct]').forEach((b) => b.addEventListener('click', () => {
-        shareAcct = mainAccount(state.user, b.dataset.acct);
-        el.querySelectorAll('[data-acct]').forEach((x) => { x.classList.toggle('is-on', x === b); x.setAttribute('aria-checked', String(x === b)); });
+        const id = b.dataset.acct;
+        const on = shareIds.includes(id);
+        if (on && shareIds.length === 1) return; // mindestens ein Account bleibt drauf
+        shareIds = on ? shareIds.filter((x) => x !== id) : PLATFORMS.map((p) => p.id).filter((x) => x === id || shareIds.includes(x));
+        b.classList.toggle('is-on', !on);
+        b.setAttribute('aria-pressed', String(!on));
         cache = {};
         previewUrl = '';
         el.querySelector('[data-loading]').hidden = false;
@@ -1083,7 +1086,7 @@ function card() {
         busy = true;
         b.classList.add('is-busy');
         try {
-          const data = { tier, serial: c.serial, acct: shareAcct || mainAccount(state.user) };
+          const data = { tier, serial: c.serial, accts: shareAccts() };
           const res = await ACTIONS[b.dataset.share](data, assets);
           if (res.how === 'native' || res.how === 'sheet') { closeSheet(); buzz(15); }
           if (res.hint) toast(res.hint);

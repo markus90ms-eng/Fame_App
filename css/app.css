@@ -2290,3 +2290,20 @@ button, input { font: inherit; color: inherit; }
 .screen--welcome .welcome-logout { margin: auto auto max(18px, env(safe-area-inset-bottom)); padding-top: 22px; }
 .screen--welcome .welcome-reset { margin-bottom: 0; }
 .screen--welcome .btn { animation-delay: 0.3s; }
+
+/* Card-Seite: Knopf oben rechts zur Startseite (Übersicht) */
+.home-btn {
+  position: absolute; top: max(36px, env(safe-area-inset-top)); right: 14px; z-index: 5;
+  width: 44px; height: 44px; display: grid; place-items: center;
+  border: 1.5px solid color-mix(in srgb, var(--rar) 60%, transparent); border-radius: 6px;
+  background: rgba(20, 20, 20, 0.35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  color: #fff; cursor: pointer;
+}
+.home-btn .ico { width: 22px; height: 22px; }
+.home-btn:active { transform: scale(0.94); }
+
+/* Card: mehrere Accounts klein übereinander */
+.famecard-accts { position: relative; z-index: 3; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.famecard-accts .famecard-insta { margin: 0; }
+.famecard-accts.is-multi .famecard-insta { font-size: 10px; gap: 5px; }
+.famecard-accts.is-multi .ico { width: 13px; height: 13px; }
