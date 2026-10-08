@@ -474,12 +474,17 @@ export async function saveImage(data, assets) {
 }
 
 // ---- Profilbild mit Rahmen (Instagram, TikTok) ------------------------------------------
-// Polierter Metallring in der Farbe der Klasse, unten in der Mitte ein Abzeichen mit dem Stein
-// wie bei einem Siegelring. Alles liegt im Kreis, weil beide Apps das Profilbild rund zuschneiden.
-// Ab 1 Mio. € ist der Ring in Regenbogenfarben.
+// Wachsender Glasbogen aus Milchglas in der Farbe der Klasse: Er beginnt links neben dem Stein
+// (läuft dort schräg aus), unten sitzt der eigene Edelstein, und mit jeder erreichten Klasse
+// wächst der Bogen weiter Richtung rechte Mitte. Ab Klasse 2 kommt pro Klasse eine
+// Facetten-Medaille in ihrer Farbe dazu. Alles liegt im Kreis, weil beide Apps rund zuschneiden.
 
 const AVATAR = 1080;
 const HOLO_RING = ['#ff9ad5', '#9fd0ff', '#fff3a8', '#b6ffd9', '#c6b6ff', '#ff9ad5'];
+const RO = 99, RI = 88, RM = (RO + RI) / 2, BW = RO - RI; // Bogen ganz am Rand (Einheiten von 200)
+const STEP = (Math.PI / 2 - 0.24 - 0.14) / 8;              // Abstand der Medaillen
+const TAIL = 0.72;                                          // Stück links neben dem Stein
+const arcEnd = (cls) => (cls === 0 ? Math.PI / 2 - 0.3 : Math.PI / 2 - (0.24 + (cls - 1) * STEP + 0.14));
 
 function shade(hex, k) {
   const n = parseInt(hex.slice(1), 16);
@@ -487,26 +492,38 @@ function shade(hex, k) {
   return `rgb(${f((n >> 16) & 255)},${f((n >> 8) & 255)},${f(n & 255)})`;
 }
 
-// cls: Farbklasse (0..9), photo: geladenes Bild (beliebiges Format, wird mittig quadratisch zugeschnitten)
+// Regenbogen-Verlauf (konisch, sonst linear als Ersatz für ältere Browser)
+function holoFill(g, cx, cy, r, alpha = 1) {
+  const gr = g.createConicGradient ? g.createConicGradient(0, cx, cy) : g.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+  HOLO_RING.forEach((c, i) => gr.addColorStop(i / (HOLO_RING.length - 1), alpha < 1 ? hexA(c, alpha) : c));
+  return gr;
+}
+
+// Weichzeichnen ohne ctx.filter (fehlt in manchen Safari-Versionen): klein rechnen und wieder vergrößern
+function softPhoto(photo, S) {
+  const small = document.createElement('canvas');
+  small.width = small.height = Math.round(S / 14);
+  const sg = small.getContext('2d');
+  const k = Math.max(small.width / photo.width, small.height / photo.height) * 1.04;
+  sg.drawImage(photo, (small.width - photo.width * k) / 2, (small.height - photo.height * k) / 2, photo.width * k, photo.height * k);
+  return small;
+}
+
+// cls: Farbklasse (0..9), photo: geladenes Bild (wird mittig quadratisch zugeschnitten)
 // gemImg (optional): freigestelltes Bild des eigenen Steins fürs Abzeichen
 export function renderAvatar(photo, cls, gemImg = null) {
-  const S = AVATAR, u = S / 200; // Maßstab: Entwurf war 200 × 200
+  const S = AVATAR, u = S / 200, C = S / 2;
   const holo = cls === CLASSES.length - 1;
   const color = CLASSES[cls].color;
+  const deep = holo ? '#8f7fd6' : color;
   const cv = document.createElement('canvas');
   cv.width = cv.height = S;
   const g = cv.getContext('2d');
-  const metal = (x0, y0, x1, y1) => {
-    const gr = g.createLinearGradient(x0, y0, x1, y1);
-    if (holo) HOLO_RING.forEach((c, i) => gr.addColorStop(i / (HOLO_RING.length - 1), c));
-    else [[0, '#ffffff'], [0.3, color], [0.65, shade(color, 0.55)], [1, color]].forEach(([o, c]) => gr.addColorStop(o, c));
-    return gr;
-  };
 
   // Foto rund zuschneiden
   g.save();
   g.beginPath();
-  g.arc(S / 2, S / 2, S / 2, 0, Math.PI * 2);
+  g.arc(C, C, C, 0, Math.PI * 2);
   g.clip();
   g.fillStyle = '#d9dee6';
   g.fillRect(0, 0, S, S);
@@ -516,64 +533,110 @@ export function renderAvatar(photo, cls, gemImg = null) {
   }
   g.restore();
 
-  // Metallring mit dunkler Außen- und heller Innenkante, dazu ein Glanzlicht oben links
-  g.lineWidth = 13 * u;
-  g.strokeStyle = metal(0, 0, S, S);
-  g.beginPath(); g.arc(S / 2, S / 2, 93 * u, 0, Math.PI * 2); g.stroke();
-  g.lineWidth = 1.2 * u;
-  g.strokeStyle = 'rgba(0,0,0,0.25)';
-  g.beginPath(); g.arc(S / 2, S / 2, 99.3 * u, 0, Math.PI * 2); g.stroke();
-  g.lineWidth = 1 * u;
-  g.strokeStyle = 'rgba(255,255,255,0.6)';
-  g.beginPath(); g.arc(S / 2, S / 2, 86.5 * u, 0, Math.PI * 2); g.stroke();
-  g.lineWidth = 3 * u;
-  g.lineCap = 'round';
-  g.strokeStyle = 'rgba(255,255,255,0.8)';
-  g.beginPath(); g.arc(S / 2, S / 2, 93 * u, Math.PI * 1.08, Math.PI * 1.38); g.stroke();
-
-  // Abzeichen mit dem Stein unten in der Mitte
-  const bx = S / 2, by = 166 * u, br = 28 * u;
-  g.fillStyle = '#0b0b0d';
-  g.beginPath(); g.arc(bx, by, br, 0, Math.PI * 2); g.fill();
-  g.lineWidth = 2.2 * u;
-  g.strokeStyle = metal(bx - br, by - br, bx + br, by + br);
-  g.beginPath(); g.arc(bx, by, br - 1.5 * u, 0, Math.PI * 2); g.stroke();
-  if (gemImg) {
-    // der eigene Stein, freigestellt, mittig im Abzeichen
-    const box = (br - 4 * u) * 2 * 0.94;
-    const k = box / Math.max(gemImg.width, gemImg.height);
-    const w = gemImg.width * k, h = gemImg.height * k;
-    g.save();
+  // Form des Bogens: links spitz auslaufend, rechts rund geschlossen
+  const aEnd = arcEnd(cls), aTail = Math.PI / 2 + TAIL;
+  const band = () => {
+    const ro = RO * u, ri = RI * u;
     g.beginPath();
-    g.arc(bx, by, br - 3.5 * u, 0, Math.PI * 2);
-    g.clip();
-    const glow = g.createRadialGradient(bx, by, 0, bx, by, br);
-    glow.addColorStop(0, holo ? 'rgba(255,255,255,0.35)' : hexA(color, 0.45));
-    glow.addColorStop(1, 'rgba(0,0,0,0)');
-    g.fillStyle = glow;
-    g.fillRect(bx - br, by - br, br * 2, br * 2);
-    g.drawImage(gemImg, bx - w / 2, by - h / 2, w, h);
-    g.restore();
-    return cv;
-  }
-
-  // Stein: ganz in der Klassenfarbe gefüllt, darüber feine helle Facettenlinien
-  const gw = 28 * u, gk = gw / 48, gx = bx - gw / 2, gy = by - gw * 0.46;
-  const trace = (poly) => {
-    g.beginPath();
-    poly.forEach(([px, py], i) => (i ? g.lineTo(gx + px * gk, gy + py * gk) : g.moveTo(gx + px * gk, gy + py * gk)));
+    g.arc(C, C, ro, aEnd, aTail, false);
+    for (let i = 0; i <= 24; i++) {
+      const t = i / 24, th = aTail - TAIL * t, q = Math.min(1, t / 0.55), e = q * q * (3 - 2 * q);
+      const r = ro - (ro - ri) * e;
+      g.lineTo(C + r * Math.cos(th), C + r * Math.sin(th));
+    }
+    g.arc(C, C, ri, Math.PI / 2, aEnd, true);
+    g.arc(C + RM * u * Math.cos(aEnd), C + RM * u * Math.sin(aEnd), (BW / 2) * u, aEnd + Math.PI, aEnd + 2 * Math.PI, false);
     g.closePath();
   };
-  const fill = g.createLinearGradient(gx, gy, gx + gw, gy + gw);
-  if (holo) HOLO_RING.forEach((c, i) => fill.addColorStop(i / (HOLO_RING.length - 1), c));
-  else [[0, '#ffffff'], [0.35, color], [1, shade(color, 0.6)]].forEach(([o, c]) => fill.addColorStop(o, c));
-  g.fillStyle = fill;
-  trace(DIA.outline);
-  g.fill();
-  g.strokeStyle = 'rgba(255,255,255,0.7)';
-  g.lineWidth = 0.55 * u;
+
+  // Milchglas: Foto darunter weich, getönt, zu den Kanten hin satter
+  g.save();
+  band();
+  g.clip();
+  if (photo) g.drawImage(softPhoto(photo, S), 0, 0, S, S);
+  g.fillStyle = holo ? holoFill(g, C, C, C, 0.55) : hexA(color, 0.55);
+  g.fillRect(0, 0, S, S);
+  const rg = g.createRadialGradient(C, C, RI * u, C, C, RO * u);
+  rg.addColorStop(0, hexA(deep, 0.95));
+  rg.addColorStop(0.18, hexA(deep, 0.35));
+  rg.addColorStop(0.5, 'rgba(255,255,255,0.2)');
+  rg.addColorStop(0.8, hexA(deep, 0.3));
+  rg.addColorStop(1, hexA(deep, 0.95));
+  g.fillStyle = rg;
+  g.fillRect(0, 0, S, S);
+  g.lineCap = 'round';
+  g.lineWidth = 1.8 * u;
+  g.strokeStyle = 'rgba(255,255,255,0.75)';
+  g.beginPath();
+  g.arc(C, C, (RM + 2) * u, aEnd + 0.06, Math.PI / 2 + TAIL * 0.6);
+  g.stroke();
+  g.restore();
+  // Glaskante rundherum
+  band();
   g.lineJoin = 'round';
-  DIA.facets.forEach((f) => { trace(f); g.stroke(); });
+  g.lineWidth = 1.6 * u;
+  g.strokeStyle = 'rgba(0,0,0,0.22)';
+  g.stroke();
+  g.lineWidth = 0.9 * u;
+  g.strokeStyle = 'rgba(255,255,255,0.9)';
+  g.stroke();
+
+  // Medaillen der erreichten Klassen (Mint … Holo), mit festem Abstand auf dem Bogen
+  for (let i = 0; i < cls; i++) {
+    const a = Math.PI / 2 - 0.24 - i * STEP;
+    const x = C + RM * u * Math.cos(a), y = C + RM * u * Math.sin(a), r = 5.2 * u;
+    const mc = i + 1 === CLASSES.length - 1 ? '#e9e4ff' : CLASSES[i + 1].color;
+    g.save();
+    g.shadowColor = 'rgba(0,0,0,0.45)';
+    g.shadowBlur = 2 * u;
+    g.fillStyle = '#121115';
+    g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+    g.restore();
+    g.lineWidth = 1.4 * u;
+    g.strokeStyle = i + 1 === CLASSES.length - 1 ? holoFill(g, x, y, r) : mc;
+    g.beginPath(); g.arc(x, y, r - 0.7 * u, 0, Math.PI * 2); g.stroke();
+    for (let f = 0; f < 8; f++) {
+      const fa = (f / 8) * Math.PI * 2;
+      g.fillStyle = hexA(mc, f % 2 ? 0.95 : 0.55);
+      g.beginPath();
+      g.moveTo(x, y);
+      g.lineTo(x + Math.cos(fa) * r * 0.62, y + Math.sin(fa) * r * 0.62);
+      g.lineTo(x + Math.cos(fa + Math.PI / 4) * r * 0.62, y + Math.sin(fa + Math.PI / 4) * r * 0.62);
+      g.closePath();
+      g.fill();
+    }
+    g.fillStyle = 'rgba(255,255,255,0.85)';
+    g.beginPath(); g.arc(x - r * 0.25, y - r * 0.3, r * 0.15, 0, Math.PI * 2); g.fill();
+  }
+
+  // Abzeichen mit dem eigenen Stein: unten in der Mitte, auf dem Bogen
+  const br = 14 * u, bx = C, by = S - br - 0.5 * u;
+  g.save();
+  g.shadowColor = 'rgba(0,0,0,0.45)';
+  g.shadowBlur = 4 * u;
+  g.fillStyle = '#0b0b0d';
+  g.beginPath(); g.arc(bx, by, br, 0, Math.PI * 2); g.fill();
+  g.restore();
+  g.lineWidth = 2.4 * u;
+  g.strokeStyle = holo ? holoFill(g, bx, by, br) : hexA(color, 0.9);
+  g.beginPath(); g.arc(bx, by, br - 1.2 * u, 0, Math.PI * 2); g.stroke();
+  g.lineWidth = 0.7 * u;
+  g.strokeStyle = 'rgba(255,255,255,0.85)';
+  g.beginPath(); g.arc(bx, by, br - 0.3 * u, Math.PI * 1.05, Math.PI * 1.6); g.stroke();
+  g.save();
+  g.beginPath(); g.arc(bx, by, br - 2.4 * u, 0, Math.PI * 2); g.clip();
+  const glow = g.createRadialGradient(bx, by, 0, bx, by, br);
+  glow.addColorStop(0, holo ? 'rgba(255,255,255,0.35)' : hexA(color, 0.45));
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = glow;
+  g.fillRect(bx - br, by - br, br * 2, br * 2);
+  if (gemImg) {
+    const box = (br - 2.4 * u) * 2 * 0.95, k = box / Math.max(gemImg.width, gemImg.height);
+    g.drawImage(gemImg, bx - (gemImg.width * k) / 2, by - (gemImg.height * k) / 2, gemImg.width * k, gemImg.height * k);
+  } else {
+    drawDiamondGlyph(g, bx - 9 * u, by - 7.5 * u, 18 * u, 'rgba(255,255,255,0.85)', color);
+  }
+  g.restore();
   return cv;
 }
 
