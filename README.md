@@ -107,9 +107,9 @@ Jede Einzahlung wird dem Konto gutgeschrieben. Stufe und Rang hängen an der **S
 Nach dem Aufdecken stehen unter der Card drei Knöpfe: **Story** (Instagram), **TikTok** und **Mehr**. „Mehr“ öffnet ein Fenster mit Vorschau der fertigen Story und den Zielen Instagram Story, TikTok, weitere Apps und Bild speichern.
 
 - **Story-Bild 1080×1920 (9:16):**
-  - Oben das Logo, direkt darunter „Erst Fame, dann die anderen.“, dann die Card (600 px breit) im Look der Stufe.
+  - Oben das Logo, darunter in einer Zeile „Erst Fame, dann die anderen.“, dann die Card (740 px breit) im Look der Stufe.
   - Hintergrund, Strahlen und Funken in der Stufenfarbe.
-  - Freie Zonen geprüft: Logo und Slogan liegen unter der Profilzeile, die Card endet vor dem Antwortfeld von Instagram und vor Beschreibung und Button-Spalte von TikTok.
+  - Freie Zonen geprüft (Instagram, Snapchat, TikTok): Logo und Slogan liegen unter der Profilzeile, die Card endet vor dem Antwortfeld und bleibt links von der Button-Spalte und über der Beschreibung von TikTok.
 - **Profilbild-Rahmen:** Auf der Card-Seite unter „Mehr“ → „Profilbild-Rahmen“ ein Foto wählen. Die App legt einen wachsenden Glasbogen aus Milchglas in der Farbe der eigenen Klasse darüber: Er beginnt links neben dem Stein und läuft dort schräg aus, unten sitzt der eigene Edelstein (echtes 3D-Bild, freigestellt), und mit jeder erreichten Klasse wächst der Bogen weiter Richtung rechte Mitte. Ab Klasse 2 kommt pro Klasse ein Logo-Diamant in ihrer Farbe dazu, bei Diamant-Holo sind es 9 und der Bogen reicht bis zur rechten Mitte. Den Ausschnitt passt man in der Vorschau an: ziehen zum Verschieben, zwei Finger, Mausrad oder Regler zum Zoomen (1- bis 4-fach), „Zurücksetzen“ stellt die Mitte wieder her. Das Foto füllt den Kreis dabei immer ganz aus. Ergebnis: 1080 × 1080 px, alles im Kreis (`renderAvatar` in `js/share.js`).
 - **Erinnerung an den neuen Rahmen:** Steigt man mit einer Einzahlung in eine neue Farbklasse auf, erscheint nach dem Aufdecken der Card „Neue Klasse: …! Hol dir deinen neuen Profilbild-Rahmen“. Hat man schon einen Rahmen aus einer niedrigeren Klasse erstellt, bleibt der Hinweis stehen, bis der neue gespeichert ist (`fame.frameCls`).
 - **Card-Sticker** (transparenter Rand) für den nativen Instagram-Weg: Instagram legt ihn auf einen Verlauf in der Stufenfarbe, der Nutzer kann ihn frei platzieren.

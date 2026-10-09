@@ -341,9 +341,10 @@ export async function renderStory(data) {
 
   // Freie Zonen: Instagram verdeckt oben ~250 px (Profilzeile) und unten ~300 px (Antwortfeld),
   // TikTok zusätzlich rechts die Button-Spalte (ab x ≈ 930) und unten links die Beschreibung
-  // (ab y ≈ 1450). Darum: Logo und Slogan oben unter der Profilzeile, Card etwas kleiner darunter.
-  const cardW = 600, cardH = Math.round(600 * CARD_RATIO);
-  const cardX = (STORY_W - cardW) / 2, cardY = 552;
+  // (ab y ≈ 1450). Darum: Logo und Slogan (eine Zeile) oben unter der Profilzeile, Card darunter
+  // so groß, dass sie auf allen drei Plattformen frei bleibt.
+  const cardW = 740, cardH = Math.round(740 * CARD_RATIO);
+  const cardX = (STORY_W - cardW) / 2, cardY = 452;
   const ccx = STORY_W / 2, ccy = cardY + cardH * 0.4;
 
   // Strahlenkranz + Licht hinter der Card
@@ -380,19 +381,24 @@ export async function renderStory(data) {
   // Logo oben, darunter der Slogan (beides unterhalb der Profilzeile von Instagram/TikTok)
   g.textAlign = 'center';
   g.textBaseline = 'alphabetic';
-  g.font = font(800, 72);
+  g.font = font(800, 64);
   const lw = g.measureText(LOGO_TEXT).width;
-  const lx = STORY_W / 2 - 32;
+  const lx = STORY_W / 2 - 28;
   g.fillStyle = '#3dfa74';
-  g.fillText(LOGO_TEXT, lx + 5, 346);
+  g.fillText(LOGO_TEXT, lx + 4, 323);
   g.fillStyle = '#f8f8f6';
-  g.fillText(LOGO_TEXT, lx, 340);
-  drawDiamondGlyph(g, lx + lw / 2 + 10, 278, 60, '#f8f8f6', '#3dfa74');
-  g.font = font(800, 40);
+  g.fillText(LOGO_TEXT, lx, 318);
+  drawDiamondGlyph(g, lx + lw / 2 + 9, 263, 53, '#f8f8f6', '#3dfa74');
+  g.font = font(800, 34);
+  const s1 = 'Erst Fame, ', s2 = 'dann die anderen.';
+  const w1 = g.measureText(s1).width, w2 = g.measureText(s2).width;
+  const sx0 = STORY_W / 2 - (w1 + w2) / 2;
+  g.textAlign = 'left';
   g.fillStyle = '#f8f8f6';
-  g.fillText('Erst Fame,', STORY_W / 2, 428);
+  g.fillText(s1, sx0, 398);
   g.fillStyle = '#3dfa74';
-  g.fillText('dann die anderen.', STORY_W / 2, 478);
+  g.fillText(s2, sx0 + w1, 398);
+  g.textAlign = 'center';
 
   drawCard(g, { x: cardX, y: cardY, w: cardW, h: cardH, ...data });
 
