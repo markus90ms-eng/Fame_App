@@ -17,7 +17,7 @@ export const SOCIAL = {
     clientKey: '',
   },
   // Adresse des kleinen Servers, der den Code von TikTok/Instagram gegen das Profil tauscht
-  // (server/tiktok-worker.js, ein Cloudflare Worker für beide)
+  // (server/connect-worker.js, ein Cloudflare Worker für beide)
   server: '',
 };
 
