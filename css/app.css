@@ -2332,3 +2332,21 @@ button, input { font: inherit; color: inherit; }
 .imgview-actions .share-btn { text-decoration: none; }
 .imgview-actions .share-btn[hidden] { display: none; }
 .imgview-actions:has([data-imgshare][hidden]) { grid-template-columns: 1fr; }
+
+/* Accounts verbinden (Snapchat, TikTok) */
+.acc-connect { grid-column: 2; display: flex; align-items: center; gap: 8px; margin-top: 6px; min-height: 0; }
+.acc-link {
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px;
+  border: 0; border-radius: 99px; background: var(--dark); color: #fff;
+  font: inherit; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.acc-link .ico { width: 15px; height: 15px; }
+.acc-link[data-connectbtn="sc"] { background: #fffc00; color: #0b0b0c; }
+.acc-link[data-connectbtn="tt"] { background: #000; box-shadow: -2px -2px 0 #25f4ee, 2px 2px 0 #fe2c55; }
+.acc-link[hidden] { display: none; }
+.acc-ok { font-size: 12px; font-weight: 700; color: #1a9d4a; }
+.acc-row input[readonly] { background: #f2fbf5; border-color: #1a9d4a; }
+.verified {
+  display: inline-grid; place-items: center; width: 13px; height: 13px; margin-left: 4px; border-radius: 50%;
+  background: #3dfa74; color: #0b0b0c; font-size: 9px; font-style: normal; font-weight: 800; line-height: 1; vertical-align: middle;
+}

@@ -299,7 +299,7 @@ export function lookupSerial(input, { account = null, user = null } = {}) {
     return {
       status: 'valid', serial, own: true, amount: mine.total, at: mine.at,
       tier: TIERS.find((t) => t.id === mine.tier) || tierFor(mine.total),
-      owner: { handle: user?.insta || user?.name || 'du', country: user?.country || 'DE', region: user?.region || '' },
+      owner: { handle: user?.insta || user?.name || 'du', verified: !!user?.verified?.[user?.main], country: user?.country || 'DE', region: user?.region || '' },
       revealed: mine.revealed !== false,
     };
   }

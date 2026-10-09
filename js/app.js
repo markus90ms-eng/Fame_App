@@ -13,6 +13,7 @@ import { tick, plink, stageTick, classDrop, classReveal, buzz, unlockAudio, buil
 import { createDiamond } from './diamond3d.js';
 import { facetArt, facetMask, svgUrl, holoStrength } from './cardfx.js';
 import { particles } from './particles.js';
+import { isReady, mountSnap, connectTikTok, finishRedirect } from './connect.js';
 import {
   renderStory, renderSticker, shareToInstagramStory, shareToTikTok, shareToSnapchat, shareElsewhere, saveImage, renderAvatar, saveAvatar, photoRect,
 } from './share.js';
@@ -310,7 +311,7 @@ function checkPage(initial) {
         out.style.setProperty('--c', CLASSES[cls].color);
         out.innerHTML = `<div class="check-badge">✓</div><h2>Echt – verifizierte Fame-Card</h2>
           <dl class="check-facts">
-            <div><dt>Gehört zu</dt><dd>@${esc(res.owner.handle)}${res.own ? ' <small>(dein Account)</small>' : ''}</dd></div>
+            <div><dt>Gehört zu</dt><dd>@${esc(res.owner.handle)}${res.owner.verified ? ' <i class="verified" title="Account bestätigt">✓</i>' : ''}${res.own ? ' <small>(dein Account)</small>' : ''}</dd></div>
             <div><dt>Edelstein</dt><dd>${res.revealed ? esc(t.name) : 'noch verdeckt'} <small>Stufe ${t.stage}</small></dd></div>
             <div><dt>Klasse</dt><dd><i class="check-dot"></i>${CLASSES[cls].name}</dd></div>
             <div><dt>Herkunft</dt><dd>${c ? `${c.flag} ` : ''}${esc(res.owner.region || c?.name || '')}</dd></div>
@@ -459,8 +460,14 @@ function regionOptions(countryId, selected) {
 }
 
 function login() {
-  const u = state.user || {};
+  // Nach der Rückkehr von TikTok: das halb ausgefüllte Formular wiederherstellen
+  const u = state.loginDraft || state.user || {};
   const accs = { ...(u.accounts || {}) };
+  const ver = { ...(u.verified || {}) };
+  const CONNECT = ['sc', 'tt'];
+  const connectLine = (p) => (!CONNECT.includes(p.id) ? '' : `<div class="acc-connect" data-connect="${p.id}">${ver[p.id]
+    ? `<span class="acc-ok">✓ Verbunden${ver[p.id].name ? ` als ${esc(ver[p.id].name)}` : ''}</span>`
+    : `<button type="button" class="acc-link" data-connectbtn="${p.id}">${platformIcon(p.id)}<span>Mit ${p.name} verbinden</span></button><span class="acc-snaphost"></span>`}</div>`);
   const country = u.country || 'DE';
   return {
     html: `<section class="screen screen--login">
@@ -476,7 +483,8 @@ function login() {
           <div class="acc-chips">${PLATFORMS.map((p) => `<button type="button" class="acc-chip${accs[p.id] != null ? ' is-on' : ''}" data-chip="${p.id}" aria-pressed="${accs[p.id] != null}">${platformIcon(p.id)}<span>${p.name}</span></button>`).join('')}</div>
           ${PLATFORMS.map((p) => `<div class="acc-row" data-row="${p.id}"${accs[p.id] != null ? '' : ' hidden'}>
             <span class="acc-ico">${platformIcon(p.id)}</span>
-            <input name="acc-${p.id}" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(accs[p.id] ? '@' + accs[p.id] : '')}" placeholder="@dein ${p.name}-Name" aria-label="${p.name}-Name">
+            <input name="acc-${p.id}" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(accs[p.id] ? '@' + accs[p.id] : '')}" placeholder="@dein ${p.name}-Name" aria-label="${p.name}-Name"${ver[p.id] ? ' readonly' : ''}>
+            ${connectLine(p)}
             <label class="acc-main" title="Dieser Name steht auf deiner Card"><input type="checkbox" name="oncard" value="${p.id}"${(u.onCard || []).includes(p.id) ? ' checked' : ''}><span>Auf die Card</span></label>
           </div>`).join('')}
           <p class="acc-note" data-accnote hidden>Die markierten Accounts stehen auf deiner Card – einer oder alle.</p>
@@ -521,6 +529,46 @@ function login() {
       }));
       form.querySelectorAll('input[name="oncard"]').forEach((b) => b.addEventListener('change', syncMain));
       syncMain();
+
+      // Accounts verbinden: Das bestätigte Profil ersetzt den eingetippten Namen
+      const readForm = () => {
+        const accounts = {};
+        PLATFORMS.forEach((p) => { const h = cleanHandle(form[`acc-${p.id}`].value); if (!rows(p.id).hidden && h) accounts[p.id] = h; });
+        const verified = {};
+        Object.keys(ver).forEach((id) => { if (accounts[id]) verified[id] = ver[id]; });
+        return {
+          name: form.name.value.trim(), accounts, verified,
+          onCard: [...form.querySelectorAll('input[name="oncard"]:checked')].map((b) => b.value),
+          country: form.country.value, region: form.region.value,
+        };
+      };
+      const verifiedOk = (pr) => {
+        ver[pr.id] = { name: pr.name, avatar: pr.avatar, externalId: pr.externalId };
+        const input = form[`acc-${pr.id}`];
+        input.value = `@${cleanHandle(pr.handle)}`;
+        input.readOnly = true;
+        form.querySelector(`[data-connect="${pr.id}"]`).innerHTML = `<span class="acc-ok">✓ Verbunden als ${esc(pr.name || pr.handle)}</span>`;
+        buzz([10, 40, 10]);
+        toast(`${pr.id === 'sc' ? 'Snapchat' : 'TikTok'} verbunden ✓`);
+      };
+      const connectError = (id, r) => {
+        const n = id === 'sc' ? 'Snapchat' : 'TikTok';
+        toast(r.error === 'setup' ? `Die ${n}-Verbindung ist noch nicht eingerichtet – trag deinen Namen solange von Hand ein.`
+          : r.error === 'denied' ? `${n}: Anmeldung abgebrochen.` : `${n} ist gerade nicht erreichbar. Versuch es gleich nochmal.`);
+      };
+      form.querySelectorAll('[data-connectbtn]').forEach((b) => {
+        const id = b.dataset.connectbtn;
+        if (id === 'sc' && isReady('sc')) {
+          // Snapchats eigener Knopf statt unserem (öffnet das Anmelde-Popup)
+          b.hidden = true;
+          mountSnap(b.nextElementSibling, (r) => (r.error ? connectError('sc', r) : verifiedOk(r)));
+          return;
+        }
+        b.addEventListener('click', () => {
+          if (!isReady(id)) { connectError(id, { error: 'setup' }); return; }
+          if (id === 'tt') connectTikTok(readForm());
+        });
+      });
       form.addEventListener('submit', (e) => {
         e.preventDefault();
         const name = form.name.value.trim();
@@ -530,9 +578,8 @@ function login() {
           buzz(30);
           return;
         }
-        const accounts = {};
-        PLATFORMS.forEach((p) => { const h = cleanHandle(form[`acc-${p.id}`].value); if (!rows(p.id).hidden && h) accounts[p.id] = h; });
-        state.user = normalizeUser({ name, accounts, onCard: [...form.querySelectorAll('input[name="oncard"]:checked')].map((b) => b.value), country: form.country.value, region: form.region.value });
+        state.user = normalizeUser({ ...readForm(), name });
+        state.loginDraft = null;
         store.set('user', state.user);
         const next = state.after || '';
         state.after = null;
@@ -863,7 +910,7 @@ function card() {
               </div>
               <div class="famecard-foot">
                 ${onCard.length
-                  ? `<div class="famecard-accts${onCard.length > 1 ? ' is-multi' : ''}">${onCard.map((a) => `<span class="famecard-insta">${platformIcon(a.id)}<span>${esc(a.handle)}</span></span>`).join('')}</div>`
+                  ? `<div class="famecard-accts${onCard.length > 1 ? ' is-multi' : ''}">${onCard.map((a) => `<span class="famecard-insta">${platformIcon(a.id)}<span>${esc(a.handle)}</span>${state.user?.verified?.[a.id] ? '<i class="verified" title="Verbunden und bestätigt">✓</i>' : ''}</span>`).join('')}</div>`
                   : `<div class="famecard-insta">${icons.insta}<input id="card-insta" data-insta placeholder="dein Instagram" autocomplete="off" autocapitalize="off" aria-label="Instagram-Name"></div>`}
                 <span class="seal" title="Echtheitssiegel">ECHT<br>FAM€</span>
               </div>
@@ -1441,6 +1488,23 @@ function rankingPage(mode) {
     },
   };
 }
+
+// Zurück von der TikTok-Anmeldung? Code einlösen und das Formular mit dem bestätigten Namen füllen.
+finishRedirect().then((r) => {
+  if (!r) return;
+  const d = r.draft || {};
+  if (r.profile) {
+    const handle = cleanHandle(r.profile.handle);
+    d.accounts = { ...(d.accounts || {}), tt: handle };
+    d.verified = { ...(d.verified || {}), tt: { name: r.profile.name, avatar: r.profile.avatar, externalId: r.profile.externalId } };
+    if (!d.onCard?.length) d.onCard = ['tt'];
+    toast('TikTok verbunden ✓');
+  } else {
+    toast(r.error === 'denied' ? 'TikTok: Anmeldung abgebrochen.' : 'TikTok-Verbindung hat nicht geklappt. Versuch es nochmal.');
+  }
+  state.loginDraft = d;
+  render();
+});
 
 render();
 
