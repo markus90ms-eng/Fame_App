@@ -13,7 +13,7 @@ import { tick, plink, stageTick, classDrop, classReveal, buzz, unlockAudio, buil
 import { createDiamond } from './diamond3d.js';
 import { facetArt, facetMask, svgUrl, holoStrength } from './cardfx.js';
 import { particles } from './particles.js';
-import { isReady, mountSnap, connectTikTok, finishRedirect } from './connect.js';
+import { isReady, mountSnap, connectRedirect, finishRedirect } from './connect.js';
 import {
   renderStory, renderSticker, shareToInstagramStory, shareToTikTok, shareToSnapchat, shareElsewhere, saveImage, renderAvatar, saveAvatar, photoRect,
 } from './share.js';
@@ -123,6 +123,7 @@ function toast(msg) {
 }
 
 const firstName = (name) => (name || '').trim().split(/\s+/)[0];
+const platformName = (id) => PLATFORMS.find((p) => p.id === id)?.name || id;
 const cleanHandle = (h) => (h || '').trim().replace(/^@+/, '').replace(/\s+/g, '');
 const shortMoney = (n) => (n >= 1_000_000 ? `${(n / 1_000_000).toLocaleString('de-DE', { maximumFractionDigits: 1 })} Mio. €`
   : n >= 10_000 ? `${fmt(Math.round(n / 1000))} Tsd. €` : money(n));
@@ -464,10 +465,10 @@ function login() {
   const u = state.loginDraft || state.user || {};
   const accs = { ...(u.accounts || {}) };
   const ver = { ...(u.verified || {}) };
-  const CONNECT = ['sc', 'tt'];
+  const CONNECT = ['ig', 'sc', 'tt'];
   const connectLine = (p) => (!CONNECT.includes(p.id) ? '' : `<div class="acc-connect" data-connect="${p.id}">${ver[p.id]
     ? `<span class="acc-ok">✓ Verbunden${ver[p.id].name ? ` als ${esc(ver[p.id].name)}` : ''}</span>`
-    : `<button type="button" class="acc-link" data-connectbtn="${p.id}">${platformIcon(p.id)}<span>Mit ${p.name} verbinden</span></button><span class="acc-snaphost"></span>`}</div>`);
+    : `<button type="button" class="acc-link" data-connectbtn="${p.id}">${platformIcon(p.id)}<span>Mit ${p.name} verbinden</span></button><span class="acc-snaphost"></span>${p.id === 'ig' ? '<small class="acc-hint">nur Business-/Creator-Konto</small>' : ''}`}</div>`);
   const country = u.country || 'DE';
   return {
     html: `<section class="screen screen--login">
@@ -549,10 +550,10 @@ function login() {
         input.readOnly = true;
         form.querySelector(`[data-connect="${pr.id}"]`).innerHTML = `<span class="acc-ok">✓ Verbunden als ${esc(pr.name || pr.handle)}</span>`;
         buzz([10, 40, 10]);
-        toast(`${pr.id === 'sc' ? 'Snapchat' : 'TikTok'} verbunden ✓`);
+        toast(`${platformName(pr.id)} verbunden ✓`);
       };
       const connectError = (id, r) => {
-        const n = id === 'sc' ? 'Snapchat' : 'TikTok';
+        const n = platformName(id);
         toast(r.error === 'setup' ? `Die ${n}-Verbindung ist noch nicht eingerichtet – trag deinen Namen solange von Hand ein.`
           : r.error === 'denied' ? `${n}: Anmeldung abgebrochen.` : `${n} ist gerade nicht erreichbar. Versuch es gleich nochmal.`);
       };
@@ -566,7 +567,7 @@ function login() {
         }
         b.addEventListener('click', () => {
           if (!isReady(id)) { connectError(id, { error: 'setup' }); return; }
-          if (id === 'tt') connectTikTok(readForm());
+          connectRedirect(id, readForm());
         });
       });
       form.addEventListener('submit', (e) => {
@@ -1489,18 +1490,22 @@ function rankingPage(mode) {
   };
 }
 
-// Zurück von der TikTok-Anmeldung? Code einlösen und das Formular mit dem bestätigten Namen füllen.
+// Zurück von der Anmeldung bei TikTok oder Instagram? Code einlösen und das Formular mit dem
+// bestätigten Namen füllen.
 finishRedirect().then((r) => {
   if (!r) return;
   const d = r.draft || {};
+  const id = r.id || 'tt';
+  const n = platformName(id);
   if (r.profile) {
-    const handle = cleanHandle(r.profile.handle);
-    d.accounts = { ...(d.accounts || {}), tt: handle };
-    d.verified = { ...(d.verified || {}), tt: { name: r.profile.name, avatar: r.profile.avatar, externalId: r.profile.externalId } };
-    if (!d.onCard?.length) d.onCard = ['tt'];
-    toast('TikTok verbunden ✓');
+    d.accounts = { ...(d.accounts || {}), [id]: cleanHandle(r.profile.handle) };
+    d.verified = { ...(d.verified || {}), [id]: { name: r.profile.name, avatar: r.profile.avatar, externalId: r.profile.externalId } };
+    if (!d.onCard?.length) d.onCard = [id];
+    toast(`${n} verbunden ✓`);
   } else {
-    toast(r.error === 'denied' ? 'TikTok: Anmeldung abgebrochen.' : 'TikTok-Verbindung hat nicht geklappt. Versuch es nochmal.');
+    toast(r.error === 'denied' ? `${n}: Anmeldung abgebrochen.`
+      : r.error === 'business' ? 'Instagram verbindet nur Business- oder Creator-Konten. Trag deinen Namen von Hand ein.'
+        : `${n}-Verbindung hat nicht geklappt. Versuch es nochmal.`);
   }
   state.loginDraft = d;
   render();

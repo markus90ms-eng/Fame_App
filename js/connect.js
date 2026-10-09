@@ -1,4 +1,4 @@
-// Accounts verbinden: Snapchat (Login Kit, Popup im Browser) und TikTok (Login Kit, Weiterleitung).
+// Accounts verbinden: Snapchat (Login Kit, Popup im Browser), TikTok und Instagram (Weiterleitung).
 // Ergebnis ist jeweils ein bestätigtes Profil { id, handle, name, avatar, verified: true }.
 // Ohne Zugangsdaten in js/config.js meldet connectX() { error: 'setup' }.
 
@@ -6,9 +6,12 @@ import { SOCIAL, REDIRECT_URI } from './config.js';
 
 const SNAP_SDK = 'https://sdk.snapkit.com/js/v1/login.js';
 const TIKTOK_AUTH = 'https://www.tiktok.com/v2/auth/authorize/';
+const INSTAGRAM_AUTH = 'https://www.instagram.com/oauth/authorize';
 const PENDING = 'fame.oauth';
 
-export const isReady = (id) => (id === 'sc' ? !!SOCIAL.snap.clientId : id === 'tt' ? !!(SOCIAL.tiktok.clientKey && SOCIAL.tiktok.server) : false);
+export const isReady = (id) => (id === 'sc' ? !!SOCIAL.snap.clientId
+  : id === 'tt' ? !!(SOCIAL.tiktok.clientKey && SOCIAL.server)
+    : id === 'ig' ? !!(SOCIAL.instagram.appId && SOCIAL.server) : false);
 
 const randomState = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
 
@@ -53,48 +56,50 @@ export async function mountSnap(host, onResult) {
   return true;
 }
 
-// ---- TikTok -----------------------------------------------------------------------------------
-// Weiterleitung zu TikTok, zurück kommt ein Code. Den tauscht unser Server (mit dem geheimen
-// Client secret) gegen das Profil; die App bekommt nur Name, Benutzername und Bild, nie den Token.
+// ---- TikTok und Instagram ---------------------------------------------------------------------
+// Weiterleitung zur Plattform, zurück kommt ein Code. Den tauscht unser Server (mit dem geheimen
+// Schlüssel der Plattform) gegen das Profil; die App bekommt nur Name, Benutzername und Bild, nie den Token.
+// Instagram verbindet nur Business- und Creator-Konten (so will es Meta).
 
-export function connectTikTok(draft) {
-  if (!isReady('tt')) return { error: 'setup' };
+const AUTH = {
+  tt: () => [TIKTOK_AUTH, { client_key: SOCIAL.tiktok.clientKey, response_type: 'code', scope: 'user.info.basic,user.info.profile' }],
+  ig: () => [INSTAGRAM_AUTH, { client_id: SOCIAL.instagram.appId, response_type: 'code', scope: 'instagram_business_basic', enable_fb_login: '0' }],
+};
+const PATH = { tt: 'tiktok', ig: 'instagram' };
+
+export function connectRedirect(id, draft) {
+  if (!isReady(id)) return { error: 'setup' };
   const state = randomState();
-  try { localStorage.setItem(PENDING, JSON.stringify({ id: 'tt', state, draft, at: Date.now() })); } catch { /* privat */ }
-  const q = new URLSearchParams({
-    client_key: SOCIAL.tiktok.clientKey,
-    response_type: 'code',
-    scope: 'user.info.basic,user.info.profile',
-    redirect_uri: REDIRECT_URI,
-    state,
-  });
-  location.href = `${TIKTOK_AUTH}?${q}`;
+  try { localStorage.setItem(PENDING, JSON.stringify({ id, state, draft, at: Date.now() })); } catch { /* privat */ }
+  const [url, params] = AUTH[id]();
+  location.href = `${url}?${new URLSearchParams({ ...params, redirect_uri: REDIRECT_URI, state })}`;
   return { pending: true };
 }
 
-// Beim Start der App: Kommen wir gerade von TikTok zurück? Dann Code einlösen.
-// Gibt null zurück, wenn nichts ansteht, sonst { profile?, error?, draft }.
+// Beim Start der App: Kommen wir gerade von TikTok/Instagram zurück? Dann Code einlösen.
+// Gibt null zurück, wenn nichts ansteht, sonst { id, profile?, error?, draft }.
 export async function finishRedirect() {
   const q = new URLSearchParams(location.search);
   if (!q.has('state') || !(q.has('code') || q.has('error'))) return null;
   let pending = null;
   try { pending = JSON.parse(localStorage.getItem(PENDING) || 'null'); localStorage.removeItem(PENDING); } catch { /* privat */ }
   history.replaceState(null, '', `${location.pathname}#/login`);
-  if (!pending || pending.state !== q.get('state')) return { error: 'state', draft: pending?.draft };
-  if (q.has('error')) return { error: 'denied', draft: pending.draft };
+  const id = pending?.id;
+  if (!pending || pending.state !== q.get('state') || !PATH[id]) return { id, error: 'state', draft: pending?.draft };
+  if (q.has('error')) return { id, error: 'denied', draft: pending.draft };
   try {
-    const r = await fetch(`${SOCIAL.tiktok.server.replace(/\/$/, '')}/tiktok/profile`, {
+    const r = await fetch(`${SOCIAL.server.replace(/\/$/, '')}/${PATH[id]}/profile`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code: q.get('code'), redirect_uri: REDIRECT_URI }),
     });
     const p = await r.json();
-    if (!r.ok || !p.open_id) return { error: 'server', draft: pending.draft };
+    if (!r.ok || !p.id) return { id, error: p.error === 'not_professional' ? 'business' : 'server', draft: pending.draft };
     return {
-      draft: pending.draft,
-      profile: { id: 'tt', handle: p.username || p.display_name, name: p.display_name, avatar: p.avatar_url || '', externalId: p.open_id, verified: true },
+      id, draft: pending.draft,
+      profile: { id, handle: p.username || p.name, name: p.name || p.username, avatar: p.avatar || '', externalId: p.id, verified: true },
     };
   } catch {
-    return { error: 'server', draft: pending.draft };
+    return { id, error: 'server', draft: pending.draft };
   }
 }

@@ -1,10 +1,10 @@
-# Snapchat und TikTok verbinden – Einrichtung
+# Instagram, Snapchat und TikTok verbinden – Einrichtung
 
-Die App kann Snapchat- und TikTok-Accounts **bestätigt verbinden**: Statt den Namen einzutippen,
-meldet man sich kurz bei Snapchat bzw. TikTok an. Danach steht der echte Name mit einem grünen ✓
+Die App kann Instagram-, Snapchat- und TikTok-Accounts **bestätigt verbinden**: Statt den Namen einzutippen,
+meldet man sich kurz bei der Plattform an. Danach steht der echte Name mit einem grünen ✓
 auf der Card und bei der Code-Prüfung.
 
-Der Code dafür ist fertig (`js/connect.js`, `js/config.js`, `server/tiktok-worker.js`).
+Der Code dafür ist fertig (`js/connect.js`, `js/config.js`, `server/connect-worker.js`).
 Es fehlen nur die Zugangsdaten der Plattformen. Die musst du selbst anlegen, weil sie an dein Konto gebunden sind.
 
 > Die Menünamen in den Entwickler-Portalen ändern sich gelegentlich – sinngemäß sind die Schritte gleich.
@@ -50,35 +50,61 @@ In der Vorschau auf claude.ai klappt die Anmeldung deshalb nicht – getestet wi
    So kannst du sofort testen, ohne dass TikTok die App schon geprüft hat.
 5. Notiere **Client key** und **Client secret**.
 
-⚠️ Der **Client secret** ist geheim: Er kommt **nur** in den Server (Schritt 3), nie in die App und nicht in den Chat.
+⚠️ Der **Client secret** ist geheim: Er kommt **nur** in den Server (Schritt 4), nie in die App und nicht in den Chat.
 
 ---
 
-## 3. Kleiner Server für TikTok (Cloudflare Worker, kostenlos)
+## 3. Instagram (Instagram-API mit Instagram-Login)
 
-TikTok gibt das Profil nur gegen den geheimen Client secret heraus. Das erledigt ein winziger Server.
+Wichtig vorab: **Meta erlaubt das Verbinden nur für Business- und Creator-Konten.** Private Instagram-Konten
+lassen sich nicht verbinden – wer eins hat, tippt seinen Namen wie bisher von Hand ein.
+(Umstellen geht in Instagram kostenlos: Einstellungen → Kontotyp und Tools → Zu professionellem Konto wechseln.)
+
+1. Öffne **developers.facebook.com** und melde dich an (Facebook-Konto nötig) → **Meine Apps → App erstellen**.
+2. Anwendungsfall **„Nachrichten und Inhalte auf Instagram verwalten“** bzw. Produkt **Instagram** wählen.
+3. Unter **Instagram → API-Einrichtung mit Instagram-Login**:
+   - **Business-Login einrichten** → bei **Gültige OAuth-Redirect-URIs** eintragen: `https://markus90ms-eng.github.io/Fame_App/`
+   - Berechtigung **instagram_business_basic** reicht (nur Profil lesen).
+4. Unter **App-Rollen → Rollen** deinen Instagram-Account als **Instagram-Tester** hinzufügen und die Einladung in
+   Instagram annehmen (Einstellungen → Website-Berechtigungen / Apps und Websites → Tester-Einladungen).
+   Solange die App im Entwicklungsmodus ist, können sich nur eingetragene Tester verbinden.
+5. Notiere **Instagram-App-ID** und **Instagram-App-Geheimcode** (beides auf der Seite „Business-Login“).
+
+⚠️ Der **App-Geheimcode** ist geheim und kommt **nur** in den Server (Schritt 4).
+
+➡️ Schick mir die **Instagram-App-ID**.
+
+---
+
+## 4. Kleiner Server für TikTok und Instagram (Cloudflare Worker, kostenlos)
+
+TikTok und Instagram geben das Profil nur gegen einen geheimen Schlüssel heraus. Das erledigt ein winziger Server –
+einer für beide.
 
 1. Konto auf **dash.cloudflare.com** anlegen (kostenlos).
-2. **Workers & Pages → Create → Worker** → Name z. B. `fame-tiktok` → Deploy.
-3. **Edit code** → den Inhalt von `server/tiktok-worker.js` komplett einfügen → **Deploy**.
+2. **Workers & Pages → Create → Worker** → Name z. B. `fame-connect` → Deploy.
+3. **Edit code** → den Inhalt von `server/connect-worker.js` komplett einfügen → **Deploy**.
 4. **Settings → Variables and Secrets** anlegen:
    - `TIKTOK_CLIENT_KEY` = dein Client key
    - `TIKTOK_CLIENT_SECRET` = dein Client secret (als **Secret** / verschlüsselt)
+   - `INSTAGRAM_APP_ID` = deine Instagram-App-ID
+   - `INSTAGRAM_APP_SECRET` = dein Instagram-App-Geheimcode (als **Secret** / verschlüsselt)
    - `ALLOWED_ORIGIN` = `https://markus90ms-eng.github.io`
-5. Die Adresse des Workers kopieren, z. B. `https://fame-tiktok.DEINNAME.workers.dev`
+5. Die Adresse des Workers kopieren, z. B. `https://fame-connect.DEINNAME.workers.dev`
 
-➡️ Schick mir den **Client key** und die **Worker-Adresse**.
+➡️ Schick mir den TikTok **Client key** und die **Worker-Adresse**.
 
 ---
 
-## 4. Was ich dann mache
+## 5. Was ich dann mache
 
-Ich trage Snapchat Client ID, TikTok Client key und Worker-Adresse in `js/config.js` ein und pushe.
+Ich trage Snapchat Client ID, TikTok Client key, Instagram-App-ID und Worker-Adresse in `js/config.js` ein und pushe.
 Danach auf dem Handy `https://markus90ms-eng.github.io/Fame_App/` öffnen → Login →
-bei TikTok/Snapchat auf **„Mit … verbinden“** tippen.
+bei Instagram/TikTok/Snapchat auf **„Mit … verbinden“** tippen.
 
 ## Später für alle Nutzer
 
 - **Snapchat:** App bei Snap zur Prüfung einreichen → danach die Production Client ID verwenden.
 - **TikTok:** App zur Prüfung einreichen (Datenschutzerklärung, Nutzungsbedingungen und Demo-Video nötig).
-- Beide verlangen eine Datenschutzerklärung unter der App-Adresse.
+- **Instagram:** App bei Meta zur Prüfung einreichen (App Review für instagram_business_basic, Unternehmensverifizierung) und auf „Live“ schalten.
+- Alle drei verlangen eine Datenschutzerklärung unter der App-Adresse.
