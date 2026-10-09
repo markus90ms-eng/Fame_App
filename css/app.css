@@ -2353,3 +2353,17 @@ button, input { font: inherit; color: inherit; }
 .acc-link[data-connectbtn="ig"] { background: linear-gradient(135deg, #feda75, #fa7e1e 25%, #d62976 50%, #962fbf 75%, #4f5bd5); }
 .acc-hint { font-size: 10.5px; color: #6f6e69; }
 .acc-connect { flex-wrap: wrap; } .acc-link { white-space: nowrap; }
+
+/* Card-Seite: Ton an/aus links neben dem Haus-Knopf */
+.sound-btn {
+  position: absolute; top: max(36px, env(safe-area-inset-top)); right: 66px; z-index: 5;
+  width: 44px; height: 44px; display: grid; place-items: center;
+  border: 1.5px solid color-mix(in srgb, var(--rar) 60%, transparent); border-radius: 6px;
+  background: rgba(20, 20, 20, 0.35); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  color: #fff; cursor: pointer;
+}
+.sound-btn .ico { width: 22px; height: 22px; }
+.sound-btn .snd-off { display: none; }
+.sound-btn.is-muted .snd-on { display: none; }
+.sound-btn.is-muted .snd-off { display: inline; }
+.sound-btn.is-muted { opacity: 0.7; }

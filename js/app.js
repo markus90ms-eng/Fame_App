@@ -9,7 +9,7 @@ import {
   APP_NAME, LOGO_TEXT, DIA, esc, logo, logoInline, hl, hero, button, backButton, diamondSvg,
   diamondShadowed, icons, platformIcon,
 } from './ui.js';
-import { tick, plink, stageTick, classDrop, classReveal, buzz, unlockAudio, buildup } from './fx.js';
+import { tick, plink, stageTick, classDrop, buzz, unlockAudio, buildup, boost, startTension, revealMusic, startCelebration, isMuted, setMuted } from './fx.js';
 import { createDiamond } from './diamond3d.js';
 import { facetArt, facetMask, svgUrl, holoStrength } from './cardfx.js';
 import { particles } from './particles.js';
@@ -890,6 +890,7 @@ function card() {
       <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
       ${backButton('back--dark')}
       <button class="home-btn" type="button" data-go="" aria-label="Zur Startseite">${icons.home}</button>
+      <button class="sound-btn${isMuted() ? ' is-muted' : ''}" type="button" data-sound aria-label="Ton an/aus" aria-pressed="${!isMuted()}">${icons.sound}</button>
       <div class="card-wrap" data-tiltwrap>
         <div class="flip" data-flip role="button" tabindex="0" aria-label="${hidden ? 'Karte aufdecken' : tier.name}">
           <article class="famecard metal-${tier.metal}${tier.legend ? ' is-legend' : ''} flip-front" data-card style="--gem:${tier.tone}">
@@ -1038,7 +1039,8 @@ function card() {
         el.classList.add('is-charging');
         fx.setColor(clsColor);
         fx.setDensity(2 + tier.level);
-        const dur = buildup(tier.cls * 0.45);
+        stopMusic();
+        const dur = buildup(boost(tier.cls) * 0.45);
         // Wackeln wird immer stärker
         const t0 = performance.now();
         const grow = setInterval(() => {
@@ -1055,7 +1057,7 @@ function card() {
           el.classList.remove('is-charging', 'is-hidden');
           el.classList.add('is-open', 'is-revealing');
           flash.classList.add('is-on');
-          classReveal(tier.cls);
+          stopMusic = revealMusic(tier.cls);
           dia.pulse();
           const [x, y] = centerIn(canvas, flip);
           fx.burst(x, y, 40 + tier.level * 40, rarity.color);
@@ -1069,6 +1071,25 @@ function card() {
         }, dur * 1000));
       };
       flip.addEventListener('click', open);
+
+      // Musik: verdeckt eine Spannungsschleife, aufgedeckt die Gewinn-Schleife – solange die Seite offen ist
+      let stopMusic = () => {};
+      const playMusic = () => {
+        stopMusic();
+        if (phase === 'hidden') stopMusic = startTension(tier.cls);
+        else if (phase === 'open') stopMusic = startCelebration(tier.cls);
+      };
+      playMusic();
+      const soundBtn = el.querySelector('[data-sound]');
+      soundBtn.addEventListener('click', () => {
+        setMuted(!isMuted());
+        soundBtn.classList.toggle('is-muted', isMuted());
+        soundBtn.setAttribute('aria-pressed', String(!isMuted()));
+        if (isMuted()) stopMusic(); else playMusic();
+      });
+      const onVisible = () => { if (document.hidden) stopMusic(); else if (phase !== 'charging') playMusic(); };
+      document.addEventListener('visibilitychange', onVisible);
+
       flip.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
 
       instaInput?.addEventListener('change', () => {
@@ -1343,6 +1364,8 @@ function card() {
 
       return () => {
         timers.forEach((t) => { clearTimeout(t); clearInterval(t); });
+        stopMusic();
+        document.removeEventListener('visibilitychange', onVisible);
         cancelAnimationFrame(raf);
         window.removeEventListener('deviceorientation', onOrient);
         fx.dispose();
