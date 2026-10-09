@@ -15,6 +15,8 @@ python3 -m http.server 8080
 
 Über GitHub Pages (Einstellungen → Pages → Branch `main`, Ordner `/`) ist die App direkt unter der Pages-Adresse des Repos erreichbar.
 
+**Aufs iPhone holen:** https://markus90ms-eng.github.io/Fame_App/ in **Safari** öffnen → Teilen-Knopf → **„Zum Home-Bildschirm“** → Hinzufügen. Fame startet dann mit eigenem Icon im Vollbild. Android: in Chrome → Menü → „App installieren“.
+
 ## Screens
 
 | Route | Inhalt |
