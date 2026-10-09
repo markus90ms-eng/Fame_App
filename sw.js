@@ -1,5 +1,5 @@
 // Einfacher Offline-Cache: App-Dateien zuerst aus dem Netz, sonst aus dem Cache.
-const CACHE = 'fame-v44';
+const CACHE = 'fame-v45'; // gleich wie APP_VERSION in js/app.js
 const ASSETS = [
   './', 'index.html', 'css/app.css', 'manifest.webmanifest',
   'js/app.js', 'js/data.js', 'js/ui.js', 'js/fx.js', 'js/diamond3d.js', 'js/gem3d.js', 'js/gems.js', 'js/refraction.js', 'js/particles.js', 'js/share.js', 'js/cardfx.js', 'js/connect.js', 'js/config.js',
@@ -8,7 +8,7 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS.map((a) => new Request(a, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
@@ -21,8 +21,10 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  // Eigene Dateien immer frisch vom Server holen (am Browser-Cache vorbei), damit Updates sofort ankommen
+  const own = new URL(e.request.url).origin === location.origin;
   e.respondWith(
-    fetch(e.request)
+    (own ? fetch(e.request.url, { cache: 'no-cache' }) : fetch(e.request))
       .then((res) => {
         if (res.ok && new URL(e.request.url).origin === location.origin) {
           const copy = res.clone();

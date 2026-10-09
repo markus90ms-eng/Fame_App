@@ -2367,3 +2367,4 @@ button, input { font: inherit; color: inherit; }
 .sound-btn.is-muted .snd-on { display: none; }
 .sound-btn.is-muted .snd-off { display: inline; }
 .sound-btn.is-muted { opacity: 0.7; }
+.app-version { display: block; position: relative; z-index: 1; margin: 4px auto max(10px, env(safe-area-inset-bottom)); text-align: center; font-size: 10px; color: #b0aea8; }

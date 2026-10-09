@@ -17,6 +17,8 @@ python3 -m http.server 8080
 
 **Aufs iPhone holen:** https://markus90ms-eng.github.io/Fame_App/ in **Safari** öffnen → Teilen-Knopf → **„Zum Home-Bildschirm“** → Hinzufügen. Fame startet dann mit eigenem Icon im Vollbild. Android: in Chrome → Menü → „App installieren“.
 
+**Updates:** Die App fragt beim Öffnen und bei jeder Rückkehr nach einer neuen Version und lädt sich dann einmal neu. Unten auf der Startseite steht die Version (`APP_VERSION` in `js/app.js`, muss zum Cache-Namen in `sw.js` passen).
+
 ## Screens
 
 | Route | Inhalt |

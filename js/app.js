@@ -58,6 +58,9 @@ const state = {
 
 const saveAccount = () => store.set('account', state.account);
 
+// Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
+export const APP_VERSION = '45';
+
 // ---- Router -----------------------------------------------------------------
 
 const app = document.getElementById('app');
@@ -220,6 +223,7 @@ function splash() {
           ${tile('check', '<span class="seal" aria-hidden="true">ECHT<br>FAM€</span>', 'Code prüfen', 'Ist eine Card echt?')}
         </nav>
         ${resetLink()}
+        <span class="app-version">Version ${APP_VERSION}</span>
         <button class="link welcome-logout" type="button" data-logout>Abmelden</button>
       </section>`,
       mount(el) {
@@ -253,6 +257,7 @@ function splash() {
       <div class="splash-space splash-space--mid"></div>
       <div class="splash-login">${button('Login', 'data-go="login"')}</div>
       ${resetLink()}
+      <span class="app-version">Version ${APP_VERSION}</span>
     </section>`,
     mount(el) { bindReset(el); },
   };
@@ -1536,6 +1541,19 @@ finishRedirect().then((r) => {
 
 render();
 
+// Offline-Cache. Neue Versionen sollen auch in der App vom Home-Bildschirm sofort ankommen:
+// beim Start und bei jeder Rückkehr in die App nach einem Update fragen; ist eins da, einmal neu laden.
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloaded) return;
+    reloaded = true;
+    location.reload();
+  });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((reg) => {
+    const check = () => reg.update().catch(() => {});
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) check(); });
+    setInterval(check, 5 * 60 * 1000);
+  }).catch(() => {});
 }
