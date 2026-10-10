@@ -4,7 +4,7 @@ Die App kann Instagram-, Snapchat- und TikTok-Accounts **bestätigt verbinden**:
 meldet man sich kurz bei der Plattform an. Danach steht der echte Name mit einem grünen ✓
 auf der Card und bei der Code-Prüfung.
 
-Der Code dafür ist fertig (`js/connect.js`, `js/config.js`, `server/connect-worker.js`).
+Der Code dafür ist fertig (`js/connect.js`, `js/config.js`, `supabase/functions/connect/index.ts`).
 Es fehlen nur die Zugangsdaten der Plattformen. Die musst du selbst anlegen, weil sie an dein Konto gebunden sind.
 
 > Die Menünamen in den Entwickler-Portalen ändern sich gelegentlich – sinngemäß sind die Schritte gleich.
@@ -50,7 +50,9 @@ In der Vorschau auf claude.ai klappt die Anmeldung deshalb nicht – getestet wi
    So kannst du sofort testen, ohne dass TikTok die App schon geprüft hat.
 5. Notiere **Client key** und **Client secret**.
 
-⚠️ Der **Client secret** ist geheim: Er kommt **nur** in den Server (Schritt 4), nie in die App und nicht in den Chat.
+⚠️ Der **Client secret** ist geheim: Er kommt **nur** in die Supabase-Secrets (Schritt 4), nie in die App und nicht in den Chat.
+
+➡️ Schick mir den **Client key**. Er ist nicht geheim.
 
 ---
 
@@ -70,35 +72,37 @@ lassen sich nicht verbinden – wer eins hat, tippt seinen Namen wie bisher von 
    Solange die App im Entwicklungsmodus ist, können sich nur eingetragene Tester verbinden.
 5. Notiere **Instagram-App-ID** und **Instagram-App-Geheimcode** (beides auf der Seite „Business-Login“).
 
-⚠️ Der **App-Geheimcode** ist geheim und kommt **nur** in den Server (Schritt 4).
+⚠️ Der **App-Geheimcode** ist geheim und kommt **nur** in die Supabase-Secrets (Schritt 4).
 
 ➡️ Schick mir die **Instagram-App-ID**.
 
 ---
 
-## 4. Kleiner Server für TikTok und Instagram (Cloudflare Worker, kostenlos)
+## 4. Kleiner Server für TikTok und Instagram (Supabase Edge Function, kostenlos)
 
-TikTok und Instagram geben das Profil nur gegen einen geheimen Schlüssel heraus. Das erledigt ein winziger Server –
-einer für beide.
+TikTok und Instagram geben das Profil nur gegen einen geheimen Schlüssel heraus. Das erledigt eine kleine
+Funktion in deinem Supabase-Projekt – eine für beide.
 
-1. Konto auf **dash.cloudflare.com** anlegen (kostenlos).
-2. **Workers & Pages → Create → Worker** → Name z. B. `fame-connect` → Deploy.
-3. **Edit code** → den Inhalt von `server/connect-worker.js` komplett einfügen → **Deploy**.
-4. **Settings → Variables and Secrets** anlegen:
+1. Supabase → dein Projekt → links **Edge Functions** → **Deploy a new function** → **Via Editor**.
+2. Den Inhalt von `supabase/functions/connect/index.ts` komplett einfügen. Name der Funktion: **`connect`** → **Deploy**.
+3. In der Funktion unter **Details** (bzw. Settings) **„Verify JWT“ / „Enforce JWT Verification“ ausschalten** → speichern.
+   (Die Funktion tauscht nur einen Code, den die Plattform gerade ausgegeben hat – dafür braucht es kein Login.)
+4. **Edge Functions → Secrets** anlegen:
    - `TIKTOK_CLIENT_KEY` = dein Client key
-   - `TIKTOK_CLIENT_SECRET` = dein Client secret (als **Secret** / verschlüsselt)
+   - `TIKTOK_CLIENT_SECRET` = dein Client secret
    - `INSTAGRAM_APP_ID` = deine Instagram-App-ID
-   - `INSTAGRAM_APP_SECRET` = dein Instagram-App-Geheimcode (als **Secret** / verschlüsselt)
-   - `ALLOWED_ORIGIN` = `https://markus90ms-eng.github.io`
-5. Die Adresse des Workers kopieren, z. B. `https://fame-connect.DEINNAME.workers.dev`
+   - `INSTAGRAM_APP_SECRET` = dein Instagram-App-Geheimcode
 
-➡️ Schick mir den TikTok **Client key** und die **Worker-Adresse**.
+Die Adresse der Funktion steht schon in der App:
+`https://yfdovwpzbenrpzaxuwpe.supabase.co/functions/v1/connect`
+
+➡️ Schick mir den TikTok **Client key** (nicht geheim).
 
 ---
 
 ## 5. Was ich dann mache
 
-Ich trage Snapchat Client ID, TikTok Client key, Instagram-App-ID und Worker-Adresse in `js/config.js` ein und pushe.
+Ich trage Snapchat Client ID, TikTok Client key und Instagram-App-ID in `js/config.js` ein und pushe.
 Danach auf dem Handy `https://markus90ms-eng.github.io/Fame_App/` öffnen → Login →
 bei Instagram/TikTok/Snapchat auf **„Mit … verbinden“** tippen.
 
@@ -107,4 +111,4 @@ bei Instagram/TikTok/Snapchat auf **„Mit … verbinden“** tippen.
 - **Snapchat:** App bei Snap zur Prüfung einreichen → danach die Production Client ID verwenden.
 - **TikTok:** App zur Prüfung einreichen (Datenschutzerklärung, Nutzungsbedingungen und Demo-Video nötig).
 - **Instagram:** App bei Meta zur Prüfung einreichen (App Review für instagram_business_basic, Unternehmensverifizierung) und auf „Live“ schalten.
-- Alle drei verlangen eine Datenschutzerklärung unter der App-Adresse.
+- Alle drei verlangen eine Datenschutzerklärung: `https://markus90ms-eng.github.io/Fame_App/datenschutz.html`

@@ -2,7 +2,7 @@
 // Ergebnis ist jeweils ein bestätigtes Profil { id, handle, name, avatar, verified: true }.
 // Ohne Zugangsdaten in js/config.js meldet connectX() { error: 'setup' }.
 
-import { SOCIAL, REDIRECT_URI } from './config.js';
+import { SOCIAL, SUPABASE, REDIRECT_URI } from './config.js';
 
 const SNAP_SDK = 'https://sdk.snapkit.com/js/v1/login.js';
 const TIKTOK_AUTH = 'https://www.tiktok.com/v2/auth/authorize/';
@@ -92,7 +92,7 @@ export async function finishRedirect() {
   try {
     const r = await fetch(`${SOCIAL.server.replace(/\/$/, '')}/${PATH[id]}/profile`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE.key },
       body: JSON.stringify({ code: q.get('code'), redirect_uri: REDIRECT_URI }),
     });
     const p = await r.json();

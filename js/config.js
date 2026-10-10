@@ -16,9 +16,9 @@ export const SOCIAL = {
     // TikTok for Developers → App → Client key (der Client secret gehört NUR auf den Server)
     clientKey: '',
   },
-  // Adresse des kleinen Servers, der den Code von TikTok/Instagram gegen das Profil tauscht
-  // (server/connect-worker.js, ein Cloudflare Worker für beide)
-  server: '',
+  // Adresse des kleinen Servers, der den Code von TikTok/Instagram gegen das Profil tauscht:
+  // Supabase Edge Function "connect" (supabase/functions/connect/index.ts)
+  server: 'https://yfdovwpzbenrpzaxuwpe.supabase.co/functions/v1/connect',
 };
 
 // Login und Konten (Supabase). Beide Werte sind öffentlich und dürfen in der App stehen.
