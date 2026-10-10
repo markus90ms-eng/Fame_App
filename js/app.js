@@ -736,7 +736,7 @@ function register() {
         <div data-connect></div>
         <p class="note">Geht auch später – über „Accounts verbinden“ auf der Startseite.</p>
         <div class="sec">3 · Fertig</div>
-        <label class="check terms-check"><input type="checkbox" name="terms"><span class="check-box"></span><span>Ich akzeptiere die <a href="#/terms">Bedingungen</a>.</span></label>
+        <label class="check terms-check"><input type="checkbox" name="terms"><span class="check-box"></span><span>Ich akzeptiere die <a href="#/terms">Bedingungen</a> und habe die <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a> gelesen.</span></label>
         <p class="form-error" data-err hidden></p>
         <div class="screen-foot"><button class="btn" type="submit"><span>Registrierung abschließen</span></button></div>
         <div class="or">Schon einen Account?</div>
@@ -859,7 +859,7 @@ function finishPage() {
         <div class="sec">1 · Accounts verbinden<small>Verbinde die Accounts, die auf deiner Card stehen sollen.</small></div>
         <div data-connect></div>
         <div class="sec">2 · Fertig</div>
-        <label class="check terms-check"><input type="checkbox" name="terms"${state.user.termsAt ? ' checked' : ''}><span class="check-box"></span><span>Ich akzeptiere die <a href="#/terms">Bedingungen</a>.</span></label>
+        <label class="check terms-check"><input type="checkbox" name="terms"${state.user.termsAt ? ' checked' : ''}><span class="check-box"></span><span>Ich akzeptiere die <a href="#/terms">Bedingungen</a> und habe die <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a> gelesen.</span></label>
         <p class="form-error" data-err hidden></p>
         <div class="screen-foot"><button class="btn" type="submit"><span>Account fertig</span></button></div>
       </form>
@@ -977,6 +977,7 @@ function terms() {
       ${backButton('back--dark')}
       <h1 class="terms-title">Bedingungen</h1>
       <p class="terms-text">Hier stehen bald die Teilnahmebedingungen von ${LOGO_TEXT}.</p>
+      <p class="terms-text"><a href="datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a></p>
     </section>`,
   };
 }
