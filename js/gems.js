@@ -102,21 +102,22 @@ export const GEM_LIST = [
 
   // Die Legenden: berühmte Einzelsteine nach Verkaufspreis bzw. Schätzwert – oben die unverkäuflichen.
   // Schliff, Seitenverhältnis (ratio = Länge zu Breite) und Farbe nach den echten Steinen.
-  // Birne: ratio 1 entspricht Länge zu Breite 1,42. Rohdiamanten: dims = Breite, Höhe, Tiefe.
-  G('The Unique Pink', '#ec6a9f', 'pear', 'diamond', { legend: true, ratio: 1.06 }),
+  // Birne: ratio 1 entspricht Länge zu Breite 1,42. Rohdiamanten: dims = Breite, Höhe, Tiefe,
+  // breaks = Bruchflächen (The Constellation ist ein Bruchstück, Lesedi La Rona eher rundlich).
+  G('The Unique Pink', '#f48fb8', 'pear', 'diamond', { legend: true, ratio: 1.06 }),
   G('De Beers Millennium Jewel 4', '#2c70d4', 'oval', 'diamond', { legend: true, ratio: 1.3 }),
   G('The Orange', '#f27a1c', 'pear', 'diamond', { legend: true, ratio: 0.99 }),
   G('Bleu Royal', '#2d6ed0', 'pear', 'diamond', { legend: true, ratio: 0.99 }),
   G('Graff Pink', '#f2a6c2', 'emerald', 'diamond', { legend: true, ratio: 1.1, corner: 0.12 }),
   G('Blue Moon of Josephine', '#3a7fda', 'cushion', 'diamond', { legend: true, ratio: 1.1 }),
-  G('Pink Legacy', '#f25e9c', 'emerald', 'diamond', { legend: true, ratio: 1.2, corner: 0.32 }),
-  G('Lesedi La Rona', '#e9edef', 'rough', 'diamond', { legend: true, dims: [0.95, 1.14, 0.73] }),
+  G('Pink Legacy', '#f585b2', 'emerald', 'diamond', { legend: true, ratio: 1.2, corner: 0.32 }),
+  G('Lesedi La Rona', '#e9edef', 'rough', 'diamond', { legend: true, dims: [0.95, 1.14, 0.73], breaks: 3 }),
   G('De Beers Blue', '#2e72d2', 'emerald', 'diamond', { legend: true, ratio: 1.35, corner: 0.2 }),
   G('Oppenheimer Blue', '#2a68c2', 'emerald', 'diamond', { legend: true, ratio: 1.3, corner: 0.14 }),
-  G('Williamson Pink Star', '#e95a94', 'cushion', 'diamond', { legend: true, ratio: 1.1 }),
-  G('The Constellation', '#edf0f1', 'rough', 'diamond', { legend: true, dims: [0.85, 1.35, 0.6] }),
-  G('The Pink Star', '#e65e9b', 'oval', 'diamond', { legend: true, ratio: 1.3 }),
-  G('Sancy', '#f2eac2', 'pear', 'diamond', { legend: true, ratio: 0.88 }),
+  G('Williamson Pink Star', '#f38ab5', 'cushion', 'diamond', { legend: true, ratio: 1.1 }),
+  G('The Constellation', '#edf0f1', 'rough', 'diamond', { legend: true, dims: [0.85, 1.35, 0.6], breaks: 6 }),
+  G('The Pink Star', '#f287b4', 'oval', 'diamond', { legend: true, ratio: 1.3 }),
+  G('Sancy', '#f2eac2', 'sancy', 'diamond', { legend: true, ratio: 1 }),
   G('Koh-i-Noor', '#f3f5f7', 'oval', 'diamond', { legend: true, ratio: 1.13 }),
   G('Hope-Diamant', '#2c4767', 'cushion', 'diamond', { legend: true, ratio: 1.18 }),
   G('Cullinan I', '#f5f7fa', 'pear', 'diamond', { legend: true, ratio: 0.92 }),
@@ -241,7 +242,14 @@ const SAYINGS = {
   'Oppenheimer Blue': 'Das tiefste Blau. Die höchste Aura.',
   'The Constellation': 'Ein ganzes Sternbild – und du bist der hellste Stern.',
   'Lesedi La Rona': '„Unser Licht“ – jetzt deins. GOAT-Status.',
-  'The Pink Star': 'Endgegner besiegt. Aura: unendlich.',
+  'The Pink Star': 'Teuerster Stein, der je versteigert wurde. Jetzt deiner.',
+  'Bleu Royal': 'Royal Blue? Nein: Royal du.',
+  'De Beers Blue': 'Fast der Blau-Rekord. Du bist ihn.',
+  'Williamson Pink Star': 'Pink, makellos, Starstatus.',
+  'Sancy': 'Trug schon Könige. Jetzt dich.',
+  'Koh-i-Noor': '„Berg des Lichts“? Du stehst ganz oben drauf.',
+  'Hope-Diamant': 'Das Herz des Ozeans? Trägst jetzt du.',
+  'Cullinan I': 'Größer geht’s nicht. Endgegner besiegt.',
 };
 
 // Brechzahl und Farbaufspaltung ("Feuer") je Steinart – bestimmen, wie das Licht im Stein läuft.

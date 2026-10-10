@@ -146,39 +146,78 @@ function pebbleGeometry(name) {
 
 export const isPebble = (spec) => spec.cut === 'cabochon' && ['opaque', 'milk', 'labra'].includes(spec.look);
 
-// Rohdiamant: unregelmäßiger Kristall mit großen, flachen Spaltflächen (z. B. The Constellation)
-function roughGeometry(name, dims = [0.95, 1.3, 0.62]) {
+// Rohdiamant wie die echten (Lesedi La Rona, The Constellation): rundlich angeätzter Kristall mit
+// matter, milchiger Haut und wenigen glatten Bruchflächen, durch die man in den klaren Stein sieht.
+// breaks: Anzahl der Bruchflächen, dims: Breite, Höhe, Tiefe. Die Haut liegt in geo.userData.skin.
+function roughGeometry(name, dims = [0.95, 1.3, 0.62], breaks = 4) {
   const rnd = seeded(`rough-${name}`);
-  const base = new THREE.IcosahedronGeometry(1, 1);
-  // Spaltflächen: Punkte jenseits einer Ebene werden auf die Ebene gedrückt
-  const planes = Array.from({ length: 11 }, () => {
+  const base = new THREE.IcosahedronGeometry(1, 2);
+  const planes = Array.from({ length: breaks }, () => {
     const n = new THREE.Vector3(rnd() - 0.5, rnd() - 0.5, rnd() - 0.5).normalize();
-    return { n, d: 0.62 + rnd() * 0.3 };
+    return { n, d: 0.55 + rnd() * 0.25 };
   });
+  const k = Array.from({ length: 4 }, () => rnd() * Math.PI * 2);
   const seen = new Map();
+  const onPlane = new Map();
   const pos = base.attributes.position;
   const t = [];
   for (let i = 0; i < pos.count; i++) {
     const v = new THREE.Vector3().fromBufferAttribute(pos, i);
     const key = `${v.x.toFixed(3)},${v.y.toFixed(3)},${v.z.toFixed(3)}`;
     if (!seen.has(key)) {
-      const w = v.clone().multiplyScalar(1 + (rnd() - 0.5) * 0.12);
-      for (const { n, d } of planes) {
-        const k = w.dot(n);
-        if (k > d) w.addScaledVector(n, d - k);
-      }
+      // angeätzte Haut: weiche Beulen statt Facetten
+      const bump = 1 + 0.07 * Math.sin(v.x * 3 + k[0]) * Math.cos(v.z * 2.6 + k[1]) + 0.05 * Math.sin(v.y * 3.4 + k[2]) + (rnd() - 0.5) * 0.04;
+      const w = v.clone().multiplyScalar(bump);
+      let hit = -1;
+      planes.forEach(({ n, d }, j) => {
+        const q = w.dot(n);
+        if (q > d) { w.addScaledVector(n, d - q); hit = j; }
+      });
       seen.set(key, w.multiply(new THREE.Vector3(...dims)));
+      onPlane.set(key, hit);
     }
     t.push(seen.get(key));
   }
   base.dispose();
+  // Haut = alle Dreiecke, die nicht vollständig auf einer Bruchfläche liegen
+  const skin = [];
+  const planeOf = new Map([...seen.entries()].map(([kk, w]) => [w, onPlane.get(kk)]));
+  for (let i = 0; i < t.length; i += 3) {
+    const p = [planeOf.get(t[i]), planeOf.get(t[i + 1]), planeOf.get(t[i + 2])];
+    if (!(p[0] >= 0 && p[0] === p[1] && p[1] === p[2])) skin.push(t[i], t[i + 1], t[i + 2]);
+  }
   const geo = facetGeometry(t, new THREE.Vector3(0, 0, 0));
-  geo.rotateX(-0.55); // gegen die Neigung der Bühne: der Kristall steht aufrecht
+  const skinGeo = new THREE.BufferGeometry().setFromPoints(skin);
+  skinGeo.computeVertexNormals();
+  for (const g of [geo, skinGeo]) g.rotateX(-0.55); // gegen die Neigung der Bühne: der Kristall steht aufrecht
+  geo.userData.skin = skinGeo;
   return geo;
 }
 
+// Sancy: alter Schild-Schliff mit zwei Kronen Rücken an Rücken – kein Pavillon, keine Spitze unten
+function doubleCrown(outlinePts) {
+  const crown = [[1, 0.02], [0.84, 0.15], [0.62, 0.26], [0.42, 0.31]];
+  const ring = (kk, y) => outlinePts.map(([x, z]) => new THREE.Vector3(x * kk, y, z * kk));
+  const rings = [...crown.slice().reverse().map(([kk, y]) => ring(kk, y)), ...crown.map(([kk, y]) => ring(kk, -y))];
+  const top = new THREE.Vector3(0, 0.31, 0), bottom = new THREE.Vector3(0, -0.31, 0);
+  const n = outlinePts.length;
+  const t = [];
+  for (let i = 0; i < n; i++) t.push(top, rings[0][i], rings[0][(i + 1) % n]);
+  for (let r = 0; r < rings.length - 1; r++) {
+    for (let i = 0; i < n; i++) {
+      const a = rings[r][i], b = rings[r][(i + 1) % n], c = rings[r + 1][i], d = rings[r + 1][(i + 1) % n];
+      t.push(a, c, b, b, c, d);
+    }
+  }
+  const last = rings[rings.length - 1];
+  for (let i = 0; i < n; i++) t.push(last[i], bottom, last[(i + 1) % n]);
+  return facetGeometry(t, new THREE.Vector3(0, 0, 0));
+}
+
 function cutGeometry(spec) {
-  if (spec.cut === 'rough') return roughGeometry(spec.de || spec.name, spec.dims);
+  if (spec.cut === 'rough') return roughGeometry(spec.de || spec.name, spec.dims, spec.breaks);
+  // Schild-Umriss: stumpfe Birne mit 16 Facetten rundum, wie beim alten Schliff
+  if (spec.cut === 'sancy') return doubleCrown(curve((t) => [(1.25 * Math.cos(t) - 0.2) * (spec.ratio ?? 1), 0.95 * Math.sin(t) * (0.55 + 0.45 * Math.abs(Math.sin(t / 2)))], 16));
   if (isPebble(spec)) return pebbleGeometry(spec.de || spec.name);
   if (spec.cut === 'cabochon') return cabochonGeometry();
   // Pavillon je nach Brechzahl: Diamant (2,42) wie gehabt, Quarz (1,54) gut ein Viertel tiefer
@@ -520,6 +559,20 @@ export function gemObject(spec, { envCube = null, style = 'holo' } = {}) {
   }
   group.add(main);
 
+  // Rohdiamant: matte, milchige Haut über dem klaren Stein (die Bruchflächen bleiben frei)
+  let skinMesh = null;
+  if (geo.userData.skin) {
+    const skinMat = new THREE.MeshPhysicalMaterial({
+      color: '#d9dde0', roughness: 0.95, metalness: 0, transparent: true, opacity: 0.6, depthWrite: false,
+      sheen: 0.6, sheenColor: new THREE.Color('#ffffff'), envMapIntensity: 0.4,
+    });
+    skinMesh = new THREE.Mesh(geo.userData.skin, skinMat);
+    skinMesh.scale.setScalar(1.004);
+    skinMesh.renderOrder = 1;
+    group.add(skinMesh);
+    disposables.push(geo.userData.skin, skinMat);
+  }
+
   // Rutilquarz: goldene Nadeln im Stein
   if ((spec.de || spec.name) === 'Rutilquarz') {
     const rnd = seeded('rutil');
@@ -582,6 +635,7 @@ export function gemObject(spec, { envCube = null, style = 'holo' } = {}) {
       sparkles.visible = !on;
       main.material = on ? blackMat : outer;
       if (innerMesh) innerMesh.visible = !on;
+      if (skinMesh) skinMesh.visible = !on;
       group.children.forEach((c) => { if (c.isLineSegments && c !== edges) c.visible = !on; });
     },
     update(t, boost = 0) {

@@ -201,5 +201,12 @@ export const SAYINGS_EN = {
   'Oppenheimer Blue': "The deepest blue. The highest aura.",
   'The Constellation': "A whole constellation, and you're the brightest star.",
   'Lesedi La Rona': "\"Our Light\", now yours. GOAT status.",
-  'The Pink Star': "Final boss defeated. Aura: infinite.",
+  'The Pink Star': "Most expensive stone ever auctioned. Now it's yours.",
+  'Bleu Royal': "Royal blue? No: royal you.",
+  'De Beers Blue': "Almost the blue record. You are it.",
+  'Williamson Pink Star': "Pink, flawless, star status.",
+  'Sancy': "Worn by kings. Now by you.",
+  'Koh-i-Noor': "\"Mountain of Light\"? You're standing on top.",
+  'Hope-Diamant': "The Heart of the Ocean? You're wearing it now.",
+  'Cullinan I': "Doesn't get bigger. Final boss defeated.",
 };
