@@ -320,4 +320,6 @@ export const EN = {
   "Masowien": "Masovia",
   "Kleinpolen": "Lesser Poland",
   "Schlesien": "Silesia",
+  'Erfolg erzielt!': 'Achievement unlocked!',
+  'Amethyst gefunden': 'Amethyst found',
 };

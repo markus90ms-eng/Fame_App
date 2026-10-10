@@ -81,7 +81,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '66';
+export const APP_VERSION = '67';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -111,19 +111,64 @@ const routes = {
 export const go = (path) => { location.hash = '#/' + path; };
 
 // Ab Klasse Gold (500.000) bzw. Diamant-Holo (1 Mio.) bekommt die ganze App den Schwarz-Gold-Look
-// mit Kristallglas. Nicht auf den Seiten vor dem Login.
+// mit Kristallglas. Drei Stufen haben stattdessen einen eigenen Hommage-Look (siehe HOMAGE).
+// Nicht auf den Seiten vor dem Login.
 const PLAIN = /^(intro\/|login|register|confirm|reset)/;
+// Hommagen: Kristallhöhle (Amethyst), Neon-Nacht im Diamantenviertel (Black Opal), Tiefsee (Hope-Diamant)
+const HOMAGE = { 14: 'cave', 76: 'neon', 98: 'ocean' };
 function luxClass() {
-  if (!state.user || !state.account.total) return '';
+  if (!state.user || !state.account.total) return {};
+  const stage = tierFor(state.account.total).stage;
+  if (HOMAGE[stage]) return { lux: 'holo', hom: HOMAGE[stage], stage };
   const cls = classFor(state.account.total);
-  return cls >= 8 ? (cls === 9 ? 'holo' : 'gold') : '';
+  return cls >= 8 ? { lux: cls === 9 ? 'holo' : 'gold' } : {};
 }
 function luxify(el, path) {
-  const lux = PLAIN.test(path) ? '' : luxClass();
-  document.documentElement.dataset.lux = lux;
+  const { lux = '', hom = '', stage } = PLAIN.test(path) ? {} : luxClass();
+  document.documentElement.dataset.lux = hom || lux;
   if (!lux) return;
   el.classList.add('lux', `lux--${lux}`);
+  if (hom) {
+    el.classList.add('hom', `hom--${hom}`);
+    if (el.classList.contains('screen--welcome')) homDecor(el, hom, stage);
+  }
   luxTilt();
+}
+
+// Deko der Startseite je Hommage – alles selbst gezeichnet, keine fremden Logos, Figuren oder Bilder
+function homDecor(el, hom, stage) {
+  const vault = el.querySelector('.welcome-vault');
+  const logoBox = el.querySelector('.splash-logo');
+  const add = (host, html) => host?.insertAdjacentHTML('beforeend', html);
+  if (hom === 'cave') {
+    add(el, `<div class="hom-achv" aria-hidden="true"><i></i><span><b>${t('Erfolg erzielt!')}</b>${t('Amethyst gefunden')}</span></div>
+      <div class="hom-hotbar" aria-hidden="true"><span class="i-pick"></span><span class="sel i-gem"></span><span class="i-torch"></span>${'<span></span>'.repeat(6)}</div>`);
+    add(vault, `<i class="hom-torch hom-torch--l" aria-hidden="true"></i><i class="hom-torch hom-torch--r" aria-hidden="true"></i>
+      <i class="hom-pick" aria-hidden="true"></i><div class="hom-xp" aria-hidden="true"><i></i><b>${stage}</b></div>`);
+  } else if (hom === 'neon') {
+    add(el, '<span class="hom-neon hom-neon--top" aria-hidden="true">★ 47TH STREET · DIAMOND DISTRICT ★</span>');
+    add(vault, `<div class="hom-cosmos" aria-hidden="true"></div>
+      <span class="hom-neon hom-neon--a" aria-hidden="true">DIAMONDS</span><span class="hom-neon hom-neon--b" aria-hidden="true">WE BUY GOLD</span>
+      <svg class="hom-fish" viewBox="0 0 96 52" aria-hidden="true"><path d="M8 26C20 6 56 2 74 22L92 8 88 26l4 18-18-14C56 50 20 46 8 26Z" fill="#8fa3ad" stroke="#334" stroke-width="1.5"/><path d="M8 26C20 6 56 2 74 22 56 14 30 14 8 26Z" fill="#b8c8d0"/><circle cx="20" cy="22" r="3" fill="#111"/><ellipse cx="44" cy="30" rx="11" ry="7" fill="#0c0e14"/><ellipse cx="41" cy="28" rx="3" ry="2" fill="#ff5fd2"/><ellipse cx="47" cy="31" rx="3" ry="2" fill="#35f0ff"/><ellipse cx="44" cy="33" rx="2.5" ry="1.5" fill="#9dff7a"/><ellipse cx="49" cy="27" rx="2" ry="1.4" fill="#ffb347"/></svg>
+      <i class="hom-ball" aria-hidden="true"></i>
+      <div class="hom-slip" aria-hidden="true"><b>PARLAY · 3 LEGS</b>WIN ✓<br>WIN ✓<br>OVER 1.5 …<br><s>ALL IN</s></div>
+      <span class="hom-buzz" aria-hidden="true">BUZZ TO ENTER</span>`);
+  } else if (hom === 'ocean') {
+    add(el, `<div class="hom-water" aria-hidden="true"></div><div class="hom-stars" aria-hidden="true"></div>
+      ${[[30, 52, 10, 0], [70, 47, 6, 2], [82, 60, 14, 4], [14, 66, 7, 1], [60, 30, 5, 3], [88, 22, 9, 5], [8, 35, 5, 6]]
+    .map(([x, y, z, d]) => `<i class="hom-bubble" style="left:${x}%;top:${y}%;width:${z}px;height:${z}px;--d:${d}s" aria-hidden="true"></i>`).join('')}`);
+    add(logoBox, `<svg class="hom-heart" viewBox="-37 -10 74 110" aria-hidden="true"><path d="M0 0v22" stroke="#e8eef6" stroke-width="1.4" stroke-dasharray="2 2"/><g transform="translate(0 54)"><path d="M0 22C-28 4-26-22-12-24-5-25 0-19 0-14c0-5 5-11 12-10 14 2 16 28-12 46Z" fill="#1d4fb8" stroke="#e8eef6" stroke-width="2.4"/><path d="M0 18-14-8 0-14 14-8ZM-14-8 0 4 14-8M0 4v14" fill="none" stroke="#8fc0ff" stroke-width=".8"/>${
+      Array.from({ length: 18 }, (_, i) => {
+        const a = (i / 18) * Math.PI * 2;
+        const x = Math.sin(a) * 16 * Math.sqrt(Math.abs(Math.sin(a))) * 1.2;
+        const y = -(13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a)) * 1.25 - 2;
+        return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.6" fill="#fff"/>`;
+      }).join('')}</g></svg>`);
+    add(vault, `<svg class="hom-bow" viewBox="0 0 150 110" aria-hidden="true"><path d="M0 46h118l28-6-18 64H0Z" fill="#081628" stroke="#9fc8ee"/><path d="M0 46h118l28-6M0 38h116l26-5" fill="none" stroke="#cfe6ff"/>${
+      Array.from({ length: 13 }, (_, i) => `<path d="M${4 + i * 9.5} 38v8" stroke="#cfe6ff" stroke-width=".7"/>`).join('')
+    }<g fill="#081628" stroke="#e8f3ff" stroke-width="1.1" stroke-linecap="round"><circle cx="128" cy="14" r="3"/><path d="M128 17v14m0-10-14-5m14 5 14-5m-14 15-3 9m3-9 3 9" fill="none"/><circle cx="121" cy="19" r="2.7"/><path d="M121 22v12m0-9-11-3m11 3 11-3m-11 12-2 6m2-6 2 6" fill="none"/></g></svg>
+      <svg class="hom-berg" viewBox="0 0 96 70" aria-hidden="true"><path d="M8 70 30 22l12 12L56 6l18 34 14 30Z" fill="#dff1ff" fill-opacity=".85"/><path d="M56 6l6 64h26L74 40Z" fill="#9fc8ee" fill-opacity=".7"/></svg>`);
+  }
 }
 
 // Glas schimmert je nachdem, wie man das Handy hält: Neigung -> --lx / --ly (-1 … 1) auf <html>
