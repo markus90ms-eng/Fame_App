@@ -5,7 +5,7 @@
 export const SOCIAL = {
   snap: {
     // Snap Kit → Developer Portal → App → OAuth2 Client ID (zum Testen die Staging-ID)
-    clientId: '',
+    clientId: '77527f7b-1361-43f1-bf0e-032071116fd3', // Staging: nur eingetragene Demo-User
   },
   instagram: {
     // Meta for Developers → App → Instagram → API-Einrichtung mit Instagram-Login → Instagram-App-ID
