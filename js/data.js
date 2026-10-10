@@ -56,7 +56,9 @@ function twoDigits(v) {
   return Math.round(v / p) * p;
 }
 const nice = (v) => (v < 100 ? Math.round(v / 5) * 5 : v < 1000 ? Math.round(v / 10) * 10 : twoDigits(v));
-const BASE = GEM_LIST.filter((g) => !g.legend).length;
+// Die Preiskurve ist fest (89 Stufen bis 250.000 €, dann 10 bis 1 Mio. €) – unabhängig davon,
+// wie viele Steine Sorten bzw. Legenden sind. So bleiben die Beträge je Stufe stabil.
+const BASE = 89;
 const LEGENDS = GEM_LIST.length - BASE;
 const baseCurve = (q) => {
   const a = [1, STEP];
