@@ -14,7 +14,7 @@ export const SOCIAL = {
   },
   tiktok: {
     // TikTok for Developers → App → Client key (der Client secret gehört NUR auf den Server)
-    clientKey: '',
+    clientKey: 'sbawihr0fp4lyvvqf1', // Sandbox: nur eingetragene Target users
   },
   // Adresse des kleinen Servers, der den Code von TikTok/Instagram gegen das Profil tauscht:
   // Supabase Edge Function "connect" (supabase/functions/connect/index.ts)
