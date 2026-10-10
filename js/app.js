@@ -81,7 +81,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '68';
+export const APP_VERSION = '69';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -116,9 +116,16 @@ export const go = (path) => { location.hash = '#/' + path; };
 const PLAIN = /^(intro\/|login|register|confirm|reset)/;
 // Hommagen: Kristallhöhle (Amethyst), Neon-Nacht im Diamantenviertel (Black Opal), Tiefsee (Hope-Diamant)
 const HOMAGE = { 14: 'cave', 76: 'neon', 98: 'ocean' };
+// Stufe der zuletzt aufgedeckten Card: Ein Hommage-Thema erscheint erst, wenn die Card umgedreht
+// wurde – sonst würde es verraten, welcher Stein unter der verdeckten Card liegt.
+function shownStage() {
+  const c = [...(state.account.cards || [])].reverse().find((x) => x.revealed !== false);
+  if (!c) return 0;
+  return c.stage || TIERS.find((x) => x.id === c.tier)?.stage || tierFor(c.total || 0).stage;
+}
 function luxClass() {
   if (!state.user || !state.account.total) return {};
-  const stage = tierFor(state.account.total).stage;
+  const stage = shownStage();
   if (HOMAGE[stage]) return { lux: 'holo', hom: HOMAGE[stage], stage };
   const cls = classFor(state.account.total);
   return cls >= 8 ? { lux: cls === 9 ? 'holo' : 'gold' } : {};
@@ -127,6 +134,7 @@ function luxify(el, path) {
   const { lux = '', hom = '', stage } = PLAIN.test(path) ? {} : luxClass();
   document.documentElement.dataset.lux = hom || lux;
   if (!lux) return;
+  el.classList.remove('lux--gold', 'lux--holo');
   el.classList.add('lux', `lux--${lux}`);
   if (hom) {
     el.classList.add('hom', `hom--${hom}`);
@@ -371,7 +379,7 @@ function splash() {
           gem: open ? top : null, mystery: !open, rim: CLASSES[cls].color, glow: 0.4 + cls * 0.06, interactive: true,
         });
         const fx = particles(el.querySelector('[data-fx]'), { color: CLASSES[cls].color, mode: 'embers', density: 0.25 + cls * 0.15 });
-        const hom = HOMAGE[tierFor(acc.total).stage];
+        const hom = HOMAGE[shownStage()];
         const t = setTimeout(() => { dia.pulse(); if (own) (hom ? themeJingle(hom) : classDrop(cls)); }, 900);
         el.querySelector('[data-logout]').addEventListener('click', logout);
         return () => { clearTimeout(t); dia.dispose(); fx.dispose(); };
@@ -1588,6 +1596,8 @@ function card() {
           c.revealed = true;
           c.stage = tier.stage;
           saveAccount();
+          // Hommage-Thema erst jetzt zeigen, wo der Stein aufgedeckt ist
+          if (HOMAGE[tier.stage]) luxify(el, 'card');
           flip.setAttribute('aria-label', tier.name);
           if (needsFrame()) timers.push(setTimeout(showFrameNudge, 1800));
         }, dur * 1000));
