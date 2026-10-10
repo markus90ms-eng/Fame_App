@@ -534,3 +534,108 @@ export function revealMusic(cls) {
 
 // Card schon aufgedeckt (Seite erneut geöffnet): gleich die Gewinn-Schleife
 export const startCelebration = (cls) => startLoop(winBar, boost(cls), 0.3);
+
+// ---- Hommage-Sounds (Stufe 14, 76, 98) ------------------------------------------------------
+// Eigene Melodien und Geräusche im Stil des Vorbilds – keine Originalmusik, keine Samples.
+// cave: 8-Bit-Höhle (Hacke, Aufstiegs-Arpeggio, Erfahrungs-Pings, ruhige Höhlenmusik)
+// neon: Diamantenviertel bei Nacht (Türsummer, Kasse, 80er-Synth-Arpeggio, Basketball-Dribbeln)
+// ocean: Tiefsee (Schiffshorn, Wellen, Flöte im keltischen Stil, Harfe, Blasen)
+
+const D = (n) => 293.66 * Math.pow(2, n / 12); // Halbtöne über D4
+
+// kleine Bausteine
+const pickHit = (at, vol = 0.05) => { noise({ at, dur: 0.06, vol, from: 2400, to: 900, q: 4, peak: 0.08 }); tone(180, { at, dur: 0.05, vol: vol * 0.8, type: 'square', slideTo: 90 }); };
+const xpPing = (at, f) => tone(f, { at, dur: 0.07, vol: 0.02, type: 'sine', slideTo: f * 1.25, rev: 0.2 });
+const drip = (at) => tone(1600 + Math.random() * 900, { at, dur: 0.18, vol: 0.018, slideTo: 500, rev: 0.7 });
+const buzzer = (at, dur = 0.55) => { tone(118, { at, dur, vol: 0.05, type: 'sawtooth', attack: 0.01 }); tone(236, { at, dur, vol: 0.02, type: 'square', attack: 0.01 }); };
+const kaching = (at) => { noise({ at, dur: 0.08, vol: 0.05, from: 3000, to: 6000, q: 2, peak: 0.1 }); tone(2637, { at: at + 0.05, dur: 0.5, vol: 0.03, type: 'triangle', rev: 0.4 }); tone(3520, { at: at + 0.09, dur: 0.6, vol: 0.025, type: 'triangle', rev: 0.4 }); };
+const dribble = (at, vol = 0.07) => { tone(95, { at, dur: 0.09, vol, slideTo: 60, attack: 0.002 }); noise({ at, dur: 0.05, vol: vol * 0.35, from: 900, to: 300, q: 1.5, peak: 0.05 }); };
+const wave = (at, dur = 3.2, vol = 0.05) => noise({ at, dur, vol, from: 250, to: 900, q: 0.7, peak: 0.45, rev: 0.3 });
+const horn = (at, dur = 1.8) => { [73.4, 92.5].forEach((f) => { tone(f, { at, dur, vol: 0.07, type: 'sawtooth', attack: 0.12 }); tone(f, { at, dur, vol: 0.05, type: 'triangle', attack: 0.12, rev: 0.6 }); }); };
+// Flöte: weicher Sinus mit leichtem Hauch, ein Hauch Verzierung vor dem Ton
+const whistle = (at, f, dur = 0.4, vol = 0.03) => { tone(f * 1.06, { at: at - 0.04, dur: 0.05, vol: vol * 0.4, rev: 0.5 }); tone(f, { at, dur, vol, attack: 0.04, rev: 0.6 }); noise({ at, dur: dur * 0.6, vol: vol * 0.15, from: f * 2, to: f * 3, q: 6, peak: 0.2 }); };
+const harp = (at, f, vol = 0.02) => tone(f, { at, dur: 1.2, vol, type: 'triangle', attack: 0.003, rev: 0.8 });
+const bubble = (at) => { const f = 400 + Math.random() * 500; tone(f, { at, dur: 0.08, vol: 0.015, slideTo: f * 2.2 }); };
+
+// Aufdecken
+function themeRevealSound(theme) {
+  if (theme === 'cave') {
+    [0, 0.35, 0.7].forEach((t, i) => pickHit(t, 0.05 + i * 0.02));
+    noise({ at: 0.95, dur: 0.35, vol: 0.06, from: 1200, to: 300, q: 1, peak: 0.1 }); // Block bricht
+    [0, 4, 7, 12, 16, 19, 24].forEach((n, i) => tone(D(n), { at: 1.15 + i * 0.07, dur: 0.12, vol: 0.03, type: 'square', rev: 0.2 }));
+    for (let i = 0; i < 9; i++) xpPing(1.3 + i * 0.09 + Math.random() * 0.04, 1300 + i * 110);
+    [D(19), D(24)].forEach((f, i) => tone(f, { at: 2.1 + i * 0.16, dur: 0.6, vol: 0.03, type: 'triangle', rev: 0.5 }));
+    return 2.9;
+  }
+  if (theme === 'neon') {
+    buzzer(0); buzzer(0.7, 0.3);
+    // kosmischer Anstieg: verstimmte Sägezähne gleiten nach oben, darüber ein schnelles Arpeggio
+    [0, 7, 10, 15].forEach((n) => { tone(D(n - 12), { at: 1.1, dur: 1.6, vol: 0.022, type: 'sawtooth', slideTo: D(n), attack: 0.4, rev: 0.5, detune: -8 }); tone(D(n - 12), { at: 1.1, dur: 1.6, vol: 0.022, type: 'sawtooth', slideTo: D(n), attack: 0.4, rev: 0.5, detune: 8 }); });
+    for (let i = 0; i < 16; i++) tone(D([0, 7, 10, 15, 19, 22][i % 6] + 12), { at: 1.3 + i * 0.075, dur: 0.07, vol: 0.016, type: 'square', rev: 0.4 });
+    kaching(2.75);
+    return 3.4;
+  }
+  // ocean
+  horn(0);
+  wave(0.4, 3.4, 0.06);
+  [[9, 0.45], [11, 0.3], [14, 0.6], [16, 0.45], [14, 0.3], [11, 0.9]].reduce((t, [n, d]) => { whistle(1.4 + t, D(n + 12), d + 0.15); return t + d; }, 0);
+  [0, 7, 12, 16, 19].forEach((n, i) => harp(1.4 + i * 0.12, D(n)));
+  for (let i = 0; i < 6; i++) bubble(0.8 + Math.random() * 2.4);
+  return 4.6;
+}
+
+// Schleifen (ein Takt)
+function themeBar(t0, bar, theme) {
+  if (theme === 'cave') {
+    // ruhige Höhlenmusik: tiefes Brummen, sparsame eigene Melodie, Tropfen, ferne Hacke
+    const beat = 0.75;
+    tone(D(-24), { at: t0, dur: beat * 4 + 0.4, vol: 0.03, attack: 0.6 });
+    const phrases = [[[0, 0], [7, 1], [12, 2.5]], [[9, 0.5], [7, 1.5], [4, 3]], [[5, 0], [9, 1], [16, 2], [14, 3]], [[12, 0.5], [7, 2]]];
+    phrases[bar % 4].forEach(([n, b]) => { tone(D(n), { at: t0 + b * beat, dur: 1.4, vol: 0.022, type: 'triangle', attack: 0.01, rev: 0.8 }); tone(D(n - 12), { at: t0 + b * beat, dur: 1.4, vol: 0.012, attack: 0.01, rev: 0.6 }); });
+    if (Math.random() < 0.7) drip(t0 + Math.random() * beat * 4);
+    if (bar % 2 === 1) [0, 0.3].forEach((d) => pickHit(t0 + 2.2 * beat + d, 0.018));
+    return beat * 4;
+  }
+  if (theme === 'neon') {
+    // treibendes Synth-Arpeggio in Moll, Bass, Dribbeln als Rhythmus, Stadtbrummen
+    const beat = 60 / 112;
+    const chords = [[0, 3, 7, 10], [-4, 0, 3, 7], [-2, 2, 5, 9], [-7, -3, 0, 3]];
+    const ch = chords[bar % 4];
+    for (let s = 0; s < 16; s++) {
+      const n = ch[[0, 1, 2, 3, 2, 1][s % 6]] + (s >= 8 ? 12 : 0);
+      tone(D(n), { at: t0 + s * beat / 4, dur: 0.12, vol: 0.013, type: 'sawtooth', rev: 0.4, detune: s % 2 ? 6 : -6 });
+    }
+    [0, 2].forEach((b) => tone(D(ch[0] - 24), { at: t0 + b * beat, dur: beat * 1.8, vol: 0.05, type: 'triangle', attack: 0.01 }));
+    [0, 1, 2, 3].forEach((b) => dribble(t0 + b * beat, b % 2 ? 0.05 : 0.07));
+    tone(D(ch[3] + 12), { at: t0, dur: beat * 4, vol: 0.006, type: 'sawtooth', attack: 0.8, rev: 0.8 });
+    noise({ at: t0, dur: beat * 4, vol: 0.008, from: 120, to: 200, q: 0.5, peak: 0.5 });
+    if (bar % 4 === 3) kaching(t0 + beat * 3.5);
+    return beat * 4;
+  }
+  // ocean: Meeresrauschen, Harfe, Flöte jeden zweiten Takt, Blasen
+  const beat = 0.6;
+  wave(t0, beat * 6, 0.04);
+  const roots = [0, 7, 9, 5];
+  const r = roots[bar % 4];
+  [0, 7, 12, 16, 19, 16].forEach((n, i) => harp(t0 + i * beat, D(r + n - 12), 0.016));
+  if (bar % 2 === 0) {
+    const tunes = [[[9, 0], [11, 1], [14, 2], [16, 3.5]], [[14, 0], [11, 1.5], [9, 2], [7, 3]], [[9, 0], [7, 1], [4, 2], [2, 3.5]], [[4, 0], [7, 1], [9, 2.5], [14, 4]]];
+    tunes[(bar / 2) % 4].forEach(([n, b]) => whistle(t0 + b * beat, D(n + 12), 0.55, 0.022));
+  }
+  for (let i = 0; i < 2; i++) bubble(t0 + Math.random() * beat * 6);
+  return beat * 6;
+}
+
+// Aufdecken mit Hommage: Fund-Sound, danach die Themen-Schleife
+export function themeReveal(theme) {
+  const len = themeRevealSound(theme);
+  return startLoop(themeBar, theme, len + 0.6);
+}
+// Hommage-Card schon offen: gleich die Themen-Schleife
+export const themeLoop = (theme) => startLoop(themeBar, theme, 0.3);
+// Kurzer Gruß auf der Startseite
+export function themeJingle(theme) {
+  if (theme === 'cave') { [D(19), D(24)].forEach((f, i) => tone(f, { at: i * 0.16, dur: 0.5, vol: 0.03, type: 'triangle', rev: 0.5 })); for (let i = 0; i < 5; i++) xpPing(0.35 + i * 0.08, 1300 + i * 140); }
+  else if (theme === 'neon') { buzzer(0, 0.35); kaching(0.45); }
+  else { horn(0, 1.2); wave(0.3, 2.4, 0.04); }
+}

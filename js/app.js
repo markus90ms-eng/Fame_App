@@ -10,7 +10,7 @@ import {
   APP_NAME, LOGO_TEXT, DIA, esc, logo, logoInline, hl, hero, button, backButton, diamondSvg,
   diamondShadowed, icons, platformIcon,
 } from './ui.js';
-import { tick, plink, stageTick, classDrop, buzz, unlockAudio, buildup, boost, startTension, revealMusic, startCelebration, isMuted, setMuted } from './fx.js';
+import { tick, plink, stageTick, classDrop, buzz, unlockAudio, buildup, boost, startTension, revealMusic, startCelebration, themeReveal, themeLoop, themeJingle, isMuted, setMuted } from './fx.js';
 import { createDiamond } from './diamond3d.js';
 import { facetArt, facetMask, svgUrl, holoStrength } from './cardfx.js';
 import { particles } from './particles.js';
@@ -81,7 +81,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '67';
+export const APP_VERSION = '68';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -371,7 +371,8 @@ function splash() {
           gem: open ? top : null, mystery: !open, rim: CLASSES[cls].color, glow: 0.4 + cls * 0.06, interactive: true,
         });
         const fx = particles(el.querySelector('[data-fx]'), { color: CLASSES[cls].color, mode: 'embers', density: 0.25 + cls * 0.15 });
-        const t = setTimeout(() => { dia.pulse(); if (own) classDrop(cls); }, 900);
+        const hom = HOMAGE[tierFor(acc.total).stage];
+        const t = setTimeout(() => { dia.pulse(); if (own) (hom ? themeJingle(hom) : classDrop(cls)); }, 900);
         el.querySelector('[data-logout]').addEventListener('click', logout);
         return () => { clearTimeout(t); dia.dispose(); fx.dispose(); };
       },
@@ -1578,7 +1579,7 @@ function card() {
           el.classList.remove('is-charging', 'is-hidden');
           el.classList.add('is-open', 'is-revealing');
           flash.classList.add('is-on');
-          stopMusic = revealMusic(tier.cls);
+          stopMusic = HOMAGE[tier.stage] ? themeReveal(HOMAGE[tier.stage]) : revealMusic(tier.cls);
           dia.pulse();
           const [x, y] = centerIn(canvas, flip);
           fx.burst(x, y, 40 + tier.level * 40, rarity.color);
@@ -1598,7 +1599,7 @@ function card() {
       const playMusic = () => {
         stopMusic();
         if (phase === 'hidden') stopMusic = startTension(tier.cls);
-        else if (phase === 'open') stopMusic = startCelebration(tier.cls);
+        else if (phase === 'open') stopMusic = HOMAGE[tier.stage] ? themeLoop(HOMAGE[tier.stage]) : startCelebration(tier.cls);
       };
       playMusic();
       const soundBtn = el.querySelector('[data-sound]');
