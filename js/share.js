@@ -432,11 +432,12 @@ export function shareText(data) {
   return `Mein ${data.tier.name} (Stufe ${data.tier.stage}/${GEM_COUNT}) auf ${APP_NAME} 💎 Nr. ${data.serial} – erst Fame, dann die anderen. #fame #thentheothers`;
 }
 
-async function webShare(blob, data, name) {
+// withText: false = nur das Bild (Snapchat nimmt sonst manchmal den Text statt des Bildes)
+async function webShare(blob, data, name, withText = true) {
   const file = new File([blob], name, { type: 'image/png' });
   if (!navigator.canShare?.({ files: [file] })) return 'unsupported';
   try {
-    await navigator.share({ files: [file], text: shareText(data), title: APP_NAME });
+    await navigator.share(withText ? { files: [file], text: shareText(data), title: APP_NAME } : { files: [file] });
     return 'shared';
   } catch (err) {
     return err?.name === 'AbortError' ? 'cancelled' : 'unsupported';
@@ -490,7 +491,7 @@ export async function shareToTikTok(data, assets) {
 
 export async function shareToSnapchat(data, assets) {
   const blob = await toBlob(await assets.story());
-  const r = await webShare(blob, data, 'fame-snap.png');
+  const r = await webShare(blob, data, 'fame-snap.png', false);
   if (r === 'shared') return { how: 'sheet' };
   if (r === 'cancelled') return { how: 'cancelled' };
   return { how: 'manual', platform: 'sc' };
