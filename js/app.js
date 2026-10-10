@@ -80,7 +80,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '55';
+export const APP_VERSION = '56';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -517,7 +517,11 @@ function connectError(id, r) {
 function connectRows(u, { card, pickMode, picked, focus }) {
   return PLATFORMS.map((p) => {
     const on = isLinked(u, p.id);
-    const sub = on ? `@${esc(u.accounts[p.id])}${u.verified?.[p.id] ? '' : ' · selbst eingetragen'}` : 'Noch nicht verbunden';
+    const ver = u.verified?.[p.id];
+    const shown = ver?.name && p.id === 'sc' && ver.handleSet && ver.name !== u.accounts[p.id] ? ` · Anzeigename „${esc(ver.name)}“` : '';
+    const sub = on ? `@${esc(u.accounts[p.id])}${ver ? shown : ' · selbst eingetragen'}` : 'Noch nicht verbunden';
+    // Snapchat liefert nur den Anzeigenamen: einmal nach dem @Benutzernamen fragen
+    const askSnap = p.id === 'sc' && on && ver && !ver.handleSet;
     const isPicked = pickMode && on && picked === p.id;
     const right = !on
       ? `<button type="button" class="pf-go" data-link="${p.id}">Verbinden</button>`
@@ -528,6 +532,11 @@ function connectRows(u, { card, pickMode, picked, focus }) {
         <span class="pf-nm">${p.name}<small>${sub}</small></span>
         ${right}
       </div>
+      ${askSnap ? `<div class="sc-ask" data-scask>
+        <b>Snapchat verbunden ✓ – wie lautet dein Benutzername?</b>
+        <p>Snapchat gibt uns nur deinen Anzeigenamen („${esc(ver.name || u.accounts.sc)}“). Damit dich alle finden, trag deinen @Benutzernamen ein.</p>
+        <div class="sc-ask-row"><input name="h" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" value="${esc(u.accounts.sc)}" aria-label="Snapchat-Benutzername"><button type="button" data-scaskok>OK</button></div>
+      </div>` : ''}
       ${on ? '' : `<div class="pf-manual" data-manual="${p.id}" role="group" hidden><input name="h" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="@dein ${p.name}-Name" aria-label="${p.name}-Name"><button type="button" data-manualok>OK</button></div>`}
       ${on && card ? `<label class="check pf-card"><input type="checkbox" data-oncard="${p.id}"${u.onCard?.includes(p.id) ? ' checked' : ''}><span class="check-box"></span><span>Steht auf meiner Card</span></label>` : ''}`;
   }).join('');
@@ -572,6 +581,18 @@ function mountConnect(host, { get, set, card = true, pickMode = false, pick = nu
         toast(`${platformName(id)} eingetragen ✓`);
       };
       f.querySelector('[data-manualok]').addEventListener('click', save);
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
+    });
+    host.querySelectorAll('[data-scask]').forEach((box) => {
+      const input = box.querySelector('input');
+      const save = () => {
+        const h = cleanHandle(input.value);
+        if (!h) { input.focus(); buzz(30); return; }
+        update((u) => { u.accounts.sc = h; u.verified.sc = { ...u.verified.sc, handleSet: true }; });
+        buzz([10, 40, 10]);
+        toast(`Snapchat: @${h} gespeichert ✓`);
+      };
+      box.querySelector('[data-scaskok]').addEventListener('click', save);
       input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
     });
     host.querySelectorAll('[data-unlink]').forEach((b) => b.addEventListener('click', () => {
