@@ -80,7 +80,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '47';
+export const APP_VERSION = '48';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -156,6 +156,8 @@ const firstName = (name) => (name || '').trim().split(/\s+/)[0];
 const displayName = (u) => u?.insta || firstName(u?.name) || '';
 const platformName = (id) => PLATFORMS.find((p) => p.id === id)?.name || id;
 const cleanHandle = (h) => (h || '').trim().replace(/^@+/, '').replace(/\s+/g, '');
+// Preisspanne einer Stufe: vom Mindestbetrag bis kurz vor die nächste Stufe
+const priceRange = (t) => { const next = TIERS.find((x) => x.stage === t.stage + 1); return next ? `${money(t.min)} – ${money(next.min - 1)}` : `ab ${money(t.min)}`; };
 const shortMoney = (n) => (n >= 1_000_000 ? `${(n / 1_000_000).toLocaleString('de-DE', { maximumFractionDigits: 1 })} Mio. €`
   : n >= 10_000 ? `${fmt(Math.round(n / 1000))} Tsd. €` : money(n));
 
@@ -350,7 +352,7 @@ function checkPage(initial) {
         out.innerHTML = `<div class="check-badge">✓</div><h2>Echt – verifizierte Fame-Card</h2>
           <dl class="check-facts">
             <div><dt>Gehört zu</dt><dd>@${esc(res.owner.handle)}${res.owner.verified ? ' <i class="verified" title="Account bestätigt">✓</i>' : ''}${res.own ? ' <small>(dein Account)</small>' : ''}</dd></div>
-            <div><dt>Edelstein</dt><dd>${res.revealed ? esc(t.name) : 'noch verdeckt'} <small>Stufe ${t.stage}</small></dd></div>
+            <div><dt>Edelstein</dt><dd class="gemline"><span><small>Stufe ${t.stage}</small> ${res.revealed ? esc(t.name) : 'noch verdeckt'}</span><span class="gemline-price">${priceRange(t)}</span></dd></div>
             <div><dt>Klasse</dt><dd><i class="check-dot"></i>${CLASSES[cls].name}</dd></div>
             <div><dt>Herkunft</dt><dd>${c ? `${c.flag} ` : ''}${esc(res.owner.region || c?.name || '')}</dd></div>
             <div><dt>Ausgestellt</dt><dd>${fmtDate(res.at)}</dd></div>
