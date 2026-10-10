@@ -2474,3 +2474,8 @@ button, input { font: inherit; color: inherit; }
 .check-result .gemline { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .check-result .gemline small { margin-right: 6px; }
 .gemline-price { font-size: 13px; font-weight: 800; color: #3dfa74; letter-spacing: 0.02em; white-space: nowrap; }
+
+/* Startseite (eingeloggt): scrollbar, damit „Abmelden“ unten immer erreichbar ist */
+.screen--splash.screen--welcome { overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.screen--welcome > * { flex-shrink: 0; }
+.screen--welcome .welcome-logout { margin-bottom: max(24px, env(safe-area-inset-bottom)); }
