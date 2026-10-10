@@ -81,7 +81,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '69';
+export const APP_VERSION = '70';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -133,8 +133,9 @@ function luxClass() {
 function luxify(el, path) {
   const { lux = '', hom = '', stage } = PLAIN.test(path) ? {} : luxClass();
   document.documentElement.dataset.lux = hom || lux;
+  // alten Look entfernen (wichtig beim Umdrehen einer Card: dann wechselt das Thema sofort)
+  el.classList.remove('lux', 'lux--gold', 'lux--holo', 'hom', ...[...el.classList].filter((c) => c.startsWith('hom--')));
   if (!lux) return;
-  el.classList.remove('lux--gold', 'lux--holo');
   el.classList.add('lux', `lux--${lux}`);
   if (hom) {
     el.classList.add('hom', `hom--${hom}`);
@@ -1596,8 +1597,9 @@ function card() {
           c.revealed = true;
           c.stage = tier.stage;
           saveAccount();
-          // Hommage-Thema erst jetzt zeigen, wo der Stein aufgedeckt ist
-          if (HOMAGE[tier.stage]) luxify(el, 'card');
+          // Look sofort auf die neue Stufe umstellen: Hommage-Thema erst jetzt (Stein ist aufgedeckt),
+          // und nach einer Hommage-Stufe zurück zum normalen Look der Klasse
+          luxify(el, 'card');
           flip.setAttribute('aria-label', tier.name);
           if (needsFrame()) timers.push(setTimeout(showFrameNudge, 1800));
         }, dur * 1000));
