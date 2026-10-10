@@ -2497,3 +2497,11 @@ button, input { font: inherit; color: inherit; }
 @keyframes trophy-glow { 0%, 100% { filter: drop-shadow(0 0 5px rgba(255, 200, 40, 0.55)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3)); } 70% { filter: drop-shadow(0 0 11px rgba(255, 210, 60, 0.95)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3)); } }
 @media (prefers-reduced-motion: reduce) { .hub-trophy, .hub-shine { animation: none; } }
 .hub-ico .seal { width: 42px; height: 42px; font-size: 7px; margin-top: 4px; }
+
+/* Sprache umschalten (nur Startseite abgemeldet, Login, Registrieren) */
+.lang-switch { position: absolute; top: max(18px, env(safe-area-inset-top)); right: 16px; z-index: 6; display: flex; align-items: stretch; border: 2px solid var(--ink); background: #fff; box-shadow: 3px 3px 0 var(--green); font: 800 12px var(--mono); }
+.lang-switch .lang-globe { display: grid; place-items: center; padding: 0 7px; }
+.lang-switch button { border: 0; padding: 6px 9px; background: transparent; color: var(--ink); font: inherit; cursor: pointer; }
+.lang-switch button.is-on { background: var(--ink); color: #fff; }
+.screen--login .lang-switch { top: max(36px, env(safe-area-inset-top)); }
+.amount-field--pre .amount-cur { margin-right: 2px; }

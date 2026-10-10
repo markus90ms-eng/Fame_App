@@ -10,6 +10,9 @@
 // pattern (für Cabochons): bands, clouds, flecks, dendrite, matrix, glitter, veins
 // c = Hauptfarbe, c2 = zweite Farbe (Muster, Bicolor, Farbwechsel)
 
+import { isEn } from './i18n.js';
+import { GEM_NAMES_EN, SAYINGS_EN } from './gems-en.js';
+
 const G = (name, c, cut = 'brilliant', look = 'clear', extra = {}) => ({ name, c, cut, look, ...extra });
 
 export const GEM_LIST = [
@@ -259,4 +262,11 @@ for (const g of GEM_LIST) {
   const o = OPTICS.find(([re]) => re.test(g.name));
   g.ior = o ? o[1] : 1.55;
   g.disp = o ? o[2] : 0.007;
+}
+// Englisch: Anzeigenamen und Sprüche tauschen (erst nach Schliff und Optik, die am deutschen Namen hängen)
+if (isEn) {
+  for (const g of GEM_LIST) {
+    if (SAYINGS_EN[g.name]) g.flavor = SAYINGS_EN[g.name];
+    if (GEM_NAMES_EN[g.name]) { g.de = g.name; g.name = GEM_NAMES_EN[g.name]; }
+  }
 }

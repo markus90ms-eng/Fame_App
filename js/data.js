@@ -1,8 +1,9 @@
 // Stammdaten, Formatierung und das (vorerst simulierte) Ranking.
 
 import { GEM_LIST } from './gems.js';
+import { t, isEn } from './i18n.js';
 
-export const CURRENCY = '€';
+export const CURRENCY = isEn ? '$' : '€';
 export const MIN_AMOUNT = 1;
 export const MAX_AMOUNT = 1_000_000;
 
@@ -23,6 +24,7 @@ export const CLASSES = [
   { id: 'gold',      name: 'Gold',         from: 500_000,   color: '#ffd23f' },
   { id: 'holo',      name: 'Diamant-Holo', from: 1_000_000, color: '#e9e4ff' },
 ];
+CLASSES.forEach((c) => { c.name = t(c.name); });
 export function classFor(amount) {
   let k = 0;
   while (k + 1 < CLASSES.length && amount >= CLASSES[k + 1].from) k++;
@@ -39,6 +41,7 @@ export const RARITIES = [
   { id: 'mythic',    label: 'Mystisch', item: 'Mystischer Gegenstand',  color: '#b65cff' },
   { id: 'legendary', label: 'Legendär', item: 'Legendärer Gegenstand',  color: '#ff8a1f' },
 ];
+RARITIES.forEach((r) => { r.label = t(r.label); r.item = t(r.item); });
 
 // Edelstein-Stufen: Stufe 1 ab 1 €, danach kommt am Anfang alle 5 € ein neuer Stein
 // (5, 10, 15 …). Sobald 5 € zu wenig werden, wachsen die Schritte gleichmäßig (Faktor q)
@@ -142,9 +145,9 @@ export function tierProgress(amount) {
   return (Math.log(amount) - Math.log(cur.min)) / (Math.log(next.min) - Math.log(cur.min));
 }
 
-const nf = new Intl.NumberFormat('de-DE', { maximumFractionDigits: 0 });
+const nf = new Intl.NumberFormat(isEn ? 'en-US' : 'de-DE', { maximumFractionDigits: 0 });
 export const fmt = (n) => nf.format(n);
-export const money = (n) => `${fmt(n)} ${CURRENCY}`;
+export const money = (n) => (isEn ? `$${fmt(n)}` : `${fmt(n)} ${CURRENCY}`);
 
 // Slider-Position (0..1) <-> Betrag, logarithmisch und auf "schöne" Schritte gerundet.
 export function amountFromPos(pos) {
@@ -169,7 +172,7 @@ export const COUNTRIES = [
   { id: 'AT', name: 'Österreich', flag: '🇦🇹', weight: 10, regions: ['Burgenland', 'Kärnten', 'Niederösterreich', 'Oberösterreich', 'Salzburg', 'Steiermark', 'Tirol', 'Vorarlberg', 'Wien'] },
   { id: 'CH', name: 'Schweiz', flag: '🇨🇭', weight: 10, regions: ['Aargau', 'Basel', 'Bern', 'Genf', 'Graubünden', 'Luzern', 'St. Gallen', 'Tessin', 'Waadt', 'Wallis', 'Zug', 'Zürich'] },
   { id: 'AE', name: 'VAE', flag: '🇦🇪', weight: 5, regions: ['Abu Dhabi', 'Dubai', 'Sharjah'] },
-  { id: 'US', name: 'USA', flag: '🇺🇸', weight: 5, regions: ['California', 'Florida', 'New York', 'Texas'] },
+  { id: 'US', name: 'USA', flag: '🇺🇸', weight: 5, regions: ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'Washington D.C.', 'West Virginia', 'Wisconsin', 'Wyoming'] },
   { id: 'GB', name: 'Großbritannien', flag: '🇬🇧', weight: 4, regions: ['England', 'Schottland', 'Wales'] },
   { id: 'FR', name: 'Frankreich', flag: '🇫🇷', weight: 3, regions: ['Île-de-France', 'Provence', 'Rhône-Alpes'] },
   { id: 'IT', name: 'Italien', flag: '🇮🇹', weight: 3, regions: ['Latium', 'Lombardei', 'Toskana'] },
@@ -178,7 +181,12 @@ export const COUNTRIES = [
   { id: 'TR', name: 'Türkei', flag: '🇹🇷', weight: 2, regions: ['Ankara', 'Antalya', 'Istanbul'] },
   { id: 'PL', name: 'Polen', flag: '🇵🇱', weight: 1, regions: ['Masowien', 'Kleinpolen', 'Schlesien'] },
 ];
-export const countryById = (id) => COUNTRIES.find((c) => c.id === id) || COUNTRIES[0];
+COUNTRIES.forEach((c) => { c.name = t(c.name); if (isEn && c.id === 'US') c.weight = 40; });
+// Startland: Deutschland, auf Englisch die USA
+export const HOME_COUNTRY = isEn ? 'US' : 'DE';
+export const countryById = (id) => COUNTRIES.find((c) => c.id === id) || COUNTRIES.find((c) => c.id === HOME_COUNTRY);
+// Anzeigename einer Region (gespeichert wird der deutsche bzw. Originalname)
+export const regionName = (r) => t(r);
 
 // ---- Simuliertes Ranking (bis ein Backend existiert) -------------------------
 

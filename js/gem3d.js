@@ -178,8 +178,8 @@ function roughGeometry(name) {
 }
 
 function cutGeometry(spec) {
-  if (spec.cut === 'rough') return roughGeometry(spec.name);
-  if (isPebble(spec)) return pebbleGeometry(spec.name);
+  if (spec.cut === 'rough') return roughGeometry(spec.de || spec.name);
+  if (isPebble(spec)) return pebbleGeometry(spec.de || spec.name);
   if (spec.cut === 'cabochon') return cabochonGeometry();
   // Pavillon je nach Brechzahl: Diamant (2,42) wie gehabt, Quarz (1,54) gut ein Viertel tiefer
   const depth = 1 + Math.max(0, 2.42 - (spec.ior ?? 2.42)) * 0.3;
@@ -402,7 +402,7 @@ function photoLook(hex, lum) {
 }
 
 function buildMaterials(spec, geo, envCube, style) {
-  const rnd = seeded(spec.name);
+  const rnd = seeded(spec.de || spec.name);
   const disposables = [];
   const tex = (name) => {
     const t = canvasTexture((g, n) => PATTERNS[name](g, n, spec, rnd));
@@ -521,7 +521,7 @@ export function gemObject(spec, { envCube = null, style = 'holo' } = {}) {
   group.add(main);
 
   // Rutilquarz: goldene Nadeln im Stein
-  if (spec.name === 'Rutilquarz') {
+  if ((spec.de || spec.name) === 'Rutilquarz') {
     const rnd = seeded('rutil');
     const v = [];
     for (let i = 0; i < 18; i++) {

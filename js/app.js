@@ -3,8 +3,9 @@
 import {
   TIERS, GEM_COUNT, RARITIES, CLASSES, classFor, PIN_FROM, COUNTRIES, countryById, tierFor, nextTier, fmt, money,
   amountFromPos, posFromAmount, rankFor, standings, groupTotals, makeSerial, lookupSerial, normalizeSerial, sampleSerial,
-  MAX_AMOUNT, MIN_AMOUNT, PLATFORMS, normalizeUser, mainAccount, cardAccounts,
+  MAX_AMOUNT, MIN_AMOUNT, CURRENCY, PLATFORMS, normalizeUser, mainAccount, cardAccounts, HOME_COUNTRY, regionName,
 } from './data.js';
+import { t, isEn, lang, LANGS, setLang } from './i18n.js';
 import {
   APP_NAME, LOGO_TEXT, DIA, esc, logo, logoInline, hl, hero, button, backButton, diamondSvg,
   diamondShadowed, icons, platformIcon,
@@ -80,7 +81,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '60';
+export const APP_VERSION = '61';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -157,9 +158,11 @@ const displayName = (u) => u?.insta || firstName(u?.name) || '';
 const platformName = (id) => PLATFORMS.find((p) => p.id === id)?.name || id;
 const cleanHandle = (h) => (h || '').trim().replace(/^@+/, '').replace(/\s+/g, '');
 // Preisspanne einer Stufe: vom Mindestbetrag bis kurz vor die nächste Stufe
-const priceRange = (t) => { const next = TIERS.find((x) => x.stage === t.stage + 1); return next ? `${money(t.min)} – ${money(next.min - 1)}` : `ab ${money(t.min)}`; };
-const shortMoney = (n) => (n >= 1_000_000 ? `${(n / 1_000_000).toLocaleString('de-DE', { maximumFractionDigits: 1 })} Mio. €`
-  : n >= 10_000 ? `${fmt(Math.round(n / 1000))} Tsd. €` : money(n));
+const priceRange = (g) => { const next = TIERS.find((x) => x.stage === g.stage + 1); return next ? `${money(g.min)} – ${money(next.min - 1)}` : t('ab {x}', { x: money(g.min) }); };
+const shortMoney = (n) => (isEn
+  ? (n >= 1_000_000 ? `$${(n / 1_000_000).toLocaleString('en-US', { maximumFractionDigits: 1 })}M` : n >= 10_000 ? `$${fmt(Math.round(n / 1000))}K` : money(n))
+  : n >= 1_000_000 ? `${(n / 1_000_000).toLocaleString('de-DE', { maximumFractionDigits: 1 })} Mio. €`
+    : n >= 10_000 ? `${fmt(Math.round(n / 1000))} Tsd. €` : money(n));
 
 // Mittelpunkt eines Elements relativ zu einem Canvas (für Funken-Explosionen).
 function centerIn(canvas, el) {
@@ -179,10 +182,10 @@ function meEntry() {
   if (!u || !state.account.total || !u.ranking?.joined) return null;
   const pid = isLinked(u, u.ranking.platform) ? u.ranking.platform : linkedIds(u).find((id) => u.onCard?.includes(id)) || linkedIds(u)[0] || '';
   return {
-    handle: u.accounts?.[pid] || displayName(u) || 'du',
+    handle: u.accounts?.[pid] || displayName(u) || t('du'),
     platform: pid,
     amount: state.account.total,
-    country: u.ranking.country || u.country || 'DE',
+    country: u.ranking.country || u.country || HOME_COUNTRY,
     region: u.ranking.region || u.region || '',
   };
 }
@@ -191,7 +194,7 @@ function meEntry() {
 
 // Testphase: alles auf diesem Gerät löschen und wieder bei 0 € anfangen
 const hasData = () => !!(state.user || state.account.total || state.account.cards?.length);
-const resetLink = () => (hasData() ? '<button class="link welcome-reset" type="button" data-reset>Alles zurücksetzen</button>' : '');
+const resetLink = () => (hasData() ? `<button class="link welcome-reset" type="button" data-reset>${t('Alles zurücksetzen')}</button>` : '');
 function bindReset(el) {
   // Eigene Rückfrage statt confirm(): in eingebetteten Ansichten werden Browser-Dialoge oft blockiert
   let armed = 0;
@@ -199,11 +202,11 @@ function bindReset(el) {
     const link = e.currentTarget;
     if (Date.now() - armed > 4000) {
       armed = Date.now();
-      link.textContent = 'Wirklich alles löschen? Nochmal tippen';
+      link.textContent = t('Wirklich alles löschen? Nochmal tippen');
       link.classList.add('is-armed');
       buzz(20);
       setTimeout(() => {
-        if (Date.now() - armed >= 4000) { link.textContent = 'Alles zurücksetzen'; link.classList.remove('is-armed'); }
+        if (Date.now() - armed >= 4000) { link.textContent = t('Alles zurücksetzen'); link.classList.remove('is-armed'); }
       }, 4100);
       return;
     }
@@ -213,9 +216,21 @@ function bindReset(el) {
     saveAccount();
     state.amount = 100;
     state.accepted = false;
-    toast('Alles zurückgesetzt – du startest wieder bei 0 €.');
+    toast(t('Alles zurückgesetzt – du startest wieder bei {x}.', { x: money(0) }));
     render();
   });
+}
+
+// Echtheits-Siegel (Startseite, Code prüfen)
+const SEAL_TXT = isEn ? 'REAL<br>FAM€' : 'ECHT<br>FAM€';
+const SEAL = `<span class="seal" aria-hidden="true">${SEAL_TXT}</span>`;
+
+// Sprache umschalten – nur auf der Startseite (abgemeldet) und beim Anmelden/Registrieren
+const langSwitch = () => `<div class="lang-switch" role="group" aria-label="Sprache / Language">
+  <span class="lang-globe" aria-hidden="true">🌐</span>${LANGS.map((l) => `<button type="button" class="${l.id === lang ? 'is-on' : ''}" data-lang="${l.id}" aria-pressed="${l.id === lang}" title="${l.name} · ${l.currency}">${l.id.toUpperCase()}</button>`).join('')}
+</div>`;
+function bindLang(el) {
+  el.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => { buzz(8); setLang(b.dataset.lang); }));
 }
 
 // Eingeloggt und schon eine Card: dann gibt es überall den schnellen Weg zur eigenen Card
@@ -231,8 +246,8 @@ function splash() {
     const last = own ? acc.cards[acc.cards.length - 1] : null;
     const top = last ? TIERS.find((t) => t.id === last.tier) || tierFor(last.total || acc.total) : null;
     const open = !!last && last.revealed !== false;
-    const hi = !own ? 'hol dir deine erste Card.' : open ? 'deine Card wartet.' : 'deine Card liegt noch verdeckt da.';
-    const main = !own ? button('Erste Card holen', 'data-go="donate"') : button(open ? 'Meine Card' : 'Card aufdecken', 'data-go="card"');
+    const hi = !own ? t('hol dir deine erste Card.') : open ? t('deine Card wartet.') : t('deine Card liegt noch verdeckt da.');
+    const main = !own ? button(t('Erste Card holen'), 'data-go="donate"') : button(open ? t('Meine Card') : t('Card aufdecken'), 'data-go="card"');
     const tile = (go, icon, title, sub) => `<a class="hub-tile" href="#/${go}"><span class="hub-ico">${icon}</span><b>${title}</b><small>${sub}</small></a>`;
     return {
       html: `<section class="screen screen--splash screen--welcome cls-${cls}" style="--rar:${CLASSES[cls].color}">
@@ -248,22 +263,22 @@ function splash() {
           <div class="vault-glow" aria-hidden="true"></div>
           <div class="stage3d" data-diamond></div>
         </div>
-        <p class="welcome-hi">Hey ${esc(displayName(state.user) || 'du')} – ${hi}</p>
-        <p class="welcome-sub">${own ? `Dein Fame-Wert <b>${money(acc.total)}</b> · Klasse <b>${CLASSES[cls].name}</b>` : 'Noch kein Fame-Wert'}</p>
+        <p class="welcome-hi">Hey ${esc(displayName(state.user) || t('du'))} – ${hi}</p>
+        <p class="welcome-sub">${own ? `${t('Dein Fame-Wert')} <b>${money(acc.total)}</b> · ${t('Klasse')} <b>${CLASSES[cls].name}</b>` : t('Noch kein Fame-Wert')}</p>
         <div class="splash-login">${main}</div>
-        <nav class="hub" aria-label="Übersicht">
-          ${tile('donate', icons.bill, own ? 'Fame steigern' : 'Einzahlen', own ? 'Leg nach, steig auf' : 'Betrag wählen')}
-          ${tile('ranking', icons.goldTrophy, 'Ranking', 'Wer hat den meisten Fame?')}
-          ${tile('check', '<span class="seal" aria-hidden="true">ECHT<br>FAM€</span>', 'Code prüfen', 'Ist eine Card echt?')}
+        <nav class="hub" aria-label="${t('Übersicht')}">
+          ${tile('donate', icons.bill, own ? t('Fame steigern') : t('Einzahlen'), own ? t('Leg nach, steig auf') : t('Betrag wählen'))}
+          ${tile('ranking', icons.goldTrophy, 'Ranking', t('Wer hat den meisten Fame?'))}
+          ${tile('check', SEAL, t('Code prüfen'), t('Ist eine Card echt?'))}
         </nav>
         <a class="connect-cta" href="#/accounts">
           <span class="cc-ics" aria-hidden="true">${PLATFORMS.map((p) => `<span class="${isLinked(state.user, p.id) ? 'is-on' : ''}">${platformIcon(p.id)}</span>`).join('')}</span>
-          <span class="cc-txt"><b>Accounts verbinden</b><small>Verbinde die Accounts, die auf deiner Card stehen sollen.</small><span class="cc-pill">${linkedIds(state.user).length} von ${PLATFORMS.length} verbunden</span></span>
+          <span class="cc-txt"><b>${t('Accounts verbinden')}</b><small>${t('Verbinde die Accounts, die auf deiner Card stehen sollen.')}</small><span class="cc-pill">${t('{n} von {m} verbunden', { n: linkedIds(state.user).length, m: PLATFORMS.length })}</span></span>
           <span class="cc-go" aria-hidden="true">→</span>
         </a>
         ${resetLink()}
         <span class="app-version">Version ${APP_VERSION}</span>
-        <button class="link welcome-logout" type="button" data-logout>Abmelden</button>
+        <button class="link welcome-logout" type="button" data-logout>${t('Abmelden')}</button>
       </section>`,
       mount(el) {
         bindReset(el);
@@ -280,11 +295,12 @@ function splash() {
   return {
     html: `<section class="screen screen--splash">
       <div class="sweep" aria-hidden="true"></div>
+      ${langSwitch()}
       <div class="splash-logo">${logo('xl')}</div>
       <div class="splash-space"></div>
       <a class="newhere" href="#/intro/1">
-        <span class="newhere-q">Neu hier?</span>
-        <span class="newhere-go">Zeig mir mehr <span aria-hidden="true">→</span></span>
+        <span class="newhere-q">${t('Neu hier?')}</span>
+        <span class="newhere-go">${t('Zeig mir mehr')} <span aria-hidden="true">→</span></span>
       </a>
       <div class="splash-space splash-space--mid"></div>
       ${checkTeaser()}
@@ -293,38 +309,38 @@ function splash() {
       ${resetLink()}
       <span class="app-version">Version ${APP_VERSION}</span>
     </section>`,
-    mount(el) { bindReset(el); },
+    mount(el) { bindReset(el); bindLang(el); },
   };
 }
 
 // Kasten auf der Startseite: Echtheit einer Fame-Card prüfen
 const checkTeaser = () => `<a class="check-teaser" href="#/check">
-  <span class="seal" aria-hidden="true">ECHT<br>FAM€</span>
-  <span class="check-teaser-text"><b>Code prüfen</b>Ist eine Fame-Card echt? Seriennummer eingeben.</span>
+  ${SEAL}
+  <span class="check-teaser-text"><b>${t('Code prüfen')}</b>${t('Ist eine Fame-Card echt? Seriennummer eingeben.')}</span>
   <span class="check-teaser-go" aria-hidden="true">→</span>
 </a>`;
 
 // Code-Prüfung: Seriennummer eingeben, Prüfzeichen und Verzeichnis prüfen, Besitzer anzeigen.
 function checkPage(initial) {
-  const fmtDate = (t) => new Date(t).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const fmtDate = (d) => new Date(d).toLocaleDateString(isEn ? 'en-US' : 'de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
   return {
     html: `<section class="screen screen--dark screen--check" style="--rar:#3dfa74">
       ${backButton('back--dark')}
       <header class="check-head">
-        <span class="seal check-seal" aria-hidden="true">ECHT<br>FAM€</span>
-        <h1 class="check-title">Code prüfen</h1>
-        <p class="check-sub">Jede Fame-Card hat oben rechts eine Seriennummer. Gib sie ein und prüf, ob die Card echt ist und wem sie gehört.</p>
+        <span class="seal check-seal" aria-hidden="true">${SEAL_TXT}</span>
+        <h1 class="check-title">${t('Code prüfen')}</h1>
+        <p class="check-sub">${t('Jede Fame-Card hat oben rechts eine Seriennummer. Gib sie ein und prüf, ob die Card echt ist und wem sie gehört.')}</p>
       </header>
       <form class="check-form" data-form autocomplete="off">
         <label class="check-field">
-          <span class="sr-only">Seriennummer</span>
+          <span class="sr-only">${t('Seriennummer')}</span>
           <input data-code inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="FM-XXXX-XXXX-X" maxlength="20" value="${esc(initial)}">
         </label>
-        ${button('Prüfen', 'type="submit" data-submit')}
-        <button class="link check-sample" type="button" data-sample>Beispiel-Code ausprobieren</button>
+        ${button(t('Prüfen'), 'type="submit" data-submit')}
+        <button class="link check-sample" type="button" data-sample>${t('Beispiel-Code ausprobieren')}</button>
       </form>
       <div class="check-result" data-result aria-live="polite"></div>
-      <p class="check-note">Prototyp: Geprüft werden die Prüfziffer und das Verzeichnis dieses Geräts (deine Cards und die Ranking-Spieler). In der fertigen App fragt Fame den Code beim Fame-Server ab.</p>
+      <p class="check-note">${t('Prototyp: Geprüft werden die Prüfziffer und das Verzeichnis dieses Geräts (deine Cards und die Ranking-Spieler). In der fertigen App fragt Fame den Code beim Fame-Server ab.')}</p>
     </section>`,
     mount(el) {
       const input = el.querySelector('[data-code]');
@@ -334,29 +350,29 @@ function checkPage(initial) {
         out.style.removeProperty('--c');
         if (res.status === 'invalid') {
           buzz([30, 40, 30]);
-          out.innerHTML = `<div class="check-badge">✕</div><h2>Kein gültiger Code</h2>
-            <p><b>${esc(res.serial || '–')}</b> ist keine Fame-Seriennummer. Prüf die Schreibweise: FM-XXXX-XXXX-X. Ist sie richtig abgeschrieben, ist die Card nicht echt.</p>`;
+          out.innerHTML = `<div class="check-badge">✕</div><h2>${t('Kein gültiger Code')}</h2>
+            <p>${t('{serial} ist keine Fame-Seriennummer. Prüf die Schreibweise: FM-XXXX-XXXX-X. Ist sie richtig abgeschrieben, ist die Card nicht echt.', { serial: `<b>${esc(res.serial || '–')}</b>` })}</p>`;
           return;
         }
         if (res.status === 'unknown') {
           buzz(20);
-          out.innerHTML = `<div class="check-badge">?</div><h2>Nicht im Verzeichnis</h2>
-            <p><b>${esc(res.serial)}</b> hat ein gültiges Format, ist aber keiner Card zugeordnet. Vorsicht – das kann eine nachgemachte Card sein.</p>`;
+          out.innerHTML = `<div class="check-badge">?</div><h2>${t('Nicht im Verzeichnis')}</h2>
+            <p>${t('{serial} hat ein gültiges Format, ist aber keiner Card zugeordnet. Vorsicht – das kann eine nachgemachte Card sein.', { serial: `<b>${esc(res.serial)}</b>` })}</p>`;
           return;
         }
-        const t = res.tier;
+        const g = res.tier;
         const cls = classFor(res.amount);
         const c = countryById(res.owner.country);
         classDrop(cls);
         out.style.setProperty('--c', CLASSES[cls].color);
-        out.innerHTML = `<div class="check-badge">✓</div><h2>Echt – verifizierte Fame-Card</h2>
+        out.innerHTML = `<div class="check-badge">✓</div><h2>${t('Echt – verifizierte Fame-Card')}</h2>
           <dl class="check-facts">
-            <div><dt>Gehört zu</dt><dd>@${esc(res.owner.handle)}${res.owner.verified ? ' <i class="verified" title="Account bestätigt">✓</i>' : ''}${res.own ? ' <small>(dein Account)</small>' : ''}</dd></div>
-            <div><dt>Edelstein</dt><dd class="gemline"><span><small>Stufe ${t.stage}</small> ${res.revealed ? esc(t.name) : 'noch verdeckt'}</span><span class="gemline-price">${priceRange(t)}</span></dd></div>
-            <div><dt>Klasse</dt><dd><i class="check-dot"></i>${CLASSES[cls].name}</dd></div>
-            <div><dt>Herkunft</dt><dd>${c ? `${c.flag} ` : ''}${esc(res.owner.region || c?.name || '')}</dd></div>
-            <div><dt>Ausgestellt</dt><dd>${fmtDate(res.at)}</dd></div>
-            <div><dt>Seriennummer</dt><dd class="mono">${esc(res.serial)}</dd></div>
+            <div><dt>${t('Gehört zu')}</dt><dd>@${esc(res.owner.handle)}${res.owner.verified ? ` <i class="verified" title="${t('Account bestätigt')}">✓</i>` : ''}${res.own ? ` <small>${t('(dein Account)')}</small>` : ''}</dd></div>
+            <div><dt>${t('Edelstein')}</dt><dd class="gemline"><span><small>${t('Stufe {n}', { n: g.stage })}</small> ${res.revealed ? esc(g.name) : t('noch verdeckt')}</span><span class="gemline-price">${priceRange(g)}</span></dd></div>
+            <div><dt>${t('Klasse')}</dt><dd><i class="check-dot"></i>${CLASSES[cls].name}</dd></div>
+            <div><dt>${t('Herkunft')}</dt><dd>${c ? `${c.flag} ` : ''}${esc(res.owner.region ? regionName(res.owner.region) : c?.name || '')}</dd></div>
+            <div><dt>${t('Ausgestellt')}</dt><dd>${fmtDate(res.at)}</dd></div>
+            <div><dt>${t('Seriennummer')}</dt><dd class="mono">${esc(res.serial)}</dd></div>
           </dl>`;
       };
       const run = () => {
@@ -376,13 +392,13 @@ function checkPage(initial) {
 
 // Schneller Weg zur eigenen Card (zum Posten), sobald man einmal eingezahlt hat
 const myCardButton = () => (hasCard()
-  ? `<button class="mycard-btn" type="button" data-go="card">${icons.share}<span>Meine Card</span></button>`
+  ? `<button class="mycard-btn" type="button" data-go="card">${icons.share}<span>${t('Meine Card')}</span></button>`
   : '');
 
 // „Zeig mir mehr“: 6 Story-Slides zum Durchtippen wie eine Instagram-Story. Jede Slide hat eine
 // Klassenfarbe – beim Durchtippen steigt man von Kiesel bis Diamant-Holo auf. Kein Stein ist sichtbar:
 // welcher es wird, zeigt erst die eigene Card.
-const STORY = [
+const STORY_DE = [
   { cls: 0, tag: 'Real Talk', h: `Reden kann ${hl('jeder.')}`,
     p: `Jeder ist plötzlich rich. Jeder hat die Uhr, den Wagen, das Leben. ${hl('Aber mal ehrlich:')} Wie viel davon ist real und wie viel nur Fake-Flex?` },
   { cls: 2, tag: 'Beweis statt Bluff', h: 'Ab jetzt zählt, was du <span class="g">beweisen</span> kannst.',
@@ -396,9 +412,32 @@ const STORY = [
   { cls: 8, tag: 'Erst Fame', h: 'Die anderen reden.<br><span class="g">Du hast Fame.</span>', p: '' },
   { cls: 9, tag: 'Der Vergleich', h: '#Real_story, BRO', extra: 'story', p: '' },
 ];
+const STORY_EN = [
+  { cls: 0, tag: 'Real Talk', h: `Talk is ${hl('cheap.')}`,
+    p: `Suddenly everyone’s rich. Everyone’s got the watch, the whip, the life. ${hl('But real talk:')} how much of it is real – and how much is just fake flex?` },
+  { cls: 2, tag: 'Proof, not bluff', h: 'From now on, what counts is what you can <span class="g">prove</span>.',
+    p: `With Fame you show in black and white how big your flex really is. No cap. No rental-car story. Just your ${hl('real status')}.` },
+  { cls: 4, tag: 'Your level', h: 'Your card.<br>Your level.', extra: 'cardback',
+    p: 'Which stone you get depends on your wallet. You decide how high you go. Every card is one of a kind.' },
+  { cls: 5, tag: 'Forever', h: 'Once Fame,<br><span class="g">always Fame.</span>', extra: 'ladder',
+    p: 'Your status stays. Forever. Stack up, level up, unlock new levels and badges. There’s no going down.' },
+  { cls: 6, tag: 'Real deal', h: `<span class="st-big">Fake?</span><br>${hl('Not with us.')}`,
+    p: `Someone’s bragging about their level? Check the ${hl('serial number')} and you’ll know in seconds if the card is ${hl('real')} – or if they’re just bluffing.` },
+  { cls: 8, tag: 'Fame first', h: 'The others talk.<br><span class="g">You’ve got Fame.</span>', p: '' },
+  { cls: 9, tag: 'The comparison', h: '#Real_story, BRO', extra: 'story', p: '' },
+];
+const STORY = isEn ? STORY_EN : STORY_DE;
 
 // Letzte Slide: der Vergleich Club-Flasche gegen Fame
-const storyQuote = () => `<blockquote class="st-quote">
+const storyQuote = () => (isEn ? `<blockquote class="st-quote">
+  <p class="st-old">A bottle of Belvedere at the club costs <b class="nowrap">$300 – $3,000</b>,</p>
+  <p class="st-old">the ${hl('Fame')} lasts <b>one night</b> max,</p>
+  <p class="st-old">and the reach ends at the club door.</p>
+  <span class="st-divider" aria-hidden="true"></span>
+  <p class="st-new">With ${logoInline()} you set your price,</p>
+  <p class="st-new">the ${hl('Fame')} lasts your ${hl('whole life')}</p>
+  <p class="st-new">and the reach is <b class="o">limitless</b>.</p>
+</blockquote>` : `<blockquote class="st-quote">
   <p class="st-old">Eine Belvedere Flasche kostet im Club <b class="nowrap">300€ – 3.000€</b>,</p>
   <p class="st-old">der ${hl('Fame')} hält maximal <b>einen Abend</b>,</p>
   <p class="st-old">die Reichweite begrenzt sich auf den Club.</p>
@@ -406,7 +445,7 @@ const storyQuote = () => `<blockquote class="st-quote">
   <p class="st-new">Bei ${logoInline()} bestimmst du deine Kosten,</p>
   <p class="st-new">der ${hl('Fame')} hält dein ${hl('Leben lang')}</p>
   <p class="st-new">und die Reichweite ist <b class="o">grenzenlos</b>.</p>
-</blockquote>`;
+</blockquote>`);
 
 // Farbleiter: der Logo-Diamant in allen 10 Klassenfarben, von links nach rechts größer
 function classLadder() {
@@ -427,7 +466,7 @@ function classLadder() {
 
 // verdeckte Card: Rückseite mit Muster, Stein-Silhouette und „?“
 const storyCardBack = () => `<div class="st-cardback" aria-hidden="true">
-  <b>${LOGO_TEXT}</b><span class="st-cardback-q">${diamondSvg({ cls: 'st-cardback-dia' })}<i>?</i></span><small>Welcher Stein? Deiner.</small>
+  <b>${LOGO_TEXT}</b><span class="st-cardback-q">${diamondSvg({ cls: 'st-cardback-dia' })}<i>?</i></span><small>${t('Welcher Stein? Deiner.')}</small>
 </div>`;
 
 function introStory() {
@@ -438,7 +477,7 @@ function introStory() {
       <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
       <div class="st-bars" aria-hidden="true">${STORY.map(() => '<i><b></b></i>').join('')}</div>
       <div class="st-top"><span class="st-logo">${LOGO_TEXT}</span><span class="st-num" data-num>1/${n}</span>
-        <button class="st-close" type="button" data-back aria-label="Schließen">×</button></div>
+        <button class="st-close" type="button" data-back aria-label="${t('Schließen')}">×</button></div>
       <div class="st-stack" data-stack>
         ${STORY.map((s, i) => `<article class="st-slide${i === 0 ? ' is-on' : ''}" data-slide="${i}" style="--c:${CLASSES[s.cls].color}" aria-hidden="${i !== 0}">
           <span class="st-tag">${s.tag}</span>
@@ -448,8 +487,8 @@ function introStory() {
         </article>`).join('')}
       </div>
       <div class="st-foot">
-        <span class="st-tap" data-tap>Tippen für weiter →</span>
-        <div class="st-cta" data-cta hidden>${button('Fang an – JETZT', 'data-go="login"')}</div>
+        <span class="st-tap" data-tap>${t('Tippen für weiter →')}</span>
+        <div class="st-cta" data-cta hidden>${button(t('Fang an – JETZT'), 'data-go="login"')}</div>
       </div>
     </section>`,
     mount(el) {
@@ -496,7 +535,7 @@ function introStory() {
 
 function regionOptions(countryId, selected) {
   return countryById(countryId).regions
-    .map((r) => `<option${r === selected ? ' selected' : ''}>${esc(r)}</option>`).join('');
+    .map((r) => `<option value="${esc(r)}"${r === selected ? ' selected' : ''}>${esc(regionName(r))}</option>`).join('');
 }
 
 // ---- Accounts verbinden ---------------------------------------------------------------------
@@ -510,35 +549,35 @@ const platIcon = (id) => (id ? `<span class="plat" title="${platformName(id)}">$
 
 function connectError(id, r) {
   const n = platformName(id);
-  toast(r.error === 'setup' ? `Die ${n}-Verbindung ist noch nicht eingerichtet – trag deinen Namen solange selbst ein.`
-    : r.error === 'denied' ? `${n}: Anmeldung abgebrochen.` : `${n} ist gerade nicht erreichbar. Versuch es gleich nochmal.`);
+  toast(r.error === 'setup' ? t('Die {n}-Verbindung ist noch nicht eingerichtet – trag deinen Namen solange selbst ein.', { n })
+    : r.error === 'denied' ? t('{n}: Anmeldung abgebrochen.', { n }) : t('{n} ist gerade nicht erreichbar. Versuch es gleich nochmal.', { n }));
 }
 
 function connectRows(u, { card, pickMode, picked, focus }) {
   return PLATFORMS.map((p) => {
     const on = isLinked(u, p.id);
     const ver = u.verified?.[p.id];
-    const shown = ver?.name && p.id === 'sc' && ver.handleSet && ver.name !== u.accounts[p.id] ? ` · Anzeigename „${esc(ver.name)}“` : '';
-    const sub = on ? `@${esc(u.accounts[p.id])}${ver ? shown : ' · selbst eingetragen'}` : 'Noch nicht verbunden';
+    const shown = ver?.name && p.id === 'sc' && ver.handleSet && ver.name !== u.accounts[p.id] ? ` · ${t('Anzeigename')} „${esc(ver.name)}“` : '';
+    const sub = on ? `@${esc(u.accounts[p.id])}${ver ? shown : ` · ${t('selbst eingetragen')}`}` : t('Noch nicht verbunden');
     // Snapchat liefert nur den Anzeigenamen: einmal nach dem @Benutzernamen fragen
     const askSnap = p.id === 'sc' && on && ver && !ver.handleSet;
     const isPicked = pickMode && on && picked === p.id;
     const right = !on
-      ? `<button type="button" class="pf-go" data-link="${p.id}">Verbinden</button>`
-      : pickMode ? `<span class="pf-ok">${isPicked ? '✓ Im Ranking' : 'Antippen'}</span>`
-        : `<span class="pf-ok">✓ Verbunden</span><button type="button" class="pf-change" data-unlink="${p.id}" aria-label="${p.name} entfernen">Entfernen</button>`;
+      ? `<button type="button" class="pf-go" data-link="${p.id}">${t('Verbinden')}</button>`
+      : pickMode ? `<span class="pf-ok">${isPicked ? t('✓ Im Ranking') : t('Antippen')}</span>`
+        : `<span class="pf-ok">${t('✓ Verbunden')}</span><button type="button" class="pf-change" data-unlink="${p.id}" aria-label="${t('{n} entfernen', { n: p.name })}">${t('Entfernen')}</button>`;
     return `<div class="pf${on ? ' is-on' : ''}${isPicked ? ' is-picked' : ''}${focus === p.id ? ' is-focus' : ''}" data-pf="${p.id}"${pickMode && on ? ' data-pick role="button" tabindex="0"' : ''}>
         <span class="pf-ic">${platformIcon(p.id)}</span>
         <span class="pf-nm">${p.name}<small>${sub}</small></span>
         ${right}
       </div>
       ${askSnap ? `<div class="sc-ask" data-scask>
-        <b>Snapchat verbunden ✓ – wie lautet dein Benutzername?</b>
-        <p>Snapchat gibt uns nur deinen Anzeigenamen („${esc(ver.name || u.accounts.sc)}“). Damit dich alle finden, trag deinen @Benutzernamen ein.</p>
-        <div class="sc-ask-row"><input name="h" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" value="${esc(u.accounts.sc)}" aria-label="Snapchat-Benutzername"><button type="button" data-scaskok>OK</button></div>
+        <b>${t('Snapchat verbunden ✓ – wie lautet dein Benutzername?')}</b>
+        <p>${t('Snapchat gibt uns nur deinen Anzeigenamen („{name}“). Damit dich alle finden, trag deinen @Benutzernamen ein.', { name: esc(ver.name || u.accounts.sc) })}</p>
+        <div class="sc-ask-row"><input name="h" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" value="${esc(u.accounts.sc)}" aria-label="${t('Snapchat-Benutzername')}"><button type="button" data-scaskok>OK</button></div>
       </div>` : ''}
-      ${on ? '' : `<div class="pf-manual" data-manual="${p.id}" role="group" hidden><input name="h" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="@dein ${p.name}-Name" aria-label="${p.name}-Name"><button type="button" data-manualok>OK</button></div>`}
-      ${on && card ? `<label class="check pf-card"><input type="checkbox" data-oncard="${p.id}"${u.onCard?.includes(p.id) ? ' checked' : ''}><span class="check-box"></span><span>Steht auf meiner Card</span></label>` : ''}`;
+      ${on ? '' : `<div class="pf-manual" data-manual="${p.id}" role="group" hidden><input name="h" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="${t('@dein {n}-Name', { n: p.name })}" aria-label="${t('{n}-Name', { n: p.name })}"><button type="button" data-manualok>OK</button></div>`}
+      ${on && card ? `<label class="check pf-card"><input type="checkbox" data-oncard="${p.id}"${u.onCard?.includes(p.id) ? ' checked' : ''}><span class="check-box"></span><span>${t('Steht auf meiner Card')}</span></label>` : ''}`;
   }).join('');
 }
 
@@ -578,7 +617,7 @@ function mountConnect(host, { get, set, card = true, pickMode = false, pick = nu
         if (!h) { input.focus(); buzz(30); return; }
         update((u) => { u.accounts[id] = h; delete u.verified[id]; if (!u.onCard.length) u.onCard.push(id); });
         buzz([10, 40, 10]);
-        toast(`${platformName(id)} eingetragen ✓`);
+        toast(t('{n} eingetragen ✓', { n: platformName(id) }));
       };
       f.querySelector('[data-manualok]').addEventListener('click', save);
       input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
@@ -590,7 +629,7 @@ function mountConnect(host, { get, set, card = true, pickMode = false, pick = nu
         if (!h) { input.focus(); buzz(30); return; }
         update((u) => { u.accounts.sc = h; u.verified.sc = { ...u.verified.sc, handleSet: true }; });
         buzz([10, 40, 10]);
-        toast(`Snapchat: @${h} gespeichert ✓`);
+        toast(t('Snapchat: @{h} gespeichert ✓', { h }));
       };
       box.querySelector('[data-scaskok]').addEventListener('click', save);
       input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
@@ -625,13 +664,14 @@ function mountConnect(host, { get, set, card = true, pickMode = false, pick = nu
 
 const authHero = () => hero('<div class="stage3d" data-diamond></div>', { cls: 'hero--tall' });
 const authDiamond = (el) => createDiamond(el.querySelector('[data-diamond]'), { level: 4, glow: 0.6, rim: '#3dfa74' });
-const ssoButtons = (verb) => `<button class="sso sso--apple" type="button" data-sso="apple">${icons.apple}<span>${verb} mit Apple</span></button>
-  <button class="sso sso--google" type="button" data-sso="google">${icons.google}<span>${verb} mit Google</span></button>`;
-const pwField = (label, name, ac) => `<label class="field"><span>${label}</span><span class="pw"><input name="${name}" type="password" autocomplete="${ac}" minlength="8" required><button type="button" class="pw-eye" data-eye aria-label="Passwort zeigen">${icons.eye}</button></span></label>`;
+const ssoButtons = (verb) => `<button class="sso sso--apple" type="button" data-sso="apple">${icons.apple}<span>${t(`${verb} mit Apple`)}</span></button>
+  <button class="sso sso--google" type="button" data-sso="google">${icons.google}<span>${t(`${verb} mit Google`)}</span></button>`;
+const pwField = (label, name, ac) => `<label class="field"><span>${label}</span><span class="pw"><input name="${name}" type="password" autocomplete="${ac}" minlength="8" required><button type="button" class="pw-eye" data-eye aria-label="${t('Passwort zeigen')}">${icons.eye}</button></span></label>`;
 const emptyScreen = (to) => { queueMicrotask(() => go(to)); return { html: '<section class="screen"></section>' }; };
 const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);
 
 function bindAuthBits(el) {
+  bindLang(el);
   el.querySelectorAll('[data-sso]').forEach((b) => b.addEventListener('click', async () => {
     if (b.classList.contains('is-busy')) return;
     b.classList.add('is-busy');
@@ -639,7 +679,7 @@ function bindAuthBits(el) {
     const r = await auth.signInWith(p);
     if (r.pending) return; // weiter zu Apple/Google
     b.classList.remove('is-busy');
-    toast(r.error === 'setup' ? `Anmelden mit ${p === 'apple' ? 'Apple' : 'Google'} ist noch nicht eingerichtet – nimm solange deine E-Mail.` : r.error);
+    toast(r.error === 'setup' ? t('Anmelden mit {p} ist noch nicht eingerichtet – nimm solange deine E-Mail.', { p: p === 'apple' ? 'Apple' : 'Google' }) : r.error);
   }));
   el.querySelectorAll('[data-eye]').forEach((b) => b.addEventListener('click', () => {
     const i = b.previousElementSibling;
@@ -665,27 +705,34 @@ async function busy(btn, fn) {
 }
 const markAlive = () => { try { sessionStorage.setItem('fame.alive', '1'); } catch { /* privat */ } };
 
+// Bedingungen + Datenschutz (Registrieren, „Fast geschafft“)
+const TERMS_LABEL = () => t('Ich akzeptiere die {terms} und habe die {privacy} gelesen.', {
+  terms: `<a href="#/terms">${t('Bedingungen')}</a>`,
+  privacy: `<a href="${isEn ? 'privacy.html' : 'datenschutz.html'}" target="_blank" rel="noopener">${t('Datenschutzerklärung')}</a>`,
+});
+
 function login() {
   if (state.user) return emptyScreen(state.after || '');
   return {
     html: `<section class="screen screen--login">
       ${authHero()}
+      ${langSwitch()}
       <form class="login-form auth-form" novalidate>
         <div class="login-icon">${diamondShadowed()}</div>
         <h1 class="headline">Login</h1>
-        <p class="sub">Schön, dass du wieder da bist.</p>
+        <p class="sub">${t('Schön, dass du wieder da bist.')}</p>
         ${ssoButtons('Anmelden')}
-        <div class="or">oder mit E-Mail</div>
-        <label class="field"><span>E-Mail</span><input name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="du@beispiel.de" required value="${esc(state.pendingEmail || '')}"></label>
-        ${pwField('Passwort', 'pw', 'current-password')}
+        <div class="or">${t('oder mit E-Mail')}</div>
+        <label class="field"><span>${t('E-Mail')}</span><input name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="${t('du@beispiel.de')}" required value="${esc(state.pendingEmail || '')}"></label>
+        ${pwField(t('Passwort'), 'pw', 'current-password')}
         <div class="row-between">
-          <label class="check"><input type="checkbox" name="keep"${store.get('keep') === false ? '' : ' checked'}><span class="check-box"></span><span>Angemeldet bleiben</span></label>
-          <button class="link" type="button" data-forgot>Passwort vergessen?</button>
+          <label class="check"><input type="checkbox" name="keep"${store.get('keep') === false ? '' : ' checked'}><span class="check-box"></span><span>${t('Angemeldet bleiben')}</span></label>
+          <button class="link" type="button" data-forgot>${t('Passwort vergessen?')}</button>
         </div>
         <p class="form-error" data-err hidden></p>
         <div class="screen-foot"><button class="btn" type="submit"><span>Login</span></button></div>
-        <div class="or">Noch kein Account?</div>
-        <div class="screen-foot"><button class="btn btn--ghost" type="button" data-go="register"><span>Registrieren</span></button></div>
+        <div class="or">${t('Noch kein Account?')}</div>
+        <div class="screen-foot"><button class="btn btn--ghost" type="button" data-go="register"><span>${t('Registrieren')}</span></button></div>
       </form>
     </section>`,
     mount(el) {
@@ -696,8 +743,8 @@ function login() {
         e.preventDefault();
         const email = form.email.value.trim();
         const pw = form.pw.value;
-        if (!validEmail(email)) { formError(form, 'Gib deine E-Mail-Adresse ein.', form.email); return; }
-        if (!pw) { formError(form, 'Gib dein Passwort ein.', form.pw); return; }
+        if (!validEmail(email)) { formError(form, t('Gib deine E-Mail-Adresse ein.'), form.email); return; }
+        if (!pw) { formError(form, t('Gib dein Passwort ein.'), form.pw); return; }
         busy(form.querySelector('[type="submit"]'), async () => {
           const r = await auth.signIn(email, pw);
           if (r.error) { formError(form, r.error); return; }
@@ -705,18 +752,18 @@ function login() {
           markAlive();
           await startSession(r.session);
           state.pendingEmail = '';
-          toast('Angemeldet ✓');
+          toast(t('Angemeldet ✓'));
           afterAuth();
         });
       });
       el.querySelector('[data-forgot]').addEventListener('click', (e) => {
         const email = form.email.value.trim();
-        if (!validEmail(email)) { formError(form, 'Gib zuerst deine E-Mail ein – dann schicken wir dir einen Link.', form.email); return; }
+        if (!validEmail(email)) { formError(form, t('Gib zuerst deine E-Mail ein – dann schicken wir dir einen Link.'), form.email); return; }
         busy(e.currentTarget, async () => {
           const r = await auth.resetPassword(email);
           if (r.error) { formError(form, r.error); return; }
           formError(form, '');
-          toast('Link ist unterwegs – schau in dein Postfach.');
+          toast(t('Link ist unterwegs – schau in dein Postfach.'));
         });
       });
       return () => dia.dispose();
@@ -729,26 +776,27 @@ function register() {
   return {
     html: `<section class="screen screen--login">
       ${authHero()}
+      ${langSwitch()}
       <form class="login-form auth-form" novalidate>
         <div class="login-icon">${diamondShadowed()}</div>
-        <h1 class="headline">Registrieren</h1>
-        <p class="sub">Leg deinen ${LOGO_TEXT}-Account an – dauert 1 Minute.</p>
-        <div class="sec">1 · Dein Login<small>Am schnellsten mit Apple (iCloud) oder Google – ohne neues Passwort. 🔒 Deine E-Mail taucht nirgendwo auf.</small></div>
+        <h1 class="headline">${t('Registrieren')}</h1>
+        <p class="sub">${t('Leg deinen {app}-Account an – dauert 1 Minute.', { app: LOGO_TEXT })}</p>
+        <div class="sec">${t('1 · Dein Login')}<small>${t('Am schnellsten mit Apple (iCloud) oder Google – ohne neues Passwort. 🔒 Deine E-Mail taucht nirgendwo auf.')}</small></div>
         ${ssoButtons('Weiter')}
-        <div class="or">oder mit E-Mail</div>
-        <label class="field"><span>E-Mail</span><input name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="du@beispiel.de" required></label>
-        <p class="hint">🔒 Deine E-Mail taucht nirgendwo auf – nicht auf der Card, nicht im Ranking.</p>
-        ${pwField('Passwort <small>(mind. 8 Zeichen)</small>', 'pw', 'new-password')}
-        ${pwField('Passwort wiederholen', 'pw2', 'new-password')}
-        <div class="sec">2 · Accounts verbinden<small>Verbinde die Accounts, die auf deiner Card stehen sollen. Dein Name kommt direkt von Insta, TikTok oder Snapchat.</small></div>
+        <div class="or">${t('oder mit E-Mail')}</div>
+        <label class="field"><span>${t('E-Mail')}</span><input name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="${t('du@beispiel.de')}" required></label>
+        <p class="hint">${t('🔒 Deine E-Mail taucht nirgendwo auf – nicht auf der Card, nicht im Ranking.')}</p>
+        ${pwField(`${t('Passwort')} <small>${t('(mind. 8 Zeichen)')}</small>`, 'pw', 'new-password')}
+        ${pwField(t('Passwort wiederholen'), 'pw2', 'new-password')}
+        <div class="sec">${t('2 · Accounts verbinden')}<small>${t('Verbinde die Accounts, die auf deiner Card stehen sollen. Dein Name kommt direkt von Insta, TikTok oder Snapchat.')}</small></div>
         <div data-connect></div>
-        <p class="note">Geht auch später – über „Accounts verbinden“ auf der Startseite.</p>
-        <div class="sec">3 · Fertig</div>
-        <label class="check terms-check"><input type="checkbox" name="terms"><span class="check-box"></span><span>Ich akzeptiere die <a href="#/terms">Bedingungen</a> und habe die <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a> gelesen.</span></label>
+        <p class="note">${t('Geht auch später – über „Accounts verbinden“ auf der Startseite.')}</p>
+        <div class="sec">${t('3 · Fertig')}</div>
+        <label class="check terms-check"><input type="checkbox" name="terms"><span class="check-box"></span><span>${TERMS_LABEL()}</span></label>
         <p class="form-error" data-err hidden></p>
-        <div class="screen-foot"><button class="btn" type="submit"><span>Registrierung abschließen</span></button></div>
-        <div class="or">Schon einen Account?</div>
-        <div class="screen-foot"><button class="link" type="button" data-go="login">Zum Login</button></div>
+        <div class="screen-foot"><button class="btn" type="submit"><span>${t('Registrierung abschließen')}</span></button></div>
+        <div class="or">${t('Schon einen Account?')}</div>
+        <div class="screen-foot"><button class="link" type="button" data-go="login">${t('Zum Login')}</button></div>
       </form>
     </section>`,
     mount(el) {
@@ -761,10 +809,10 @@ function register() {
       form.addEventListener('submit', (e) => {
         e.preventDefault();
         const email = form.email.value.trim();
-        if (!validEmail(email)) { formError(form, 'Die E-Mail-Adresse stimmt nicht.', form.email); return; }
-        if (form.pw.value.length < 8) { formError(form, 'Das Passwort braucht mindestens 8 Zeichen.', form.pw); return; }
-        if (form.pw.value !== form.pw2.value) { formError(form, 'Die beiden Passwörter sind nicht gleich.', form.pw2); return; }
-        if (!form.terms.checked) { formError(form, 'Bitte akzeptiere die Bedingungen.'); return; }
+        if (!validEmail(email)) { formError(form, t('Die E-Mail-Adresse stimmt nicht.'), form.email); return; }
+        if (form.pw.value.length < 8) { formError(form, t('Das Passwort braucht mindestens 8 Zeichen.'), form.pw); return; }
+        if (form.pw.value !== form.pw2.value) { formError(form, t('Die beiden Passwörter sind nicht gleich.'), form.pw2); return; }
+        if (!form.terms.checked) { formError(form, t('Bitte akzeptiere die Bedingungen.')); return; }
         busy(form.querySelector('[type="submit"]'), async () => {
           const d = state.regDraft;
           const r = await auth.signUp(email, form.pw.value, {
@@ -775,7 +823,7 @@ function register() {
           store.set('keep', true);
           markAlive();
           await startSession(r.session);
-          toast('Account erstellt ✓ Willkommen!');
+          toast(t('Account erstellt ✓ Willkommen!'));
           afterAuth();
         });
       });
@@ -792,18 +840,18 @@ function confirmPage() {
       ${authHero()}
       <div class="login-form auth-form">
         <div class="login-icon">${diamondShadowed()}</div>
-        <h1 class="headline">Check dein Postfach</h1>
-        <p class="sub">Wir haben dir ${email ? `an <b>${esc(email)}</b> ` : ''}einen Link geschickt. Tipp darauf – dann ist dein Account fertig.</p>
-        <p class="note">Keine Mail da? Schau auch im Spam-Ordner nach.</p>
-        <div class="screen-foot">${email ? '<button class="btn btn--ghost" type="button" data-resend><span>Mail nochmal senden</span></button>' : ''}</div>
-        <div class="screen-foot"><button class="link" type="button" data-go="login">Zum Login</button></div>
+        <h1 class="headline">${t('Check dein Postfach')}</h1>
+        <p class="sub">${email ? t('Wir haben dir an {email} einen Link geschickt. Tipp darauf – dann ist dein Account fertig.', { email: `<b>${esc(email)}</b>` }) : t('Wir haben dir einen Link geschickt. Tipp darauf – dann ist dein Account fertig.')}</p>
+        <p class="note">${t('Keine Mail da? Schau auch im Spam-Ordner nach.')}</p>
+        <div class="screen-foot">${email ? `<button class="btn btn--ghost" type="button" data-resend><span>${t('Mail nochmal senden')}</span></button>` : ''}</div>
+        <div class="screen-foot"><button class="link" type="button" data-go="login">${t('Zum Login')}</button></div>
       </div>
     </section>`,
     mount(el) {
       const dia = authDiamond(el);
       el.querySelector('[data-resend]')?.addEventListener('click', (e) => busy(e.currentTarget, async () => {
         const r = await auth.resendConfirm(email);
-        toast(r.error || 'Neue Mail ist unterwegs.');
+        toast(r.error || t('Neue Mail ist unterwegs.'));
       }));
       return () => dia.dispose();
     },
@@ -818,14 +866,14 @@ function resetPage() {
       ${authHero()}
       <form class="login-form auth-form" novalidate>
         <div class="login-icon">${diamondShadowed()}</div>
-        <h1 class="headline">Neues Passwort</h1>
-        ${ok ? `<p class="sub">Wähl ein neues Passwort für deinen ${LOGO_TEXT}-Account.</p>
-          ${pwField('Neues Passwort <small>(mind. 8 Zeichen)</small>', 'pw', 'new-password')}
-          ${pwField('Passwort wiederholen', 'pw2', 'new-password')}
+        <h1 class="headline">${t('Neues Passwort')}</h1>
+        ${ok ? `<p class="sub">${t('Wähl ein neues Passwort für deinen {app}-Account.', { app: LOGO_TEXT })}</p>
+          ${pwField(`${t('Neues Passwort')} <small>${t('(mind. 8 Zeichen)')}</small>`, 'pw', 'new-password')}
+          ${pwField(t('Passwort wiederholen'), 'pw2', 'new-password')}
           <p class="form-error" data-err hidden></p>
-          <div class="screen-foot"><button class="btn" type="submit"><span>Passwort speichern</span></button></div>`
-    : `<p class="sub">Der Link ist abgelaufen oder wurde schon benutzt. Fordere beim Login einfach einen neuen an.</p>
-          <div class="screen-foot"><button class="btn" type="button" data-go="login"><span>Zum Login</span></button></div>`}
+          <div class="screen-foot"><button class="btn" type="submit"><span>${t('Passwort speichern')}</span></button></div>`
+    : `<p class="sub">${t('Der Link ist abgelaufen oder wurde schon benutzt. Fordere beim Login einfach einen neuen an.')}</p>
+          <div class="screen-foot"><button class="btn" type="button" data-go="login"><span>${t('Zum Login')}</span></button></div>`}
       </form>
     </section>`,
     mount(el) {
@@ -835,12 +883,12 @@ function resetPage() {
       if (ok) {
         form.addEventListener('submit', (e) => {
           e.preventDefault();
-          if (form.pw.value.length < 8) { formError(form, 'Das Passwort braucht mindestens 8 Zeichen.', form.pw); return; }
-          if (form.pw.value !== form.pw2.value) { formError(form, 'Die beiden Passwörter sind nicht gleich.', form.pw2); return; }
+          if (form.pw.value.length < 8) { formError(form, t('Das Passwort braucht mindestens 8 Zeichen.'), form.pw); return; }
+          if (form.pw.value !== form.pw2.value) { formError(form, t('Die beiden Passwörter sind nicht gleich.'), form.pw2); return; }
           busy(form.querySelector('[type="submit"]'), async () => {
             const r = await auth.updatePassword(form.pw.value);
             if (r.error) { formError(form, r.error); return; }
-            toast('Passwort geändert ✓');
+            toast(t('Passwort geändert ✓'));
             go(state.user && !state.user.done ? 'finish' : '');
           });
         });
@@ -860,16 +908,16 @@ function finishPage() {
       ${authHero()}
       <form class="login-form auth-form" novalidate>
         <div class="login-icon">${diamondShadowed()}</div>
-        <h1 class="headline">Fast geschafft</h1>
-        <p class="sub">Noch 2 kurze Schritte, dann ist dein Account fertig.</p>
-        <div class="signed">${via[1]}<span>Angemeldet mit ${via[0]}</span>${prov === 'email' ? '' : '<small>✓ ohne Passwort</small>'}</div>
-        <p class="hint">🔒 Deine E-Mail taucht nirgendwo auf.</p>
-        <div class="sec">1 · Accounts verbinden<small>Verbinde die Accounts, die auf deiner Card stehen sollen.</small></div>
+        <h1 class="headline">${t('Fast geschafft')}</h1>
+        <p class="sub">${t('Noch 2 kurze Schritte, dann ist dein Account fertig.')}</p>
+        <div class="signed">${via[1]}<span>${t('Angemeldet mit {p}', { p: via[0] })}</span>${prov === 'email' ? '' : `<small>${t('✓ ohne Passwort')}</small>`}</div>
+        <p class="hint">${t('🔒 Deine E-Mail taucht nirgendwo auf.')}</p>
+        <div class="sec">${t('1 · Accounts verbinden')}<small>${t('Verbinde die Accounts, die auf deiner Card stehen sollen.')}</small></div>
         <div data-connect></div>
-        <div class="sec">2 · Fertig</div>
-        <label class="check terms-check"><input type="checkbox" name="terms"${state.user.termsAt ? ' checked' : ''}><span class="check-box"></span><span>Ich akzeptiere die <a href="#/terms">Bedingungen</a> und habe die <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a> gelesen.</span></label>
+        <div class="sec">${t('2 · Fertig')}</div>
+        <label class="check terms-check"><input type="checkbox" name="terms"${state.user.termsAt ? ' checked' : ''}><span class="check-box"></span><span>${TERMS_LABEL()}</span></label>
         <p class="form-error" data-err hidden></p>
-        <div class="screen-foot"><button class="btn" type="submit"><span>Account fertig</span></button></div>
+        <div class="screen-foot"><button class="btn" type="submit"><span>${t('Account fertig')}</span></button></div>
       </form>
     </section>`,
     mount(el) {
@@ -878,9 +926,9 @@ function finishPage() {
       mountConnect(el.querySelector('[data-connect]'), { get: () => state.user, set: saveUser, back: 'finish' });
       form.addEventListener('submit', (e) => {
         e.preventDefault();
-        if (!form.terms.checked) { formError(form, 'Bitte akzeptiere die Bedingungen.'); return; }
+        if (!form.terms.checked) { formError(form, t('Bitte akzeptiere die Bedingungen.')); return; }
         saveUser({ ...state.user, done: true, termsAt: state.user.termsAt || Date.now() });
-        toast('Account fertig ✓ Willkommen!');
+        toast(t('Account fertig ✓ Willkommen!'));
         afterAuth();
       });
       return () => dia.dispose();
@@ -896,11 +944,11 @@ function accountsPage() {
     html: `<section class="screen screen--login">
       ${authHero()}
       <div class="login-form auth-form">
-        <h1 class="headline">Accounts verbinden</h1>
-        <p class="sub">${focus ? `Verbinde ${platformName(focus)}, dann kannst du deine Card direkt posten.` : 'Verbinde die Accounts, die auf deiner Card stehen sollen. Mehrere möglich.'}</p>
+        <h1 class="headline">${t('Accounts verbinden')}</h1>
+        <p class="sub">${focus ? t('Verbinde {n}, dann kannst du deine Card direkt posten.', { n: platformName(focus) }) : t('Verbinde die Accounts, die auf deiner Card stehen sollen. Mehrere möglich.')}</p>
         <div data-connect></div>
-        <p class="note">Verbunden heißt: Dein echter Name steht auf der Card und du kannst deine Story direkt posten.</p>
-        <div class="screen-foot"><button class="btn" type="button" data-done><span>${state.after === 'card' ? 'Zurück zur Card' : 'Fertig'}</span></button></div>
+        <p class="note">${t('Verbunden heißt: Dein echter Name steht auf der Card und du kannst deine Story direkt posten.')}</p>
+        <div class="screen-foot"><button class="btn" type="button" data-done><span>${state.after === 'card' ? t('Zurück zur Card') : t('Fertig')}</span></button></div>
       </div>
     </section>`,
     mount(el) {
@@ -983,9 +1031,9 @@ function terms() {
   return {
     html: `<section class="screen screen--dark screen--terms" style="--rar:#3dfa74">
       ${backButton('back--dark')}
-      <h1 class="terms-title">Bedingungen</h1>
-      <p class="terms-text">Hier stehen bald die Teilnahmebedingungen von ${LOGO_TEXT}.</p>
-      <p class="terms-text"><a href="datenschutz.html" target="_blank" rel="noopener">Datenschutzerklärung</a></p>
+      <h1 class="terms-title">${t('Bedingungen')}</h1>
+      <p class="terms-text">${t('Hier stehen bald die Teilnahmebedingungen von {app}.', { app: LOGO_TEXT })}</p>
+      <p class="terms-text"><a href="${isEn ? 'privacy.html' : 'datenschutz.html'}" target="_blank" rel="noopener">${t('Datenschutzerklärung')}</a></p>
     </section>`,
   };
 }
@@ -1024,24 +1072,25 @@ function donate() {
         <h1 class="vault-name" data-tier></h1>
         <p class="vault-teaser" data-teaser></p>
       </div>
-      <div class="collection" aria-label="Deine Sammlung">
+      <div class="collection" aria-label="${t('Deine Sammlung')}">
         <div class="gem-grid">
           ${TIERS.map((t) => `<i class="gcell${collected.has(t.stage) ? ' is-found' : ''}" data-cell="${t.stage}" style="--c:${t.css}"></i>`).join('')}
         </div>
       </div>
       <div class="donate-body">
-        ${acc.total ? `<div class="account">Dein Fame-Wert <b>${money(acc.total)}</b> → danach <b data-after></b></div>` : ''}
+        ${acc.total ? `<div class="account">${t('Dein Fame-Wert')} <b>${money(acc.total)}</b> → ${t('danach')} <b data-after></b></div>` : ''}
         <div class="amount-box">
-          <button class="stepper" type="button" data-step="-1" aria-label="Weniger">−</button>
-          <label class="amount-field">
-            <span class="sr-only">Betrag in Euro</span>
+          <button class="stepper" type="button" data-step="-1" aria-label="${t('Weniger')}">−</button>
+          <label class="amount-field${isEn ? ' amount-field--pre' : ''}">
+            <span class="sr-only">${t('Betrag in Euro')}</span>
+            ${isEn ? `<span class="amount-cur" aria-hidden="true">${CURRENCY}</span>` : ''}
             <input id="donate-amount" data-amount inputmode="numeric" autocomplete="off" enterkeyhint="done">
-            <span class="amount-cur" aria-hidden="true">€</span>
+            ${isEn ? '' : `<span class="amount-cur" aria-hidden="true">${CURRENCY}</span>`}
           </label>
-          <button class="stepper" type="button" data-step="1" aria-label="Mehr">+</button>
+          <button class="stepper" type="button" data-step="1" aria-label="${t('Mehr')}">+</button>
         </div>
-        <p class="amount-hint">Betrag antippen zum Eintippen – oder Regler ziehen</p>
-        <div class="arc" data-arc role="slider" tabindex="0" aria-label="Betrag einstellen"
+        <p class="amount-hint">${t('Betrag antippen zum Eintippen – oder Regler ziehen')}</p>
+        <div class="arc" data-arc role="slider" tabindex="0" aria-label="${t('Betrag einstellen')}"
           aria-valuemin="${MIN_AMOUNT}" aria-valuemax="${MAX_AMOUNT}">
           <svg viewBox="0 0 300 108" aria-hidden="true">
             <path class="arc-track" d="M20 16 Q150 168 280 16" pathLength="1"/>
@@ -1054,7 +1103,7 @@ function donate() {
         <label class="check">
           <input id="donate-accept" type="checkbox" data-accept ${state.accepted ? 'checked' : ''}>
           <span class="check-box" aria-hidden="true"></span>
-          <span>Ich akzeptiere die <a href="#/terms">Bedingungen</a></span>
+          <span>${t('Ich akzeptiere die {terms}', { terms: `<a href="#/terms">${t('Bedingungen')}</a>` })}</span>
         </label>
         <div class="screen-foot">
           ${button('I´m awesome', 'data-awesome')}
@@ -1107,16 +1156,16 @@ function donate() {
         knob.setAttribute('transform', `translate(${20 + 260 * pos} ${16 + 304 * pos * (1 - pos)})`);
         fill.style.strokeDasharray = `${pos} 1`;
         arc.setAttribute('aria-valuenow', amount);
-        arc.setAttribute('aria-valuetext', `${money(amount)}, danach ${tier.name}`);
+        arc.setAttribute('aria-valuetext', `${money(amount)}, ${t('danach')} ${tier.name}`);
         if (document.activeElement !== input) input.value = fmt(amount);
         input.parentElement.classList.toggle('is-long', amount >= 1_000_000);
         const afterEl = $('[data-after]');
         if (afterEl) afterEl.textContent = money(after);
 
-        $('[data-tier]').innerHTML = `Edelstein <span>Stufe ${tier.stage} von ${GEM_COUNT}</span>`;
+        $('[data-tier]').innerHTML = `${t('Edelstein')} <span>${t('Stufe {n} von {m}', { n: tier.stage, m: GEM_COUNT })}</span>`;
         $('[data-teaser]').textContent = locked
-          ? 'Welcher es ist, zeigt dir erst deine Card.'
-          : 'Den hast du schon in deiner Sammlung.';
+          ? t('Welcher es ist, zeigt dir erst deine Card.')
+          : t('Den hast du schon in deiner Sammlung.');
         el.classList.toggle('is-locked', locked);
         el.querySelectorAll('[data-cell]').forEach((c) => c.classList.toggle('is-target', +c.dataset.cell === tier.stage));
         el.style.setProperty('--rar', tier.css);
@@ -1131,14 +1180,14 @@ function donate() {
           nudgeTarget = nx.min - acc.total;
           nudge.hidden = false;
           nudge.style.setProperty('--c', nx.css);
-          nudge.innerHTML = `<span>Nur noch <b>${money(nx.min - after)}</b> bis <b>Stufe ${nx.stage}</b></span><span class="nudge-go">Nächster Edelstein →</span>`;
+          nudge.innerHTML = `<span>${t('Nur noch {x} bis {lvl}', { x: `<b>${money(nx.min - after)}</b>`, lvl: `<b>${t('Stufe {n}', { n: nx.stage })}</b>` })}</span><span class="nudge-go">${t('Nächster Edelstein →')}</span>`;
         } else {
           nudge.hidden = true;
         }
         const rl = $('[data-rankline]');
         if (rl) {
           const { rank, total } = rankFor(after);
-          rl.innerHTML = `${icons.trophy} Rang danach <b>${fmt(rank)}</b> von ${fmt(total)}`;
+          rl.innerHTML = `${icons.trophy} ${t('Rang danach {r} von {n}', { r: `<b>${fmt(rank)}</b>`, n: fmt(total) })}`;
         }
 
         if (tier.stage !== stage) {
@@ -1212,7 +1261,7 @@ function donate() {
         if (!accept.checked) return;
         if (!state.user) {
           state.after = 'donate';
-          toast('Log dich ein, damit der Betrag deinem Fame-Wert gutgeschrieben wird.');
+          toast(t('Log dich ein, damit der Betrag deinem Fame-Wert gutgeschrieben wird.'));
           go('login');
           return;
         }
@@ -1272,10 +1321,10 @@ function card() {
       <div class="reveal-streak" aria-hidden="true"></div>
       <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
       ${backButton('back--dark')}
-      <button class="home-btn" type="button" data-go="" aria-label="Zur Startseite">${icons.home}</button>
-      <button class="sound-btn${isMuted() ? ' is-muted' : ''}" type="button" data-sound aria-label="Ton an/aus" aria-pressed="${!isMuted()}">${icons.sound}</button>
+      <button class="home-btn" type="button" data-go="" aria-label="${t('Zur Startseite')}">${icons.home}</button>
+      <button class="sound-btn${isMuted() ? ' is-muted' : ''}" type="button" data-sound aria-label="${t('Ton an/aus')}" aria-pressed="${!isMuted()}">${icons.sound}</button>
       <div class="card-wrap" data-tiltwrap>
-        <div class="flip" data-flip role="button" tabindex="0" aria-label="${hidden ? 'Karte aufdecken' : tier.name}">
+        <div class="flip" data-flip role="button" tabindex="0" aria-label="${hidden ? t('Karte aufdecken') : tier.name}">
           <article class="famecard metal-${tier.metal}${tier.legend ? ' is-legend' : ''} flip-front" data-card style="--gem:${tier.tone}">
             <div class="famecard-ring" aria-hidden="true"></div>
             <div class="famecard-inner" style="--holo:${holoStrength(tier.cls)}">
@@ -1286,7 +1335,7 @@ function card() {
               <div class="famecard-shine" data-shine></div>
               <div class="famecard-top">
                 <span class="famecard-brand">${LOGO_TEXT}${diamondSvg({ filled: true, cls: 'dia-inline' })}</span>
-                <span class="famecard-serial" title="Seriennummer">Nr. ${c.serial}</span>
+                <span class="famecard-serial" title="${t('Seriennummer')}">${t('Nr.')} ${c.serial}</span>
               </div>
               <div class="famecard-plate">
                 <h2 class="famecard-name">${tier.name}</h2>
@@ -1296,8 +1345,8 @@ function card() {
               <div class="famecard-foot">
                 ${onCard.length
                   ? `<div class="famecard-accts${onCard.length > 1 ? ' is-multi' : ''}">${onCard.map((a) => `<span class="famecard-insta">${platformIcon(a.id)}<span>${esc(a.handle)}</span></span>`).join('')}</div>`
-                  : `<div class="famecard-insta">${icons.insta}<input id="card-insta" data-insta placeholder="dein Instagram" autocomplete="off" autocapitalize="off" aria-label="Instagram-Name"></div>`}
-                <span class="seal" title="Echtheitssiegel">ECHT<br>FAM€</span>
+                  : `<div class="famecard-insta">${icons.insta}<input id="card-insta" data-insta placeholder="${t('dein Instagram')}" autocomplete="off" autocapitalize="off" aria-label="${t('Instagram-Name')}"></div>`}
+                <span class="seal" title="${t('Echtheitssiegel')}">${SEAL_TXT}</span>
               </div>
             </div>
           </article>
@@ -1305,43 +1354,43 @@ function card() {
             <div class="cardback-pattern"></div>
             <div class="cardback-logo">${logo('md')}</div>
             <div class="cardback-q">?</div>
-            <div class="cardback-tap">Tippen zum Aufdecken</div>
+            <div class="cardback-tap">${t('Tippen zum Aufdecken')}</div>
           </div>
         </div>
       </div>
       <div class="screen-foot card-actions">
         <button class="frame-nudge" type="button" data-framenudge hidden>
           <span class="frame-nudge-ring" aria-hidden="true"></span>
-          <span class="frame-nudge-text"><b>Neue Klasse: ${CLASSES[tier.cls].name}!</b>Hol dir deinen neuen Profilbild-Rahmen</span>
+          <span class="frame-nudge-text"><b>${t('Neue Klasse: {c}!', { c: CLASSES[tier.cls].name })}</b>${t('Hol dir deinen neuen Profilbild-Rahmen')}</span>
           <span class="frame-nudge-go" aria-hidden="true">→</span>
         </button>
         <div class="quick-share">
           <button class="qs qs--ig" type="button" data-share="ig">${icons.insta}<span>Story</span></button>
           <button class="qs qs--tt" type="button" data-share="tt">${icons.tiktok}<span>TikTok</span></button>
           <button class="qs qs--sc" type="button" data-share="sc">${icons.snap}<span>Snap</span></button>
-          <button class="qs" type="button" data-open-sheet>${icons.share}<span>Mehr</span></button>
+          <button class="qs" type="button" data-open-sheet>${icons.share}<span>${t('Mehr')}</span></button>
         </div>
         <div class="foot-links">
-          <a class="link" href="#/donate">Fame steigern</a>
+          <a class="link" href="#/donate">${t('Fame steigern')}</a>
           <a class="link" href="#/ranking">Ranking</a>
         </div>
       </div>
       <div class="sheet" data-sheet hidden>
         <div class="sheet-backdrop" data-close-sheet></div>
-        <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="Card teilen">
+        <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="${t('Card teilen')}">
           <div class="sheet-grip" aria-hidden="true"></div>
-          <h2 class="sheet-title">Zeig´s der Welt</h2>
-          ${myAccts.length > 1 ? `<div class="acc-switch" aria-label="Accounts auf dem Bild">${myAccts.map((a) => { const on = onCard.some((x) => x.id === a.id); return `<button type="button" class="acc-chip${on ? ' is-on' : ''}" data-acct="${a.id}" aria-pressed="${on}">${platformIcon(a.id)}<span>@${esc(a.handle)}</span></button>`; }).join('')}</div>` : ''}
-          <div class="sheet-preview"><img data-preview alt="Vorschau deiner Story"><span class="sheet-loading" data-loading>Story wird gebaut…</span></div>
+          <h2 class="sheet-title">${t('Zeig´s der Welt')}</h2>
+          ${myAccts.length > 1 ? `<div class="acc-switch" aria-label="${t('Accounts auf dem Bild')}">${myAccts.map((a) => { const on = onCard.some((x) => x.id === a.id); return `<button type="button" class="acc-chip${on ? ' is-on' : ''}" data-acct="${a.id}" aria-pressed="${on}">${platformIcon(a.id)}<span>@${esc(a.handle)}</span></button>`; }).join('')}</div>` : ''}
+          <div class="sheet-preview"><img data-preview alt="${t('Vorschau deiner Story')}"><span class="sheet-loading" data-loading>${t('Story wird gebaut…')}</span></div>
           <div class="sheet-actions">
             <button class="share-btn share-btn--ig" type="button" data-share="ig">${icons.insta}<span>Instagram Story</span></button>
             <button class="share-btn share-btn--tt" type="button" data-share="tt">${icons.tiktok}<span>TikTok</span></button>
             <button class="share-btn share-btn--sc" type="button" data-share="sc">${icons.snap}<span>Snapchat</span></button>
-            <button class="share-btn" type="button" data-share="more">${icons.whatsapp}<span>WhatsApp &amp; mehr</span></button>
-            <button class="share-btn" type="button" data-share="save">${icons.download}<span>Bild speichern</span></button>
-            <button class="share-btn share-btn--avatar" type="button" data-avatar>${icons.user}<span>Profilbild-Rahmen</span></button>
+            <button class="share-btn" type="button" data-share="more">${icons.whatsapp}<span>${t('WhatsApp &amp; mehr')}</span></button>
+            <button class="share-btn" type="button" data-share="save">${icons.download}<span>${t('Bild speichern')}</span></button>
+            <button class="share-btn share-btn--avatar" type="button" data-avatar>${icons.user}<span>${t('Profilbild-Rahmen')}</span></button>
           </div>
-          <p class="sheet-note">Format 9:16 – passt für Instagram Story, TikTok, Snapchat und WhatsApp-Status.</p>
+          <p class="sheet-note">${t('Format 9:16 – passt für Instagram Story, TikTok, Snapchat und WhatsApp-Status.')}</p>
         </div>
       </div>
       <div class="msheet" data-needlink hidden>
@@ -1352,37 +1401,37 @@ function card() {
           <h3 id="needtitle" data-needtitle></h3>
           <p data-needtext></p>
           <button class="btn" type="button" data-needgo><span></span></button>
-          <button class="link" type="button" data-needclose>Abbrechen</button>
+          <button class="link" type="button" data-needclose>${t('Abbrechen')}</button>
         </div>
       </div>
-      <div class="imgview" data-imgview hidden role="dialog" aria-modal="true" aria-label="Bild speichern">
-        <button class="imgview-close" type="button" data-imgclose aria-label="Schließen">×</button>
+      <div class="imgview" data-imgview hidden role="dialog" aria-modal="true" aria-label="${t('Bild speichern')}">
+        <button class="imgview-close" type="button" data-imgclose aria-label="${t('Schließen')}">×</button>
         <h2 class="imgview-title" data-imgtitle></h2>
-        <div class="imgview-pic"><img data-imgpic alt="Dein Fame-Bild"></div>
+        <div class="imgview-pic"><img data-imgpic alt="${t('Dein Fame-Bild')}"></div>
         <ol class="imgview-steps" data-imgsteps></ol>
         <div class="imgview-actions">
-          <button class="share-btn" type="button" data-imgshare hidden>${icons.share}<span>Teilen …</span></button>
-          <a class="share-btn" data-imgdl download="fame.png">${icons.download}<span>Herunterladen</span></a>
+          <button class="share-btn" type="button" data-imgshare hidden>${icons.share}<span>${t('Teilen …')}</span></button>
+          <a class="share-btn" data-imgdl download="fame.png">${icons.download}<span>${t('Herunterladen')}</span></a>
         </div>
       </div>
       <div class="sheet avatar-sheet" data-avsheet hidden>
         <div class="sheet-backdrop" data-close-av></div>
-        <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="Profilbild mit Rahmen">
+        <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="${t('Profilbild mit Rahmen')}">
           <div class="sheet-grip" aria-hidden="true"></div>
-          <h2 class="sheet-title">Dein Profilbild</h2>
-          <p class="avatar-hint">Wähl ein Foto – wir legen den Rahmen deiner Klasse darüber. Danach in Instagram, TikTok oder Snapchat als Profilbild einstellen.</p>
-          <div class="avatar-preview"><canvas data-avimg width="600" height="600" role="img" aria-label="Profilbild mit Rahmen – ziehen zum Verschieben, Zoom mit zwei Fingern oder Regler"></canvas></div>
+          <h2 class="sheet-title">${t('Dein Profilbild')}</h2>
+          <p class="avatar-hint">${t('Wähl ein Foto – wir legen den Rahmen deiner Klasse darüber. Danach in Instagram, TikTok oder Snapchat als Profilbild einstellen.')}</p>
+          <div class="avatar-preview"><canvas data-avimg width="600" height="600" role="img" aria-label="${t('Profilbild mit Rahmen – ziehen zum Verschieben, Zoom mit zwei Fingern oder Regler')}"></canvas></div>
           <div class="avatar-zoom" data-avzoomrow hidden>
             <span aria-hidden="true">−</span>
             <input type="range" min="1" max="4" step="0.01" value="1" data-avzoom aria-label="Zoom">
             <span aria-hidden="true">+</span>
-            <button class="link" type="button" data-avreset>Zurücksetzen</button>
+            <button class="link" type="button" data-avreset>${t('Zurücksetzen')}</button>
           </div>
-          <p class="avatar-tip" data-avtip hidden>Ziehen zum Verschieben · zwei Finger oder Regler zum Zoomen</p>
+          <p class="avatar-tip" data-avtip hidden>${t('Ziehen zum Verschieben · zwei Finger oder Regler zum Zoomen')}</p>
           <input type="file" accept="image/*" data-avfile hidden>
           <div class="sheet-actions">
-            <button class="share-btn" type="button" data-avpick>${icons.download}<span>Foto wählen</span></button>
-            <button class="share-btn share-btn--ig" type="button" data-avsave disabled>${icons.share}<span>Speichern / Teilen</span></button>
+            <button class="share-btn" type="button" data-avpick>${icons.download}<span>${t('Foto wählen')}</span></button>
+            <button class="share-btn share-btn--ig" type="button" data-avsave disabled>${icons.share}<span>${t('Speichern / Teilen')}</span></button>
           </div>
         </div>
       </div>
@@ -1550,20 +1599,20 @@ function card() {
 
       // Bildansicht: Bild groß zeigen, gedrückt halten zum Sichern, dazu die Schritte für die Plattform
       const imgView = el.querySelector('[data-imgview]');
-      const HOLD = 'Halte das Bild gedrückt und tipp auf <b>„Zu Fotos hinzufügen“</b> (iPhone) bzw. <b>„Bild herunterladen“</b> (Android).';
+      const HOLD = t('Halte das Bild gedrückt und tipp auf <b>„Zu Fotos hinzufügen“</b> (iPhone) bzw. <b>„Bild herunterladen“</b> (Android).');
       const GUIDE = {
-        save: { title: 'Bild speichern', steps: [HOLD] },
-        ig: { title: 'In deine Instagram Story', steps: [HOLD, 'Öffne Instagram, wisch nach rechts oder tipp auf <b>+ → Story</b>.', 'Wähl das Bild aus deiner Galerie und tipp auf <b>Deine Story</b>.'] },
-        tt: { title: 'Auf TikTok posten', steps: [HOLD, 'Öffne TikTok und tipp auf <b>+ → Hochladen</b>.', 'Wähl das Foto, schreib was dazu und poste es.'] },
-        sc: { title: 'In deine Snapchat Story', steps: [HOLD, 'Öffne Snapchat und wisch nach oben zu den <b>Erinnerungen → Kamerarolle</b>.', 'Wähl das Bild, tipp auf <b>Senden an → Meine Story</b>.'] },
-        more: { title: 'WhatsApp & mehr', steps: [HOLD, 'Öffne WhatsApp und tipp auf <b>Status → Foto</b> – oder schick es direkt an Freunde.'] },
-        avatar: { title: 'Dein Profilbild', steps: [HOLD, 'Instagram: <b>Profil → Profil bearbeiten → Bild ändern</b>.', 'TikTok: <b>Profil → Profil bearbeiten → Foto ändern</b>. Snapchat: <b>Profil → Profilbild</b>.'] },
+        save: { title: t('Bild speichern'), steps: [HOLD] },
+        ig: { title: t('In deine Instagram Story'), steps: [HOLD, t('Öffne Instagram, wisch nach rechts oder tipp auf <b>+ → Story</b>.'), t('Wähl das Bild aus deiner Galerie und tipp auf <b>Deine Story</b>.')] },
+        tt: { title: t('Auf TikTok posten'), steps: [HOLD, t('Öffne TikTok und tipp auf <b>+ → Hochladen</b>.'), t('Wähl das Foto, schreib was dazu und poste es.')] },
+        sc: { title: t('In deine Snapchat Story'), steps: [HOLD, t('Öffne Snapchat und wisch nach oben zu den <b>Erinnerungen → Kamerarolle</b>.'), t('Wähl das Bild, tipp auf <b>Senden an → Meine Story</b>.')] },
+        more: { title: t('WhatsApp & mehr'), steps: [HOLD, t('Öffne WhatsApp und tipp auf <b>Status → Foto</b> – oder schick es direkt an Freunde.')] },
+        avatar: { title: t('Dein Profilbild'), steps: [HOLD, t('Instagram: <b>Profil → Profil bearbeiten → Bild ändern</b>.'), t('TikTok: <b>Profil → Profil bearbeiten → Foto ändern</b>. Snapchat: <b>Profil → Profilbild</b>.')] },
       };
       let imgUrl = '';
       const openImageView = async (cv, kind, name) => {
         const g = GUIDE[kind] || GUIDE.save;
         el.querySelector('[data-imgtitle]').textContent = g.title;
-        el.querySelector('[data-imgsteps]').innerHTML = g.steps.map((t) => `<li>${t}</li>`).join('');
+        el.querySelector('[data-imgsteps]').innerHTML = g.steps.map((x) => `<li>${x}</li>`).join('');
         el.querySelector('[data-imgpic]').src = cv.toDataURL('image/png');
         const shareBtn = el.querySelector('[data-imgshare]');
         shareBtn.hidden = true;
@@ -1577,7 +1626,7 @@ function card() {
         dl.download = name;
         const file = new File([blob], name, { type: 'image/png' });
         shareBtn.hidden = !navigator.canShare?.({ files: [file] });
-        shareBtn.onclick = () => navigator.share({ files: [file], title: APP_NAME }).catch((err) => { if (err?.name !== 'AbortError') toast('Teilen geht hier nicht – halte das Bild gedrückt zum Sichern.'); });
+        shareBtn.onclick = () => navigator.share({ files: [file], title: APP_NAME }).catch((err) => { if (err?.name !== 'AbortError') toast(t('Teilen geht hier nicht – halte das Bild gedrückt zum Sichern.')); });
       };
       const closeImageView = () => { imgView.classList.remove('is-open'); setTimeout(() => { imgView.hidden = true; }, 250); };
       el.querySelector('[data-imgclose]').addEventListener('click', closeImageView);
@@ -1589,9 +1638,9 @@ function card() {
       const openNeed = (id) => {
         const n = platformName(id);
         need.querySelector('[data-needicon]').innerHTML = platformIcon(id);
-        need.querySelector('[data-needtitle]').textContent = `${n} noch nicht verbunden`;
-        need.querySelector('[data-needtext]').textContent = `Verbinde zuerst deinen ${n}-Account – dann postest du deine Card direkt in deine Story.`;
-        need.querySelector('[data-needgo] span').textContent = `Jetzt mit ${n} verbinden`;
+        need.querySelector('[data-needtitle]').textContent = t('{n} noch nicht verbunden', { n });
+        need.querySelector('[data-needtext]').textContent = t('Verbinde zuerst deinen {n}-Account – dann postest du deine Card direkt in deine Story.', { n });
+        need.querySelector('[data-needgo] span').textContent = t('Jetzt mit {n} verbinden', { n });
         need.dataset.id = id;
         need.hidden = false;
         requestAnimationFrame(() => need.classList.add('is-open'));
@@ -1621,7 +1670,7 @@ function card() {
           if (res.how === 'manual') { closeSheet(); await openImageView(await assets.story(), res.platform, `fame-${c.serial}.png`); }
           if (res.hint) toast(res.hint);
         } catch {
-          toast('Teilen hat nicht geklappt. Speicher das Bild und lade es selbst hoch.');
+          toast(t('Teilen hat nicht geklappt. Speicher das Bild und lade es selbst hoch.'));
         } finally {
           busy = false;
           b.classList.remove('is-busy');
@@ -1767,7 +1816,7 @@ function card() {
         if (!f) return;
         const img = new Image();
         img.onload = () => { showAvatar(img); URL.revokeObjectURL(img.src); };
-        img.onerror = () => toast('Das Foto konnte nicht geladen werden.');
+        img.onerror = () => toast(t('Das Foto konnte nicht geladen werden.'));
         img.src = URL.createObjectURL(f);
       });
       avSave.addEventListener('click', async () => {
@@ -1813,22 +1862,22 @@ const avatar = (r, cls = '') => `<span class="avatar ${cls}" style="--c:${tierFo
 function joinSheet() {
   const u = state.user;
   const joined = !!u.ranking?.joined;
-  const c = u.ranking?.country || u.country || 'DE';
+  const c = u.ranking?.country || u.country || HOME_COUNTRY;
   return `<div class="msheet msheet--join" data-join${joined || state.joinDismissed ? ' hidden' : ''}>
     <div class="msheet-bg" data-joinclose></div>
     <form class="msheet-pnl join-form" role="dialog" aria-modal="true" aria-labelledby="jointitle" novalidate>
       <div class="msheet-grip" aria-hidden="true"></div>
-      <h3 id="jointitle">🏆 ${joined ? 'Ranking-Einstellungen' : 'Beim Ranking mitmachen'}</h3>
-      <p class="msheet-lead">${joined ? 'Wo und mit welchem Namen du im Ranking stehst.' : 'Einmal kurz einrichten – danach landest du direkt im Ranking.'}</p>
+      <h3 id="jointitle">🏆 ${joined ? t('Ranking-Einstellungen') : t('Beim Ranking mitmachen')}</h3>
+      <p class="msheet-lead">${joined ? t('Wo und mit welchem Namen du im Ranking stehst.') : t('Einmal kurz einrichten – danach landest du direkt im Ranking.')}</p>
       <div class="field-row">
-        <label class="field"><span>Land</span><select name="country">${COUNTRIES.map((x) => `<option value="${x.id}"${x.id === c ? ' selected' : ''}>${x.flag} ${x.name}</option>`).join('')}</select></label>
-        <label class="field"><span>Bundesland</span><select name="region">${regionOptions(c, u.ranking?.region || u.region)}</select></label>
+        <label class="field"><span>${t('Land')}</span><select name="country">${COUNTRIES.map((x) => `<option value="${x.id}"${x.id === c ? ' selected' : ''}>${x.flag} ${x.name}</option>`).join('')}</select></label>
+        <label class="field"><span>${t('Bundesland')}</span><select name="region">${regionOptions(c, u.ranking?.region || u.region)}</select></label>
       </div>
-      <div class="sec">Mit welchem Namen?<small>Tipp den Namen an, der im Ranking stehen soll – mit Symbol davor.</small></div>
+      <div class="sec">${t('Mit welchem Namen?')}<small>${t('Tipp den Namen an, der im Ranking stehen soll – mit Symbol davor.')}</small></div>
       <div data-joinlist></div>
       <div class="req" data-req></div>
-      <button class="btn" type="submit"><span>${joined ? 'Speichern' : 'Mitmachen'}</span></button>
-      <p class="msheet-once">${joined ? '<button class="link" type="button" data-leave>Nicht mehr im Ranking zeigen</button>' : 'Das Fenster kommt nur einmal. Ändern kannst du alles später über ⚙.'}</p>
+      <button class="btn" type="submit"><span>${joined ? t('Speichern') : t('Mitmachen')}</span></button>
+      <p class="msheet-once">${joined ? `<button class="link" type="button" data-leave>${t('Nicht mehr im Ranking zeigen')}</button>` : t('Das Fenster kommt nur einmal. Ändern kannst du alles später über ⚙.')}</p>
     </form>
   </div>`;
 }
@@ -1849,8 +1898,8 @@ function mountJoin(el) {
       btn.disabled = !ok;
       req.classList.toggle('is-ok', ok);
       req.innerHTML = ok
-        ? `<span>✓ Du erscheinst als ${platIcon(picked)}<b>@${esc(state.user.accounts[picked])}</b>.</span>`
-        : '<span>⚠️ Verbinde mindestens eine Plattform, damit jeder sieht, dass dein Name echt ist.</span>';
+        ? `<span>${t('✓ Du erscheinst als {name}.', { name: `${platIcon(picked)}<b>@${esc(state.user.accounts[picked])}</b>` })}</span>`
+        : `<span>${t('⚠️ Verbinde mindestens eine Plattform, damit jeder sieht, dass dein Name echt ist.')}</span>`;
     },
   });
   form.addEventListener('submit', (e) => {
@@ -1861,14 +1910,14 @@ function mountJoin(el) {
     const first = !state.user.ranking?.joined;
     saveUser({ ...state.user, country, region, ranking: { joined: true, country, region, platform: ctl.picked } });
     state.rankView = {};
-    toast(first ? 'Du bist im Ranking ✓' : 'Gespeichert ✓');
+    toast(first ? t('Du bist im Ranking ✓') : t('Gespeichert ✓'));
     buzz([10, 40, 10]);
     render();
   });
   sheet.querySelectorAll('[data-joinclose]').forEach((b) => b.addEventListener('click', close));
   sheet.querySelector('[data-leave]')?.addEventListener('click', () => {
     saveUser({ ...state.user, ranking: { ...state.user.ranking, joined: false } });
-    toast('Du stehst nicht mehr im Ranking.');
+    toast(t('Du stehst nicht mehr im Ranking.'));
     go('');
   });
   el.querySelector('[data-joinopen]')?.addEventListener('click', open);
@@ -1877,7 +1926,7 @@ function mountJoin(el) {
 
 function rankingPage(mode) {
   const me = meEntry();
-  const userCountry = state.user?.ranking?.country || state.user?.country || 'DE';
+  const userCountry = state.user?.ranking?.country || state.user?.country || HOME_COUNTRY;
   const userRegion = state.user?.ranking?.region || state.user?.region;
   const view = state.rankView;
   const country = countryById(view.country || userCountry);
@@ -1898,29 +1947,29 @@ function rankingPage(mode) {
   const PODIUM_RAR = [RARITIES[4], RARITIES[3], RARITIES[2]]; // Platz 1, 2, 3
 
   const row = (r) => {
-    const t = tierFor(r.amount);
-    return `<li class="rrow${r.me ? ' rrow--me' : ''}" style="--rar:${t.css}">
+    const g = tierFor(r.amount);
+    return `<li class="rrow${r.me ? ' rrow--me' : ''}" style="--rar:${g.css}">
       <span class="rrow-rank">${fmt(r.rank)}</span>
       ${avatar(r)}
-      <span class="rrow-name">${platIcon(r.platform)}@${esc(r.handle)}<small>Edelstein · Stufe ${t.stage}</small></span>
+      <span class="rrow-name">${platIcon(r.platform)}@${esc(r.handle)}<small>${t('Edelstein')} · ${t('Stufe {n}', { n: g.stage })}</small></span>
       <span class="rrow-amount">${money(r.amount)}</span>
     </li>`;
   };
 
   // Duell: Kachelkarte für Deutschland, sonst Balken. Farbe: eine Farbe, je mehr Geld desto heller.
-  const groupName = (g) => (mode === 'region' ? g.id : `${countryById(g.id).flag} ${countryById(g.id).name}`);
+  const groupName = (g) => (mode === 'region' ? regionName(g.id) : `${countryById(g.id).flag} ${countryById(g.id).name}`);
   const isMyGroup = (g) => (mode === 'region' ? g.id === me?.region : g.id === me?.country);
   const tileMap = mode === 'region' && country.id === 'DE'
     ? `<div class="tilemap" role="list">
         ${groups.map((g) => {
           const [code, col, rowIdx] = DE_TILES[g.id] || ['?', 0, 0];
-          const t = g.amount / maxGroup;
+          const share = g.amount / maxGroup;
           return `<button class="tile${g.id === region ? ' is-active' : ''}${isMyGroup(g) ? ' is-mine' : ''}" type="button" role="listitem"
-            data-region="${esc(g.id)}" style="grid-column:${col + 1};grid-row:${rowIdx + 1};--t:${(0.12 + t * 0.88).toFixed(2)}"
-            title="${esc(g.id)}: ${money(g.amount)} · Platz ${g.rank}">
+            data-region="${esc(g.id)}" style="grid-column:${col + 1};grid-row:${rowIdx + 1};--t:${(0.12 + share * 0.88).toFixed(2)}"
+            title="${esc(g.id)}: ${money(g.amount)} · ${t('Platz {n}', { n: g.rank })}">
             <b>${code}</b><small>${shortMoney(g.amount)}</small><i>${g.rank}.</i></button>`;
         }).join('')}
-        <div class="tilemap-legend" aria-hidden="true"><span>weniger</span><i></i><span>mehr</span></div>
+        <div class="tilemap-legend" aria-hidden="true"><span>${t('weniger')}</span><i></i><span>${t('mehr')}</span></div>
       </div>`
     : '';
   const bars = `<ol class="duel-list">${groups.slice(0, tileMap ? 5 : 12).map((g) => `<li class="duel-row${isMyGroup(g) ? ' is-mine' : ''}">
@@ -1934,23 +1983,23 @@ function rankingPage(mode) {
     html: `<section class="screen screen--dark screen--ranking" style="--rar:${state.account.total ? CLASSES[classFor(state.account.total)].color : RARITIES[4].color}">
       <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
       ${backButton('back--dark')}
-      ${state.user ? `<button class="rank-gear" type="button" data-joinopen aria-label="Ranking-Einstellungen">${icons.gear}</button>` : ''}
+      ${state.user ? `<button class="rank-gear" type="button" data-joinopen aria-label="${t('Ranking-Einstellungen')}">${icons.gear}</button>` : ''}
       <nav class="rank-tabs" aria-label="Ranking">
-        <a href="#/ranking/region" class="${mode === 'region' ? 'is-active' : ''}">Bundesland</a>
-        <a href="#/ranking/country" class="${mode === 'country' ? 'is-active' : ''}">Länder</a>
+        <a href="#/ranking/region" class="${mode === 'region' ? 'is-active' : ''}">${t('Bundesland')}</a>
+        <a href="#/ranking/country" class="${mode === 'country' ? 'is-active' : ''}">${t('Länder')}</a>
       </nav>
       <header class="rank-head">
         <span class="rank-flag">${country.flag}</span>
-        <h1>${esc(region || country.name)}</h1>
+        <h1>${esc(region ? regionName(region) : country.name)}</h1>
       </header>
       <div class="stat-tiles">
-        <div class="stat"><b>${fmt(list.length)}</b><span>Spieler</span></div>
-        <div class="stat"><b>${shortMoney(sum)}</b><span>Gesamt</span></div>
-        <div class="stat stat--me"><b>${mine ? `#${fmt(mine.rank)}` : '–'}</b><span>Dein Platz</span></div>
+        <div class="stat"><b>${fmt(list.length)}</b><span>${t('Spieler')}</span></div>
+        <div class="stat"><b>${shortMoney(sum)}</b><span>${t('Gesamt')}</span></div>
+        <div class="stat stat--me"><b>${mine ? `#${fmt(mine.rank)}` : '–'}</b><span>${t('Dein Platz')}</span></div>
       </div>
       <div class="chips" role="tablist">
         ${mode === 'region'
-          ? country.regions.map((r) => `<button class="chip${r === region ? ' is-active' : ''}" type="button" data-region="${esc(r)}">${esc(r)}</button>`).join('')
+          ? country.regions.map((r) => `<button class="chip${r === region ? ' is-active' : ''}" type="button" data-region="${esc(r)}">${esc(regionName(r))}</button>`).join('')
           : COUNTRIES.map((c) => `<button class="chip${c.id === country.id ? ' is-active' : ''}" type="button" data-country="${c.id}">${c.flag} ${c.name}</button>`).join('')}
       </div>
       <div class="podium3">
@@ -1971,16 +2020,16 @@ function rankingPage(mode) {
       <ol class="rlist">${top.slice(3).map(row).join('')}</ol>
       ${mine && mine.rank > 20 ? `<div class="rows-gap">…</div><ol class="rlist">${row(mine)}</ol>` : ''}
       <section class="duel">
-        <h2>${mode === 'region' ? `${country.name}: Bundesländer-Duell` : 'Länder-Duell'}</h2>
+        <h2>${mode === 'region' ? t('{c}: Bundesländer-Duell', { c: country.name }) : t('Länder-Duell')}</h2>
         ${tileMap}
         ${bars}
       </section>
       <div class="mebar">
         ${myCardButton()}
         ${mine
-          ? `<div><b>Platz ${fmt(mine.rank)}</b> in ${esc(region || country.name)}<small>${money(mine.amount)} · Stufe ${tierFor(mine.amount).stage}</small></div>`
-          : `<div><b>${state.user ? 'Noch nicht dabei' : 'Du fehlst noch'}</b><small>Zahl ein und steig ins Ranking ein</small></div>`}
-        ${button(mine ? 'Fame steigern' : 'Steig ein', 'data-go="donate"')}
+          ? `<div><b>${t('Platz {n}', { n: fmt(mine.rank) })}</b> ${t('in')} ${esc(region ? regionName(region) : country.name)}<small>${money(mine.amount)} · ${t('Stufe {n}', { n: tierFor(mine.amount).stage })}</small></div>`
+          : `<div><b>${state.user ? t('Noch nicht dabei') : t('Du fehlst noch')}</b><small>${t('Zahl ein und steig ins Ranking ein')}</small></div>`}
+        ${button(mine ? t('Fame steigern') : t('Steig ein'), 'data-go="donate"')}
       </div>
       ${state.user ? joinSheet() : ''}
     </section>`,
@@ -2038,7 +2087,7 @@ async function boot() {
   if (urlReturn?.type === 'recovery') { render(); return; }
   if (!state.user.done) { goOrRender('finish'); return; }
   if (urlReturn?.access_token) {
-    toast(urlReturn.type === 'signup' ? 'E-Mail bestätigt ✓ Willkommen bei Fam€!' : 'Angemeldet ✓');
+    toast(urlReturn.type === 'signup' ? t('E-Mail bestätigt ✓ Willkommen bei Fam€!') : t('Angemeldet ✓'));
     afterAuth();
     return;
   }
@@ -2062,11 +2111,11 @@ async function finishConnect() {
     };
     if (state.user) saveUser(add(state.user));
     else { state.regDraft = add(r.draft || state.regDraft); saveDraft(); }
-    toast(`${n} verbunden ✓`);
+    toast(t('{n} verbunden ✓', { n }));
   } else {
-    toast(r.error === 'denied' ? `${n}: Anmeldung abgebrochen.`
-      : r.error === 'business' ? 'Instagram verbindet nur Business- oder Creator-Konten. Trag deinen Namen solange selbst ein.'
-        : `${n}-Verbindung hat nicht geklappt. Versuch es nochmal.${r.detail ? ` (${r.detail})` : ''}`);
+    toast(r.error === 'denied' ? t('{n}: Anmeldung abgebrochen.', { n })
+      : r.error === 'business' ? t('Instagram verbindet nur Business- oder Creator-Konten. Trag deinen Namen solange selbst ein.')
+        : `${t('{n}-Verbindung hat nicht geklappt. Versuch es nochmal.', { n })}${r.detail ? ` (${r.detail})` : ''}`);
   }
   render();
 }

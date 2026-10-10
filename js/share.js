@@ -15,6 +15,8 @@ export const SHARE_BASE = 'https://fame.app/card/';
 
 const STORY_W = 1080;
 const STORY_H = 1920;
+import { t, isEn } from './i18n.js';
+
 const FONT = '"Source Code Pro", ui-monospace, monospace';
 const SERIF = '"Cormorant Garamond", Georgia, serif';
 const font = (w, s, style = '') => `${style} ${w} ${s}px ${FONT}`;
@@ -206,7 +208,7 @@ export function drawCard(g, { x, y, w, h, tier, serial, accts = [], gem, facets 
   drawDiamondGlyph(g, ix + pad + lw + 4 * s, iy + pad + 2 * s, 18 * s, '#f8f8f6', '#3dfa74');
   g.textAlign = 'right';
   g.font = font(600, 9.5 * s);
-  const serialText = `Nr. ${serial}`;
+  const serialText = `${t('Nr.')} ${serial}`;
   const sw = g.measureText(serialText).width + 16 * s;
   g.fillStyle = 'rgba(0,0,0,0.45)';
   roundRect(g, ix + iw - pad - sw + 6 * s, iy + pad + 1 * s, sw, 20 * s, 10 * s);
@@ -283,7 +285,7 @@ export function drawCard(g, { x, y, w, h, tier, serial, accts = [], gem, facets 
   g.fillStyle = '#0b0b0c';
   g.textAlign = 'center';
   g.font = font(800, 6.5 * s);
-  g.fillText('ECHT', sx, sy - 1 * s);
+  g.fillText(isEn ? 'REAL' : 'ECHT', sx, sy - 1 * s);
   g.fillText(LOGO_TEXT, sx, sy + 7 * s);
   g.textAlign = 'left';
 
@@ -390,7 +392,7 @@ export async function renderStory(data) {
   g.fillText(LOGO_TEXT, lx, 318);
   drawDiamondGlyph(g, lx + lw / 2 + 9, 263, 53, '#f8f8f6', '#3dfa74');
   g.font = font(800, 34);
-  const s1 = 'Erst Fame, ', s2 = 'dann die anderen.';
+  const s1 = t('Erst Fame, '), s2 = t('dann die anderen.');
   const w1 = g.measureText(s1).width, w2 = g.measureText(s2).width;
   const sx0 = STORY_W / 2 - (w1 + w2) / 2;
   g.textAlign = 'left';
@@ -429,7 +431,7 @@ function nativeShare() {
 // ---- Teilen ---------------------------------------------------------------------------------
 
 export function shareText(data) {
-  return `Mein ${data.tier.name} (Stufe ${data.tier.stage}/${GEM_COUNT}) auf ${APP_NAME} 💎 Nr. ${data.serial} – erst Fame, dann die anderen. #fame #thentheothers`;
+  return t('Mein {gem} (Stufe {n}/{m}) auf {app} 💎 Nr. {serial} – erst Fame, dann die anderen. #fame #thentheothers', { gem: data.tier.name, n: data.tier.stage, m: GEM_COUNT, app: APP_NAME, serial: data.serial });
 }
 
 // withText: false = nur das Bild (Snapchat nimmt sonst manchmal den Text statt des Bildes)

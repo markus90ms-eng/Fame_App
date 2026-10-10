@@ -4,6 +4,7 @@
 // Die Bibliothek (vendor/supabase.js) wird erst geladen, wenn sie gebraucht wird.
 
 import { SUPABASE, REDIRECT_URI } from './config.js';
+import { t } from './i18n.js';
 
 const LIB = 'vendor/supabase.js';
 const SESSION_KEY = 'fame.sb';
@@ -70,17 +71,17 @@ export async function applyUrlReturn(r) {
 export function text(e) {
   const code = e?.code || '';
   const m = (e?.message || String(e || '')).toLowerCase();
-  if (code === 'invalid_credentials' || m.includes('invalid login')) return 'E-Mail oder Passwort stimmt nicht.';
-  if (code === 'user_already_exists' || m.includes('already registered')) return 'Diese E-Mail ist schon registriert – log dich ein.';
-  if (code === 'email_not_confirmed' || m.includes('not confirmed')) return 'Bitte bestätige zuerst deine E-Mail – der Link ist in deinem Postfach.';
-  if (code === 'weak_password' || m.includes('password should')) return 'Das Passwort ist zu schwach – nimm mindestens 8 Zeichen.';
-  if (code === 'same_password') return 'Das ist schon dein Passwort.';
-  if (code === 'email_address_invalid' || m.includes('invalid format')) return 'Die E-Mail-Adresse stimmt nicht.';
-  if (code.startsWith('over_') || m.includes('rate limit')) return 'Zu viele Versuche – warte kurz und probier es nochmal.';
-  if (code === 'signup_disabled') return 'Registrieren ist gerade ausgeschaltet.';
-  if (code === 'otp_expired' || m.includes('expired')) return 'Der Link ist abgelaufen – fordere einfach einen neuen an.';
-  if (m.includes('fetch') || m.includes('network') || m.includes('load')) return 'Keine Verbindung – prüf dein Internet.';
-  return 'Das hat nicht geklappt. Versuch es nochmal.';
+  if (code === 'invalid_credentials' || m.includes('invalid login')) return t('E-Mail oder Passwort stimmt nicht.');
+  if (code === 'user_already_exists' || m.includes('already registered')) return t('Diese E-Mail ist schon registriert – log dich ein.');
+  if (code === 'email_not_confirmed' || m.includes('not confirmed')) return t('Bitte bestätige zuerst deine E-Mail – der Link ist in deinem Postfach.');
+  if (code === 'weak_password' || m.includes('password should')) return t('Das Passwort ist zu schwach – nimm mindestens 8 Zeichen.');
+  if (code === 'same_password') return t('Das ist schon dein Passwort.');
+  if (code === 'email_address_invalid' || m.includes('invalid format')) return t('Die E-Mail-Adresse stimmt nicht.');
+  if (code.startsWith('over_') || m.includes('rate limit')) return t('Zu viele Versuche – warte kurz und probier es nochmal.');
+  if (code === 'signup_disabled') return t('Registrieren ist gerade ausgeschaltet.');
+  if (code === 'otp_expired' || m.includes('expired')) return t('Der Link ist abgelaufen – fordere einfach einen neuen an.');
+  if (m.includes('fetch') || m.includes('network') || m.includes('load')) return t('Keine Verbindung – prüf dein Internet.');
+  return t('Das hat nicht geklappt. Versuch es nochmal.');
 }
 
 const wrap = async (fn) => {

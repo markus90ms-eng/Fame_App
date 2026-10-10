@@ -1,3 +1,4 @@
+import { t } from './i18n.js';
 // Wiederverwendbare UI-Bausteine (HTML-Snippets) im Fame-Look.
 
 export const APP_NAME = 'Fame';
@@ -99,7 +100,7 @@ export function dots(active, count = 3) {
 }
 
 export function backButton(cls = '') {
-  return `<button class="back ${cls}" type="button" data-back aria-label="Zurück">
+  return `<button class="back ${cls}" type="button" data-back aria-label="${t('Zurück')}">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4 7 12l8 8"/></svg>
   </button>`;
 }
