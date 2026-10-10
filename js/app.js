@@ -81,7 +81,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '64';
+export const APP_VERSION = '65';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -248,9 +248,11 @@ function splash() {
     const open = !!last && last.revealed !== false;
     const hi = !own ? t('hol dir deine erste Card.') : open ? t('deine Card wartet.') : t('deine Card liegt noch verdeckt da.');
     const main = !own ? button(t('Erste Card holen'), 'data-go="donate"') : button(open ? t('Meine Card') : t('Card aufdecken'), 'data-go="card"');
-    const tile = (go, icon, title, sub) => `<a class="hub-tile" href="#/${go}"><span class="hub-ico">${icon}</span><b>${title}</b><small>${sub}</small></a>`;
+    // Höchste Klasse: kleine Funkel-Sterne auf den Glas-Kacheln
+    const sparkles = (n) => (cls === 9 ? Array.from({ length: n }, (_, i) => `<i class="sparkle" style="--d:${(i * 1.3).toFixed(1)}s" aria-hidden="true"></i>`).join('') : '');
+    const tile = (go, icon, title, sub) => `<a class="hub-tile" href="#/${go}"><span class="hub-ico">${icon}</span><b>${title}</b><small>${sub}</small>${sparkles(1)}</a>`;
     return {
-      html: `<section class="screen screen--splash screen--welcome cls-${cls}" style="--rar:${CLASSES[cls].color}">
+      html: `<section class="screen screen--splash screen--welcome cls-${cls}${cls >= 8 ? ` lux lux--${cls === 9 ? 'holo' : 'gold'}` : ''}" style="--rar:${CLASSES[cls].color}">
         <div class="donate-aura" aria-hidden="true"></div>
         <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
         <div class="sweep" aria-hidden="true"></div>
@@ -274,7 +276,7 @@ function splash() {
         <a class="connect-cta" href="#/accounts">
           <span class="cc-ics" aria-hidden="true">${PLATFORMS.map((p) => `<span class="${isLinked(state.user, p.id) ? 'is-on' : ''}">${platformIcon(p.id)}</span>`).join('')}</span>
           <span class="cc-txt"><b>${t('Accounts verbinden')}</b><small>${t('Verbinde die Accounts, die auf deiner Card stehen sollen.')}</small><span class="cc-pill">${t('{n} von {m} verbunden', { n: linkedIds(state.user).length, m: PLATFORMS.length })}</span></span>
-          <span class="cc-go" aria-hidden="true">→</span>
+          <span class="cc-go" aria-hidden="true">→</span>${sparkles(2)}
         </a>
         ${resetLink()}
         <span class="app-version">Version ${APP_VERSION}</span>
