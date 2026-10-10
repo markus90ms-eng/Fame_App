@@ -41,7 +41,7 @@ export async function mountSnap(host, onResult) {
   snap.loginkit.mountButton(host.id, {
     clientId: SOCIAL.snap.clientId,
     redirectURI: REDIRECT_URI,
-    scopeList: ['user.display_name', 'user.bitmoji.avatar', 'user.external_id'],
+    scopeList: ['user.display_name', 'user.bitmoji.avatar'],
     handleResponseCallback: () => {
       snap.loginkit.fetchUserInfo().then((res) => {
         const me = res?.data?.me;
