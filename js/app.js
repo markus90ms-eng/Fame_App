@@ -81,7 +81,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '72';
+export const APP_VERSION = '73';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -131,6 +131,8 @@ function luxClass() {
   return cls >= 8 ? { lux: cls === 9 ? 'holo' : 'gold' } : {};
 }
 function luxify(el, path) {
+  // Stufe 82 (Diamant): kleine Diamanten statt Funken – erst nach dem Aufdecken, ab 83 wieder Funken
+  document.documentElement.dataset.fx = !PLAIN.test(path) && state.user && shownStage() === 82 ? 'diamond' : '';
   const { lux = '', hom = '', stage } = PLAIN.test(path) ? {} : luxClass();
   document.documentElement.dataset.lux = hom || lux;
   // alten Look entfernen (wichtig beim Umdrehen einer Card: dann wechselt das Thema sofort)
