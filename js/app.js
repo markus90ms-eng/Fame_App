@@ -13,7 +13,7 @@ import { tick, plink, stageTick, classDrop, buzz, unlockAudio, buildup, boost, s
 import { createDiamond } from './diamond3d.js';
 import { facetArt, facetMask, svgUrl, holoStrength } from './cardfx.js';
 import { particles } from './particles.js';
-import { isReady, mountSnap, connectRedirect, finishRedirect } from './connect.js';
+import { isReady, connectRedirect, finishRedirect } from './connect.js';
 import * as auth from './auth.js';
 import {
   renderStory, renderSticker, shareToInstagramStory, shareToTikTok, shareToSnapchat, shareElsewhere, saveImage, renderAvatar, saveAvatar, photoRect,
@@ -80,7 +80,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '51';
+export const APP_VERSION = '52';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -520,7 +520,7 @@ function connectRows(u, { card, pickMode, picked, focus }) {
     const sub = on ? `@${esc(u.accounts[p.id])}${u.verified?.[p.id] ? '' : ' · selbst eingetragen'}` : 'Noch nicht verbunden';
     const isPicked = pickMode && on && picked === p.id;
     const right = !on
-      ? `<button type="button" class="pf-go" data-link="${p.id}">Verbinden</button><span class="pf-snap" data-snaphost="${p.id}"></span>`
+      ? `<button type="button" class="pf-go" data-link="${p.id}">Verbinden</button>`
       : pickMode ? `<span class="pf-ok">${isPicked ? '✓ Im Ranking' : 'Antippen'}</span>`
         : `<span class="pf-ok">✓ Verbunden</span><button type="button" class="pf-change" data-unlink="${p.id}" aria-label="${p.name} ändern">Ändern</button>`;
     return `<div class="pf${on ? ' is-on' : ''}${isPicked ? ' is-picked' : ''}${focus === p.id ? ' is-focus' : ''}" data-pf="${p.id}"${pickMode && on ? ' data-pick role="button" tabindex="0"' : ''}>
@@ -549,24 +549,9 @@ function mountConnect(host, { get, set, card = true, pickMode = false, pick = nu
     set(u);
     draw();
   };
-  const linked = (pr) => {
-    update((u) => {
-      u.accounts[pr.id] = cleanHandle(pr.handle);
-      u.verified[pr.id] = { name: pr.name, avatar: pr.avatar, externalId: pr.externalId };
-      if (!u.onCard.length) u.onCard.push(pr.id);
-    });
-    buzz([10, 40, 10]);
-    toast(`${platformName(pr.id)} verbunden ✓`);
-  };
   function bind() {
     host.querySelectorAll('[data-link]').forEach((b) => {
       const id = b.dataset.link;
-      if (id === 'sc' && isReady('sc')) {
-        // Snapchats eigener Knopf (öffnet das Anmelde-Popup)
-        b.hidden = true;
-        mountSnap(host.querySelector('[data-snaphost="sc"]'), (r) => (r.error ? connectError('sc', r) : linked(r)));
-        return;
-      }
       b.addEventListener('click', () => {
         if (isReady(id)) { connectRedirect(id, get(), back); return; }
         const f = host.querySelector(`[data-manual="${id}"]`);

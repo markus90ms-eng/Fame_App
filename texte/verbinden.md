@@ -37,6 +37,9 @@ In der Vorschau auf claude.ai klappt die Anmeldung deshalb nicht – getestet wi
 
 ➡️ Schick mir die **Client ID**. Sie ist nicht geheim.
 
+Snapchat läuft – wie TikTok und Instagram – per Weiterleitung über die Edge Function aus Schritt 4
+(ohne Geheimschlüssel, mit PKCE). Die Funktion muss also auch für Snapchat eingerichtet sein.
+
 ---
 
 ## 2. TikTok (Login Kit for Web)
@@ -78,7 +81,7 @@ lassen sich nicht verbinden – wer eins hat, tippt seinen Namen wie bisher von 
 
 ---
 
-## 4. Kleiner Server für TikTok und Instagram (Supabase Edge Function, kostenlos)
+## 4. Kleiner Server für Snapchat, TikTok und Instagram (Supabase Edge Function, kostenlos)
 
 TikTok und Instagram geben das Profil nur gegen einen geheimen Schlüssel heraus. Das erledigt eine kleine
 Funktion in deinem Supabase-Projekt – eine für beide.
