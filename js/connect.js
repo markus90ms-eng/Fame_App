@@ -67,26 +67,28 @@ const AUTH = {
 };
 const PATH = { tt: 'tiktok', ig: 'instagram' };
 
-export function connectRedirect(id, draft) {
+// back: Seite, auf die es nach der Rückkehr weitergeht (z. B. 'accounts' oder 'register')
+export function connectRedirect(id, draft, back = 'accounts') {
   if (!isReady(id)) return { error: 'setup' };
   const state = randomState();
-  try { localStorage.setItem(PENDING, JSON.stringify({ id, state, draft, at: Date.now() })); } catch { /* privat */ }
+  try { localStorage.setItem(PENDING, JSON.stringify({ id, state, draft, back, at: Date.now() })); } catch { /* privat */ }
   const [url, params] = AUTH[id]();
   location.href = `${url}?${new URLSearchParams({ ...params, redirect_uri: REDIRECT_URI, state })}`;
   return { pending: true };
 }
 
 // Beim Start der App: Kommen wir gerade von TikTok/Instagram zurück? Dann Code einlösen.
-// Gibt null zurück, wenn nichts ansteht, sonst { id, profile?, error?, draft }.
+// Gibt null zurück, wenn nichts ansteht, sonst { id, profile?, error?, draft, back }.
 export async function finishRedirect() {
   const q = new URLSearchParams(location.search);
   if (!q.has('state') || !(q.has('code') || q.has('error'))) return null;
   let pending = null;
   try { pending = JSON.parse(localStorage.getItem(PENDING) || 'null'); localStorage.removeItem(PENDING); } catch { /* privat */ }
-  history.replaceState(null, '', `${location.pathname}#/login`);
+  history.replaceState(null, '', `${location.pathname}#/${pending?.back || 'accounts'}`);
   const id = pending?.id;
-  if (!pending || pending.state !== q.get('state') || !PATH[id]) return { id, error: 'state', draft: pending?.draft };
-  if (q.has('error')) return { id, error: 'denied', draft: pending.draft };
+  const back = pending?.back || 'accounts';
+  if (!pending || pending.state !== q.get('state') || !PATH[id]) return { id, error: 'state', draft: pending?.draft, back };
+  if (q.has('error')) return { id, error: 'denied', draft: pending.draft, back };
   try {
     const r = await fetch(`${SOCIAL.server.replace(/\/$/, '')}/${PATH[id]}/profile`, {
       method: 'POST',
@@ -94,12 +96,12 @@ export async function finishRedirect() {
       body: JSON.stringify({ code: q.get('code'), redirect_uri: REDIRECT_URI }),
     });
     const p = await r.json();
-    if (!r.ok || !p.id) return { id, error: p.error === 'not_professional' ? 'business' : 'server', draft: pending.draft };
+    if (!r.ok || !p.id) return { id, error: p.error === 'not_professional' ? 'business' : 'server', draft: pending.draft, back };
     return {
-      id, draft: pending.draft,
+      id, draft: pending.draft, back,
       profile: { id, handle: p.username || p.name, name: p.name || p.username, avatar: p.avatar || '', externalId: p.id, verified: true },
     };
   } catch {
-    return { id, error: 'server', draft: pending.draft };
+    return { id, error: 'server', draft: pending.draft, back };
   }
 }

@@ -21,6 +21,14 @@ export const SOCIAL = {
   server: '',
 };
 
+// Login und Konten (Supabase). Beide Werte sind öffentlich und dürfen in der App stehen.
+// Geheime Schlüssel (service_role / secret, Datenbank-Passwort) gehören NIE hierher.
+// Einrichtung: texte/supabase.md
+export const SUPABASE = {
+  url: 'https://yfdovwpzbenrpzaxuwpe.supabase.co',
+  key: 'sb_publishable_GbkjjZxEvC2E3zUiOerISA_lmIg6Ok5',
+};
+
 // Rücksprung-Adresse nach der Anmeldung: die App selbst, ohne #-Teil.
 // Genau diese Adresse muss bei Snapchat und TikTok als Redirect URI eingetragen sein.
 export const REDIRECT_URI = `${location.origin}${location.pathname}`;

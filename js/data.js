@@ -216,6 +216,8 @@ export function leaderboard() {
   }).sort((a, b) => b.amount - a.amount);
   // Jede Ranking-Card bekommt eine feste Seriennummer (für die Code-Prüfung im Prototyp)
   board.forEach((r, i) => { r.serial = makeSerial(`board|${r.handle}|${i}`); r.at = Date.UTC(2026, 0, 1) + i * 37_000_000; });
+  // Plattform, von der der Name kommt (Symbol vor dem Namen im Ranking)
+  board.forEach((r, i) => { r.platform = ['ig', 'tt', 'sc'][(i * 7 + r.handle.length) % 3]; });
   return board;
 }
 

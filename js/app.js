@@ -14,6 +14,7 @@ import { createDiamond } from './diamond3d.js';
 import { facetArt, facetMask, svgUrl, holoStrength } from './cardfx.js';
 import { particles } from './particles.js';
 import { isReady, mountSnap, connectRedirect, finishRedirect } from './connect.js';
+import * as auth from './auth.js';
 import {
   renderStory, renderSticker, shareToInstagramStory, shareToTikTok, shareToSnapchat, shareElsewhere, saveImage, renderAvatar, saveAvatar, photoRect,
 } from './share.js';
@@ -47,8 +48,12 @@ function loadAccount() {
     : { total: 0, deposits: [], cards: [] };
 }
 
+// Angemeldet ist, wer eine Supabase-Sitzung hat. Das Profil wird lokal zwischengespeichert, damit die
+// App sofort (auch offline) startet; die Wahrheit liegt in der Tabelle "profiles".
 const state = {
-  user: normalizeUser(store.get('user')), // { name, accounts, main, insta (= Name des Haupt-Accounts), country, region }
+  user: auth.hasStoredSession() ? normalizeUser(store.get('user')) : null, // { accounts, verified, onCard, main, insta, ranking, done }
+  session: null,                      // { id, email, provider } sobald die Sitzung geprüft ist
+  regDraft: store.get('regdraft') || { accounts: {}, verified: {}, onCard: [] }, // Accounts beim Registrieren
   amount: store.get('amount', 100),   // gewählter Einzahlungsbetrag
   accepted: false,
   account: loadAccount(),
@@ -56,10 +61,26 @@ const state = {
   rankView: {},                       // gewähltes Land/Bundesland im Ranking
 };
 
-const saveAccount = () => store.set('account', state.account);
+// Profil und Konto speichern: lokal sofort, in Supabase kurz danach (gebündelt)
+let syncTimer = 0;
+function syncProfile() {
+  if (!state.session || !state.user) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    const r = await auth.saveProfile(state.session.id, { user: state.user, account: state.account });
+    if (r.error) console.warn('Profil nicht gespeichert:', r.error);
+  }, 600);
+}
+const saveAccount = () => { store.set('account', state.account); syncProfile(); };
+function saveUser(u = state.user) {
+  state.user = normalizeUser(u);
+  store.set('user', state.user);
+  syncProfile();
+}
+const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '45';
+export const APP_VERSION = '46';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -72,11 +93,16 @@ const routes = {
   'intro/2': introStory,
   'intro/3': introStory,
   login: login,
+  register: register,
+  confirm: confirmPage,
+  reset: resetPage,
+  finish: finishPage,
+  accounts: accountsPage,
   donate: donate,
   card: card,
   check: () => checkPage(''),
   terms: terms,
-  ranking: () => rankingPage(state.user?.region ? 'region' : 'country'),
+  ranking: () => rankingPage(state.user?.ranking?.region || state.user?.region ? 'region' : 'country'),
   'ranking/region': () => rankingPage('region'),
   'ranking/country': () => rankingPage('country'),
 };
@@ -126,6 +152,8 @@ function toast(msg) {
 }
 
 const firstName = (name) => (name || '').trim().split(/\s+/)[0];
+// Anzeigename: der Haupt-Account (Insta, TikTok oder Snapchat), sonst ein alter Vorname
+const displayName = (u) => u?.insta || firstName(u?.name) || '';
 const platformName = (id) => PLATFORMS.find((p) => p.id === id)?.name || id;
 const cleanHandle = (h) => (h || '').trim().replace(/^@+/, '').replace(/\s+/g, '');
 const shortMoney = (n) => (n >= 1_000_000 ? `${(n / 1_000_000).toLocaleString('de-DE', { maximumFractionDigits: 1 })} Mio. €`
@@ -145,12 +173,15 @@ function collectedStages() {
 
 // Das eigene Konto als Eintrag fürs Ranking.
 function meEntry() {
-  if (!state.user || !state.account.total) return null;
+  const u = state.user;
+  if (!u || !state.account.total || !u.ranking?.joined) return null;
+  const pid = isLinked(u, u.ranking.platform) ? u.ranking.platform : linkedIds(u).find((id) => u.onCard?.includes(id)) || linkedIds(u)[0] || '';
   return {
-    handle: state.user.insta || firstName(state.user.name) || 'du',
+    handle: u.accounts?.[pid] || displayName(u) || 'du',
+    platform: pid,
     amount: state.account.total,
-    country: state.user.country || 'DE',
-    region: state.user.region || '',
+    country: u.ranking.country || u.country || 'DE',
+    region: u.ranking.region || u.region || '',
   };
 }
 
@@ -174,9 +205,10 @@ function bindReset(el) {
       }, 4100);
       return;
     }
-    ['user', 'account', 'amount', 'donation'].forEach((k) => store.remove(k));
-    state.user = null;
+    ['account', 'amount', 'donation'].forEach((k) => store.remove(k));
+    if (!state.user) { store.remove('user'); store.remove('regdraft'); state.regDraft = { accounts: {}, verified: {}, onCard: [] }; }
     state.account = { total: 0, deposits: [], cards: [] };
+    saveAccount();
     state.amount = 100;
     state.accepted = false;
     toast('Alles zurückgesetzt – du startest wieder bei 0 €.');
@@ -214,7 +246,7 @@ function splash() {
           <div class="vault-glow" aria-hidden="true"></div>
           <div class="stage3d" data-diamond></div>
         </div>
-        <p class="welcome-hi">Hey ${esc(firstName(state.user?.name) || 'du')} – ${hi}</p>
+        <p class="welcome-hi">Hey ${esc(displayName(state.user) || 'du')} – ${hi}</p>
         <p class="welcome-sub">${own ? `Dein Konto <b>${money(acc.total)}</b> · Klasse <b>${CLASSES[cls].name}</b>` : 'Noch kein Fame auf deinem Konto'}</p>
         <div class="splash-login">${main}</div>
         <nav class="hub" aria-label="Übersicht">
@@ -222,6 +254,11 @@ function splash() {
           ${tile('ranking', icons.trophy, 'Ranking', 'Wer hat den meisten Fame?')}
           ${tile('check', '<span class="seal" aria-hidden="true">ECHT<br>FAM€</span>', 'Code prüfen', 'Ist eine Card echt?')}
         </nav>
+        <a class="connect-cta" href="#/accounts">
+          <span class="cc-ics" aria-hidden="true">${PLATFORMS.map((p) => `<span class="${isLinked(state.user, p.id) ? 'is-on' : ''}">${platformIcon(p.id)}</span>`).join('')}</span>
+          <span class="cc-txt"><b>Accounts verbinden</b><small>Verbinde die Accounts, die auf deiner Card stehen sollen.</small><span class="cc-pill">${linkedIds(state.user).length} von ${PLATFORMS.length} verbunden</span></span>
+          <span class="cc-go" aria-hidden="true">→</span>
+        </a>
         ${resetLink()}
         <span class="app-version">Version ${APP_VERSION}</span>
         <button class="link welcome-logout" type="button" data-logout>Abmelden</button>
@@ -233,12 +270,7 @@ function splash() {
         });
         const fx = particles(el.querySelector('[data-fx]'), { color: CLASSES[cls].color, mode: 'embers', density: 0.25 + cls * 0.15 });
         const t = setTimeout(() => { dia.pulse(); if (own) classDrop(cls); }, 900);
-        el.querySelector('[data-logout]').addEventListener('click', () => {
-          state.user = null;
-          store.set('user', null);
-          toast('Du bist abgemeldet.');
-          render();
-        });
+        el.querySelector('[data-logout]').addEventListener('click', logout);
         return () => { clearTimeout(t); dia.dispose(); fx.dispose(); };
       },
     };
@@ -465,140 +497,477 @@ function regionOptions(countryId, selected) {
     .map((r) => `<option${r === selected ? ' selected' : ''}>${esc(r)}</option>`).join('');
 }
 
+// ---- Accounts verbinden ---------------------------------------------------------------------
+// Eine Liste für Registrieren, „Fast geschafft“, die Accounts-Seite und das Ranking-Fenster.
+// Verbunden zählt: über die Plattform bestätigt – oder selbst eingetragen, solange die Verbindung
+// zu dieser Plattform noch nicht eingerichtet ist (js/config.js).
+
+const isLinked = (u, id) => !!u?.accounts?.[id] && (!!u.verified?.[id] || !isReady(id));
+const linkedIds = (u) => PLATFORMS.filter((p) => isLinked(u, p.id)).map((p) => p.id);
+const platIcon = (id) => (id ? `<span class="plat" title="${platformName(id)}">${platformIcon(id)}</span>` : '');
+
+function connectError(id, r) {
+  const n = platformName(id);
+  toast(r.error === 'setup' ? `Die ${n}-Verbindung ist noch nicht eingerichtet – trag deinen Namen solange selbst ein.`
+    : r.error === 'denied' ? `${n}: Anmeldung abgebrochen.` : `${n} ist gerade nicht erreichbar. Versuch es gleich nochmal.`);
+}
+
+function connectRows(u, { card, pickMode, picked, focus }) {
+  return PLATFORMS.map((p) => {
+    const on = isLinked(u, p.id);
+    const sub = on ? `@${esc(u.accounts[p.id])}${u.verified?.[p.id] ? '' : ' · selbst eingetragen'}` : 'Noch nicht verbunden';
+    const isPicked = pickMode && on && picked === p.id;
+    const right = !on
+      ? `<button type="button" class="pf-go" data-link="${p.id}">Verbinden</button><span class="pf-snap" data-snaphost="${p.id}"></span>`
+      : pickMode ? `<span class="pf-ok">${isPicked ? '✓ Im Ranking' : 'Antippen'}</span>`
+        : `<span class="pf-ok">✓ Verbunden</span><button type="button" class="pf-change" data-unlink="${p.id}" aria-label="${p.name} ändern">Ändern</button>`;
+    return `<div class="pf${on ? ' is-on' : ''}${isPicked ? ' is-picked' : ''}${focus === p.id ? ' is-focus' : ''}" data-pf="${p.id}"${pickMode && on ? ' data-pick role="button" tabindex="0"' : ''}>
+        <span class="pf-ic">${platformIcon(p.id)}</span>
+        <span class="pf-nm">${p.name}<small>${sub}</small></span>
+        ${right}
+      </div>
+      ${on ? '' : `<div class="pf-manual" data-manual="${p.id}" role="group" hidden><input name="h" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="@dein ${p.name}-Name" aria-label="${p.name}-Name"><button type="button" data-manualok>OK</button></div>`}
+      ${on && card ? `<label class="check pf-card"><input type="checkbox" data-oncard="${p.id}"${u.onCard?.includes(p.id) ? ' checked' : ''}><span class="check-box"></span><span>Steht auf meiner Card</span></label>` : ''}`;
+  }).join('');
+}
+
+// get/set lesen und schreiben das Profil (oder beim Registrieren den Entwurf).
+// pickMode: verbundene Zeilen lassen sich antippen (Name fürs Ranking).
+function mountConnect(host, { get, set, card = true, pickMode = false, pick = null, focus = null, back, onChange }) {
+  let picked = pick;
+  const fix = () => {
+    if (!pickMode) return;
+    const ids = linkedIds(get());
+    if (!ids.includes(picked)) picked = ids.find((id) => get().onCard?.includes(id)) || ids[0] || null;
+  };
+  const update = (fn) => {
+    const u = structuredClone(get() || {});
+    u.accounts ||= {}; u.verified ||= {}; u.onCard ||= [];
+    fn(u);
+    set(u);
+    draw();
+  };
+  const linked = (pr) => {
+    update((u) => {
+      u.accounts[pr.id] = cleanHandle(pr.handle);
+      u.verified[pr.id] = { name: pr.name, avatar: pr.avatar, externalId: pr.externalId };
+      if (!u.onCard.length) u.onCard.push(pr.id);
+    });
+    buzz([10, 40, 10]);
+    toast(`${platformName(pr.id)} verbunden ✓`);
+  };
+  function bind() {
+    host.querySelectorAll('[data-link]').forEach((b) => {
+      const id = b.dataset.link;
+      if (id === 'sc' && isReady('sc')) {
+        // Snapchats eigener Knopf (öffnet das Anmelde-Popup)
+        b.hidden = true;
+        mountSnap(host.querySelector('[data-snaphost="sc"]'), (r) => (r.error ? connectError('sc', r) : linked(r)));
+        return;
+      }
+      b.addEventListener('click', () => {
+        if (isReady(id)) { connectRedirect(id, get(), back); return; }
+        const f = host.querySelector(`[data-manual="${id}"]`);
+        f.hidden = false;
+        f.querySelector('input').focus();
+        connectError(id, { error: 'setup' });
+      });
+    });
+    // Selbst eintragen (kein eigenes <form>, die Liste steckt oft schon in einem Formular)
+    host.querySelectorAll('[data-manual]').forEach((f) => {
+      const input = f.querySelector('input');
+      const save = () => {
+        const id = f.dataset.manual;
+        const h = cleanHandle(input.value);
+        if (!h) { input.focus(); buzz(30); return; }
+        update((u) => { u.accounts[id] = h; delete u.verified[id]; if (!u.onCard.length) u.onCard.push(id); });
+        buzz([10, 40, 10]);
+        toast(`${platformName(id)} eingetragen ✓`);
+      };
+      f.querySelector('[data-manualok]').addEventListener('click', save);
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
+    });
+    host.querySelectorAll('[data-unlink]').forEach((b) => b.addEventListener('click', () => {
+      const id = b.dataset.unlink;
+      update((u) => { delete u.accounts[id]; delete u.verified[id]; u.onCard = u.onCard.filter((x) => x !== id); });
+      buzz(8);
+    }));
+    host.querySelectorAll('[data-oncard]').forEach((c) => c.addEventListener('change', () => {
+      const id = c.dataset.oncard;
+      update((u) => { u.onCard = c.checked ? [...new Set([...u.onCard, id])] : u.onCard.filter((x) => x !== id); });
+      buzz(8);
+    }));
+    host.querySelectorAll('[data-pick]').forEach((r) => {
+      const choose = () => { picked = r.dataset.pf; buzz(8); draw(); };
+      r.addEventListener('click', choose);
+      r.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(); } });
+    });
+  }
+  function draw() {
+    fix();
+    host.innerHTML = connectRows(get() || {}, { card, pickMode, picked, focus });
+    bind();
+    onChange?.(picked);
+  }
+  draw();
+  return { get picked() { return picked; } };
+}
+
+// ---- Anmelden und Registrieren ----------------------------------------------------------------
+
+const authHero = () => hero('<div class="stage3d" data-diamond></div>', { cls: 'hero--tall' });
+const authDiamond = (el) => createDiamond(el.querySelector('[data-diamond]'), { level: 4, glow: 0.6, rim: '#3dfa74' });
+const ssoButtons = (verb) => `<button class="sso sso--apple" type="button" data-sso="apple">${icons.apple}<span>${verb} mit Apple</span></button>
+  <button class="sso sso--google" type="button" data-sso="google">${icons.google}<span>${verb} mit Google</span></button>`;
+const pwField = (label, name, ac) => `<label class="field"><span>${label}</span><span class="pw"><input name="${name}" type="password" autocomplete="${ac}" minlength="8" required><button type="button" class="pw-eye" data-eye aria-label="Passwort zeigen">${icons.eye}</button></span></label>`;
+const emptyScreen = (to) => { queueMicrotask(() => go(to)); return { html: '<section class="screen"></section>' }; };
+const validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e);
+
+function bindAuthBits(el) {
+  el.querySelectorAll('[data-sso]').forEach((b) => b.addEventListener('click', async () => {
+    if (b.classList.contains('is-busy')) return;
+    b.classList.add('is-busy');
+    const p = b.dataset.sso;
+    const r = await auth.signInWith(p);
+    if (r.pending) return; // weiter zu Apple/Google
+    b.classList.remove('is-busy');
+    toast(r.error === 'setup' ? `Anmelden mit ${p === 'apple' ? 'Apple' : 'Google'} ist noch nicht eingerichtet – nimm solange deine E-Mail.` : r.error);
+  }));
+  el.querySelectorAll('[data-eye]').forEach((b) => b.addEventListener('click', () => {
+    const i = b.previousElementSibling;
+    i.type = i.type === 'password' ? 'text' : 'password';
+    b.classList.toggle('is-on', i.type === 'text');
+  }));
+}
+
+// Fehler unter dem Formular zeigen (und das Feld markieren)
+function formError(form, msg, field) {
+  const box = form.querySelector('[data-err]');
+  box.textContent = msg;
+  box.hidden = !msg;
+  form.querySelectorAll('.is-error').forEach((f) => f.classList.remove('is-error'));
+  if (field) { field.closest('.field')?.classList.add('is-error'); field.focus(); }
+  if (msg) buzz(30);
+}
+async function busy(btn, fn) {
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.classList.add('is-busy');
+  try { await fn(); } finally { btn.disabled = false; btn.classList.remove('is-busy'); }
+}
+const markAlive = () => { try { sessionStorage.setItem('fame.alive', '1'); } catch { /* privat */ } };
+
 function login() {
-  // Nach der Rückkehr von TikTok: das halb ausgefüllte Formular wiederherstellen
-  const u = state.loginDraft || state.user || {};
-  const accs = { ...(u.accounts || {}) };
-  const ver = { ...(u.verified || {}) };
-  const CONNECT = ['ig', 'sc', 'tt'];
-  const connectLine = (p) => (!CONNECT.includes(p.id) ? '' : `<div class="acc-connect" data-connect="${p.id}">${ver[p.id]
-    ? `<span class="acc-ok">✓ Verbunden${ver[p.id].name ? ` als ${esc(ver[p.id].name)}` : ''}</span>`
-    : `<button type="button" class="acc-link" data-connectbtn="${p.id}">${platformIcon(p.id)}<span>Mit ${p.name} verbinden</span></button><span class="acc-snaphost"></span>${p.id === 'ig' ? '<small class="acc-hint">nur Business-/Creator-Konto</small>' : ''}`}</div>`);
-  const country = u.country || 'DE';
+  if (state.user) return emptyScreen(state.after || '');
   return {
     html: `<section class="screen screen--login">
-      ${hero(`<div class="stage3d" data-diamond></div>`, { cls: 'hero--tall' })}
-      <form class="login-form" novalidate>
+      ${authHero()}
+      <form class="login-form auth-form" novalidate>
         <div class="login-icon">${diamondShadowed()}</div>
-        <h1 class="headline">Werde ${LOGO_TEXT}</h1>
-        <p class="sub">Leg dein Profil an und sichere dir deinen Platz.</p>
-        <label class="field"><span>Name</span>
-          <input id="login-name" name="name" autocomplete="given-name" required value="${esc(u.name)}" placeholder="Max"></label>
-        <fieldset class="accounts">
-          <legend>Deine Accounts <small>Wo bist du unterwegs? Mehrere möglich.</small></legend>
-          <div class="acc-chips">${PLATFORMS.map((p) => `<button type="button" class="acc-chip${accs[p.id] != null ? ' is-on' : ''}" data-chip="${p.id}" aria-pressed="${accs[p.id] != null}">${platformIcon(p.id)}<span>${p.name}</span></button>`).join('')}</div>
-          ${PLATFORMS.map((p) => `<div class="acc-row" data-row="${p.id}"${accs[p.id] != null ? '' : ' hidden'}>
-            <span class="acc-ico">${platformIcon(p.id)}</span>
-            <input name="acc-${p.id}" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(accs[p.id] ? '@' + accs[p.id] : '')}" placeholder="@dein ${p.name}-Name" aria-label="${p.name}-Name"${ver[p.id] ? ' readonly' : ''}>
-            ${connectLine(p)}
-            <label class="acc-main" title="Dieser Name steht auf deiner Card"><input type="checkbox" name="oncard" value="${p.id}"${(u.onCard || []).includes(p.id) ? ' checked' : ''}><span>Auf die Card</span></label>
-          </div>`).join('')}
-          <p class="acc-note" data-accnote hidden>Die markierten Accounts stehen auf deiner Card – einer oder alle.</p>
-        </fieldset>
-        <div class="field-row">
-          <label class="field"><span>Land</span>
-            <select id="login-country" name="country">${COUNTRIES.map((c) =>
-              `<option value="${c.id}"${c.id === country ? ' selected' : ''}>${c.flag} ${c.name}</option>`).join('')}</select></label>
-          <label class="field"><span>Bundesland</span>
-            <select id="login-region" name="region">${regionOptions(country, u.region)}</select></label>
+        <h1 class="headline">Login</h1>
+        <p class="sub">Schön, dass du wieder da bist.</p>
+        ${ssoButtons('Anmelden')}
+        <div class="or">oder mit E-Mail</div>
+        <label class="field"><span>E-Mail</span><input name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="du@beispiel.de" required value="${esc(state.pendingEmail || '')}"></label>
+        ${pwField('Passwort', 'pw', 'current-password')}
+        <div class="row-between">
+          <label class="check"><input type="checkbox" name="keep"${store.get('keep') === false ? '' : ' checked'}><span class="check-box"></span><span>Angemeldet bleiben</span></label>
+          <button class="link" type="button" data-forgot>Passwort vergessen?</button>
         </div>
-        <div class="screen-foot">
-          <button class="btn" type="submit"><span>Login</span></button>
-          ${state.user ? '<button class="link" type="button" data-logout>Abmelden</button>' : ''}
-        </div>
+        <p class="form-error" data-err hidden></p>
+        <div class="screen-foot"><button class="btn" type="submit"><span>Login</span></button></div>
+        <div class="or">Noch kein Account?</div>
+        <div class="screen-foot"><button class="btn btn--ghost" type="button" data-go="register"><span>Registrieren</span></button></div>
       </form>
     </section>`,
     mount(el) {
-      const dia = createDiamond(el.querySelector('[data-diamond]'), { level: 4, glow: 0.6, rim: '#3dfa74' });
+      const dia = authDiamond(el);
       const form = el.querySelector('form');
-      form.country.addEventListener('change', () => {
-        form.region.innerHTML = regionOptions(form.country.value);
-      });
-      // Plattformen an- und abwählen; mindestens ein gewählter Account kommt auf die Card
-      const rows = (id) => form.querySelector(`[data-row="${id}"]`);
-      const syncMain = () => {
-        const on = PLATFORMS.filter((p) => !rows(p.id).hidden);
-        const boxes = [...form.querySelectorAll('input[name="oncard"]')];
-        boxes.forEach((b) => { if (rows(b.value).hidden) b.checked = false; });
-        if (!boxes.some((b) => b.checked) && on[0]) form.querySelector(`input[name="oncard"][value="${on[0].id}"]`).checked = true;
-        form.classList.toggle('has-multi', on.length > 1);
-        form.querySelector('[data-accnote]').hidden = on.length < 2;
-      };
-      form.querySelectorAll('[data-chip]').forEach((chip) => chip.addEventListener('click', () => {
-        const row = rows(chip.dataset.chip);
-        row.hidden = !row.hidden;
-        chip.classList.toggle('is-on', !row.hidden);
-        chip.setAttribute('aria-pressed', String(!row.hidden));
-        if (!row.hidden) row.querySelector('input[name^="acc-"]').focus();
-        buzz(8);
-        syncMain();
-      }));
-      form.querySelectorAll('input[name="oncard"]').forEach((b) => b.addEventListener('change', syncMain));
-      syncMain();
-
-      // Accounts verbinden: Das bestätigte Profil ersetzt den eingetippten Namen
-      const readForm = () => {
-        const accounts = {};
-        PLATFORMS.forEach((p) => { const h = cleanHandle(form[`acc-${p.id}`].value); if (!rows(p.id).hidden && h) accounts[p.id] = h; });
-        const verified = {};
-        Object.keys(ver).forEach((id) => { if (accounts[id]) verified[id] = ver[id]; });
-        return {
-          name: form.name.value.trim(), accounts, verified,
-          onCard: [...form.querySelectorAll('input[name="oncard"]:checked')].map((b) => b.value),
-          country: form.country.value, region: form.region.value,
-        };
-      };
-      const verifiedOk = (pr) => {
-        ver[pr.id] = { name: pr.name, avatar: pr.avatar, externalId: pr.externalId };
-        const input = form[`acc-${pr.id}`];
-        input.value = `@${cleanHandle(pr.handle)}`;
-        input.readOnly = true;
-        form.querySelector(`[data-connect="${pr.id}"]`).innerHTML = `<span class="acc-ok">✓ Verbunden als ${esc(pr.name || pr.handle)}</span>`;
-        buzz([10, 40, 10]);
-        toast(`${platformName(pr.id)} verbunden ✓`);
-      };
-      const connectError = (id, r) => {
-        const n = platformName(id);
-        toast(r.error === 'setup' ? `Die ${n}-Verbindung ist noch nicht eingerichtet – trag deinen Namen solange von Hand ein.`
-          : r.error === 'denied' ? `${n}: Anmeldung abgebrochen.` : `${n} ist gerade nicht erreichbar. Versuch es gleich nochmal.`);
-      };
-      form.querySelectorAll('[data-connectbtn]').forEach((b) => {
-        const id = b.dataset.connectbtn;
-        if (id === 'sc' && isReady('sc')) {
-          // Snapchats eigener Knopf statt unserem (öffnet das Anmelde-Popup)
-          b.hidden = true;
-          mountSnap(b.nextElementSibling, (r) => (r.error ? connectError('sc', r) : verifiedOk(r)));
-          return;
-        }
-        b.addEventListener('click', () => {
-          if (!isReady(id)) { connectError(id, { error: 'setup' }); return; }
-          connectRedirect(id, readForm());
-        });
-      });
+      bindAuthBits(el);
       form.addEventListener('submit', (e) => {
         e.preventDefault();
-        const name = form.name.value.trim();
-        if (!name) {
-          form.name.focus();
-          form.name.closest('.field').classList.add('is-error');
-          buzz(30);
-          return;
-        }
-        state.user = normalizeUser({ ...readForm(), name });
-        state.loginDraft = null;
-        store.set('user', state.user);
-        const next = state.after || '';
-        state.after = null;
-        go(next);
+        const email = form.email.value.trim();
+        const pw = form.pw.value;
+        if (!validEmail(email)) { formError(form, 'Gib deine E-Mail-Adresse ein.', form.email); return; }
+        if (!pw) { formError(form, 'Gib dein Passwort ein.', form.pw); return; }
+        busy(form.querySelector('[type="submit"]'), async () => {
+          const r = await auth.signIn(email, pw);
+          if (r.error) { formError(form, r.error); return; }
+          store.set('keep', form.keep.checked);
+          markAlive();
+          await startSession(r.session);
+          state.pendingEmail = '';
+          toast('Angemeldet ✓');
+          afterAuth();
+        });
       });
-      el.querySelector('[data-logout]')?.addEventListener('click', () => {
-        state.user = null;
-        store.set('user', null);
-        go('');
+      el.querySelector('[data-forgot]').addEventListener('click', (e) => {
+        const email = form.email.value.trim();
+        if (!validEmail(email)) { formError(form, 'Gib zuerst deine E-Mail ein – dann schicken wir dir einen Link.', form.email); return; }
+        busy(e.currentTarget, async () => {
+          const r = await auth.resetPassword(email);
+          if (r.error) { formError(form, r.error); return; }
+          formError(form, '');
+          toast('Link ist unterwegs – schau in dein Postfach.');
+        });
       });
       return () => dia.dispose();
     },
   };
+}
+
+function register() {
+  if (state.user) return emptyScreen('');
+  return {
+    html: `<section class="screen screen--login">
+      ${authHero()}
+      <form class="login-form auth-form" novalidate>
+        <div class="login-icon">${diamondShadowed()}</div>
+        <h1 class="headline">Registrieren</h1>
+        <p class="sub">Leg deinen ${LOGO_TEXT}-Account an – dauert 1 Minute.</p>
+        <div class="sec">1 · Dein Login<small>Am schnellsten mit Apple (iCloud) oder Google – ohne neues Passwort. 🔒 Deine E-Mail taucht nirgendwo auf.</small></div>
+        ${ssoButtons('Weiter')}
+        <div class="or">oder mit E-Mail</div>
+        <label class="field"><span>E-Mail</span><input name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" placeholder="du@beispiel.de" required></label>
+        <p class="hint">🔒 Deine E-Mail taucht nirgendwo auf – nicht auf der Card, nicht im Ranking.</p>
+        ${pwField('Passwort <small>(mind. 8 Zeichen)</small>', 'pw', 'new-password')}
+        ${pwField('Passwort wiederholen', 'pw2', 'new-password')}
+        <div class="sec">2 · Accounts verbinden<small>Verbinde die Accounts, die auf deiner Card stehen sollen. Dein Name kommt direkt von Insta, TikTok oder Snapchat.</small></div>
+        <div data-connect></div>
+        <p class="note">Geht auch später – über „Accounts verbinden“ auf der Startseite.</p>
+        <div class="sec">3 · Fertig</div>
+        <label class="check terms-check"><input type="checkbox" name="terms"><span class="check-box"></span><span>Ich akzeptiere die <a href="#/terms">Bedingungen</a>.</span></label>
+        <p class="form-error" data-err hidden></p>
+        <div class="screen-foot"><button class="btn" type="submit"><span>Registrierung abschließen</span></button></div>
+        <div class="or">Schon einen Account?</div>
+        <div class="screen-foot"><button class="link" type="button" data-go="login">Zum Login</button></div>
+      </form>
+    </section>`,
+    mount(el) {
+      const dia = authDiamond(el);
+      const form = el.querySelector('form');
+      bindAuthBits(el);
+      mountConnect(el.querySelector('[data-connect]'), {
+        get: () => state.regDraft, set: (u) => { state.regDraft = u; saveDraft(); }, back: 'register',
+      });
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = form.email.value.trim();
+        if (!validEmail(email)) { formError(form, 'Die E-Mail-Adresse stimmt nicht.', form.email); return; }
+        if (form.pw.value.length < 8) { formError(form, 'Das Passwort braucht mindestens 8 Zeichen.', form.pw); return; }
+        if (form.pw.value !== form.pw2.value) { formError(form, 'Die beiden Passwörter sind nicht gleich.', form.pw2); return; }
+        if (!form.terms.checked) { formError(form, 'Bitte akzeptiere die Bedingungen.'); return; }
+        busy(form.querySelector('[type="submit"]'), async () => {
+          const d = state.regDraft;
+          const r = await auth.signUp(email, form.pw.value, {
+            fame: { accounts: d.accounts || {}, verified: d.verified || {}, onCard: d.onCard || [], termsAt: Date.now() },
+          });
+          if (r.error) { formError(form, r.error); return; }
+          if (!r.session) { state.pendingEmail = email; go('confirm'); return; } // erst die Mail bestätigen
+          store.set('keep', true);
+          markAlive();
+          await startSession(r.session);
+          toast('Account erstellt ✓ Willkommen!');
+          afterAuth();
+        });
+      });
+      return () => dia.dispose();
+    },
+  };
+}
+
+// Nach dem Registrieren: Link in der Mail bestätigen
+function confirmPage() {
+  const email = state.pendingEmail || '';
+  return {
+    html: `<section class="screen screen--login">
+      ${authHero()}
+      <div class="login-form auth-form">
+        <div class="login-icon">${diamondShadowed()}</div>
+        <h1 class="headline">Check dein Postfach</h1>
+        <p class="sub">Wir haben dir ${email ? `an <b>${esc(email)}</b> ` : ''}einen Link geschickt. Tipp darauf – dann ist dein Account fertig.</p>
+        <p class="note">Keine Mail da? Schau auch im Spam-Ordner nach.</p>
+        <div class="screen-foot">${email ? '<button class="btn btn--ghost" type="button" data-resend><span>Mail nochmal senden</span></button>' : ''}</div>
+        <div class="screen-foot"><button class="link" type="button" data-go="login">Zum Login</button></div>
+      </div>
+    </section>`,
+    mount(el) {
+      const dia = authDiamond(el);
+      el.querySelector('[data-resend]')?.addEventListener('click', (e) => busy(e.currentTarget, async () => {
+        const r = await auth.resendConfirm(email);
+        toast(r.error || 'Neue Mail ist unterwegs.');
+      }));
+      return () => dia.dispose();
+    },
+  };
+}
+
+// Link aus „Passwort vergessen“: neues Passwort setzen
+function resetPage() {
+  const ok = auth.hasStoredSession();
+  return {
+    html: `<section class="screen screen--login">
+      ${authHero()}
+      <form class="login-form auth-form" novalidate>
+        <div class="login-icon">${diamondShadowed()}</div>
+        <h1 class="headline">Neues Passwort</h1>
+        ${ok ? `<p class="sub">Wähl ein neues Passwort für deinen ${LOGO_TEXT}-Account.</p>
+          ${pwField('Neues Passwort <small>(mind. 8 Zeichen)</small>', 'pw', 'new-password')}
+          ${pwField('Passwort wiederholen', 'pw2', 'new-password')}
+          <p class="form-error" data-err hidden></p>
+          <div class="screen-foot"><button class="btn" type="submit"><span>Passwort speichern</span></button></div>`
+    : `<p class="sub">Der Link ist abgelaufen oder wurde schon benutzt. Fordere beim Login einfach einen neuen an.</p>
+          <div class="screen-foot"><button class="btn" type="button" data-go="login"><span>Zum Login</span></button></div>`}
+      </form>
+    </section>`,
+    mount(el) {
+      const dia = authDiamond(el);
+      bindAuthBits(el);
+      const form = el.querySelector('form');
+      if (ok) {
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          if (form.pw.value.length < 8) { formError(form, 'Das Passwort braucht mindestens 8 Zeichen.', form.pw); return; }
+          if (form.pw.value !== form.pw2.value) { formError(form, 'Die beiden Passwörter sind nicht gleich.', form.pw2); return; }
+          busy(form.querySelector('[type="submit"]'), async () => {
+            const r = await auth.updatePassword(form.pw.value);
+            if (r.error) { formError(form, r.error); return; }
+            toast('Passwort geändert ✓');
+            go(state.user && !state.user.done ? 'finish' : '');
+          });
+        });
+      }
+      return () => dia.dispose();
+    },
+  };
+}
+
+// Nach Apple/Google (und für alle, die noch nicht fertig sind): Accounts verbinden, Bedingungen
+function finishPage() {
+  if (!state.user) return emptyScreen('login');
+  const prov = state.session?.provider || 'email';
+  const via = { apple: ['Apple', icons.apple], google: ['Google', icons.google] }[prov] || ['E-Mail', icons.mail];
+  return {
+    html: `<section class="screen screen--login">
+      ${authHero()}
+      <form class="login-form auth-form" novalidate>
+        <div class="login-icon">${diamondShadowed()}</div>
+        <h1 class="headline">Fast geschafft</h1>
+        <p class="sub">Noch 2 kurze Schritte, dann ist dein Account fertig.</p>
+        <div class="signed">${via[1]}<span>Angemeldet mit ${via[0]}</span>${prov === 'email' ? '' : '<small>✓ ohne Passwort</small>'}</div>
+        <p class="hint">🔒 Deine E-Mail taucht nirgendwo auf.</p>
+        <div class="sec">1 · Accounts verbinden<small>Verbinde die Accounts, die auf deiner Card stehen sollen.</small></div>
+        <div data-connect></div>
+        <div class="sec">2 · Fertig</div>
+        <label class="check terms-check"><input type="checkbox" name="terms"${state.user.termsAt ? ' checked' : ''}><span class="check-box"></span><span>Ich akzeptiere die <a href="#/terms">Bedingungen</a>.</span></label>
+        <p class="form-error" data-err hidden></p>
+        <div class="screen-foot"><button class="btn" type="submit"><span>Account fertig</span></button></div>
+      </form>
+    </section>`,
+    mount(el) {
+      const dia = authDiamond(el);
+      const form = el.querySelector('form');
+      mountConnect(el.querySelector('[data-connect]'), { get: () => state.user, set: saveUser, back: 'finish' });
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!form.terms.checked) { formError(form, 'Bitte akzeptiere die Bedingungen.'); return; }
+        saveUser({ ...state.user, done: true, termsAt: state.user.termsAt || Date.now() });
+        toast('Account fertig ✓ Willkommen!');
+        afterAuth();
+      });
+      return () => dia.dispose();
+    },
+  };
+}
+
+// „Accounts verbinden“ von der Startseite (oder von der Card, wenn zum Posten etwas fehlt)
+function accountsPage() {
+  if (!state.user) { state.after = 'accounts'; return emptyScreen('login'); }
+  const focus = state.focusPlatform;
+  return {
+    html: `<section class="screen screen--login">
+      ${authHero()}
+      <div class="login-form auth-form">
+        <h1 class="headline">Accounts verbinden</h1>
+        <p class="sub">${focus ? `Verbinde ${platformName(focus)}, dann kannst du deine Card direkt posten.` : 'Verbinde die Accounts, die auf deiner Card stehen sollen. Mehrere möglich.'}</p>
+        <div data-connect></div>
+        <p class="note">Verbunden heißt: Dein echter Name steht auf der Card und du kannst deine Story direkt posten.</p>
+        <div class="screen-foot"><button class="btn" type="button" data-done><span>${state.after === 'card' ? 'Zurück zur Card' : 'Fertig'}</span></button></div>
+      </div>
+    </section>`,
+    mount(el) {
+      const dia = authDiamond(el);
+      mountConnect(el.querySelector('[data-connect]'), { get: () => state.user, set: saveUser, focus, back: 'accounts' });
+      el.querySelector('[data-done]').addEventListener('click', () => {
+        const next = state.after || '';
+        state.after = null;
+        state.focusPlatform = null;
+        go(next);
+      });
+      el.querySelector('.is-focus')?.scrollIntoView({ block: 'center' });
+      return () => dia.dispose();
+    },
+  };
+}
+
+// Nach dem Anmelden: erst „Fast geschafft“, sonst dorthin, wo man hinwollte
+function afterAuth() {
+  if (!state.user?.done) { go('finish'); return; }
+  const next = state.after || '';
+  state.after = null;
+  goOrRender(next);
+}
+
+// go() ändert nichts, wenn man schon auf der Seite ist – dann neu zeichnen
+const goOrRender = (path) => { if (location.hash.replace(/^#\/?/, '') === path) render(); else go(path); };
+
+// ---- Sitzung -----------------------------------------------------------------------------------
+
+// Profil nach dem Anmelden laden. Neu angelegt wird es aus der Registrierung (E-Mail),
+// dem Entwurf auf diesem Gerät oder – einmalig – aus den alten Daten vor dem Login-Umbau.
+async function startSession(session) {
+  const info = auth.sessionInfo(session);
+  if (!info) return false;
+  state.session = info;
+  const r = await auth.loadProfile(info.id);
+  if (r.data?.user) {
+    state.user = normalizeUser(r.data.user);
+    if (r.data.account) state.account = r.data.account;
+    store.set('user', state.user);
+    store.set('account', state.account);
+    return true;
+  }
+  if (r.error) console.warn('Profil nicht geladen:', r.error);
+  if (r.error && state.user) return true; // offline o. ä.: lokaler Stand bleibt
+  const meta = info.meta?.fame || {};
+  const has = (o) => (o && Object.keys(o.accounts || {}).length ? o : null);
+  const src = has(meta) || has(state.regDraft) || has(store.get('user')) || {};
+  state.user = normalizeUser({
+    accounts: src.accounts || {}, verified: src.verified || {}, onCard: src.onCard || [],
+    done: !!meta.termsAt, termsAt: meta.termsAt || null, created: Date.now(),
+  });
+  store.set('user', state.user);
+  state.regDraft = { accounts: {}, verified: {}, onCard: [] };
+  store.remove('regdraft');
+  if (!r.error) {
+    const w = await auth.saveProfile(info.id, { user: state.user, account: state.account });
+    if (w.error) console.warn('Profil nicht gespeichert:', w.error);
+  }
+  return true;
+}
+
+function clearLocal() {
+  state.user = null;
+  state.session = null;
+  state.account = { total: 0, deposits: [], cards: [] };
+  ['user', 'account'].forEach((k) => store.remove(k));
+}
+
+async function logout() {
+  await auth.signOut();
+  clearLocal();
+  toast('Du bist abgemeldet.');
+  goOrRender('');
 }
 
 // Bedingungen: Platzhalter, der Text folgt
@@ -846,7 +1215,7 @@ function donate() {
         const tier = tierFor(acc.total);
         acc.cards.push({
           tier: tier.id, stage: tier.stage, total: acc.total, at, revealed: false,
-          serial: makeSerial(`${state.user.name}|${state.user.insta}|${acc.total}|${at}`),
+          serial: makeSerial(`${state.session?.id || state.user.name}|${state.user.insta}|${acc.total}|${at}`),
         });
         saveAccount();
         go('card');
@@ -964,6 +1333,17 @@ function card() {
             <button class="share-btn share-btn--avatar" type="button" data-avatar>${icons.user}<span>Profilbild-Rahmen</span></button>
           </div>
           <p class="sheet-note">Format 9:16 – passt für Instagram Story, TikTok, Snapchat und WhatsApp-Status.</p>
+        </div>
+      </div>
+      <div class="msheet" data-needlink hidden>
+        <div class="msheet-bg" data-needclose></div>
+        <div class="msheet-pnl" role="dialog" aria-modal="true" aria-labelledby="needtitle">
+          <div class="msheet-grip" aria-hidden="true"></div>
+          <div class="msheet-big" data-needicon></div>
+          <h3 id="needtitle" data-needtitle></h3>
+          <p data-needtext></p>
+          <button class="btn" type="button" data-needgo><span></span></button>
+          <button class="link" type="button" data-needclose>Abbrechen</button>
         </div>
       </div>
       <div class="imgview" data-imgview hidden role="dialog" aria-modal="true" aria-label="Bild speichern">
@@ -1100,8 +1480,7 @@ function card() {
       instaInput?.addEventListener('change', () => {
         if (state.user) {
           const h = cleanHandle(instaInput.value);
-          state.user = normalizeUser({ ...state.user, accounts: { ...state.user.accounts, ig: h }, onCard: h ? ['ig'] : state.user.onCard });
-          store.set('user', state.user);
+          saveUser({ ...state.user, accounts: { ...state.user.accounts, ig: h }, onCard: h ? ['ig'] : state.user.onCard });
         }
       });
 
@@ -1196,8 +1575,34 @@ function card() {
 
       const ACTIONS = { ig: shareToInstagramStory, tt: shareToTikTok, sc: shareToSnapchat, more: shareElsewhere, save: saveImage };
       let busy = false;
+      // Posten in Insta, TikTok oder Snapchat geht nur mit verbundenem Account – sonst erst verbinden
+      const need = el.querySelector('[data-needlink]');
+      const openNeed = (id) => {
+        const n = platformName(id);
+        need.querySelector('[data-needicon]').innerHTML = platformIcon(id);
+        need.querySelector('[data-needtitle]').textContent = `${n} noch nicht verbunden`;
+        need.querySelector('[data-needtext]').textContent = `Verbinde zuerst deinen ${n}-Account – dann postest du deine Card direkt in deine Story.`;
+        need.querySelector('[data-needgo] span').textContent = `Jetzt mit ${n} verbinden`;
+        need.dataset.id = id;
+        need.hidden = false;
+        requestAnimationFrame(() => need.classList.add('is-open'));
+        buzz(15);
+      };
+      const closeNeed = () => { need.classList.remove('is-open'); setTimeout(() => { need.hidden = true; }, 250); };
+      need.querySelectorAll('[data-needclose]').forEach((b) => b.addEventListener('click', closeNeed));
+      need.querySelector('[data-needgo]').addEventListener('click', () => {
+        state.after = 'card';
+        state.focusPlatform = need.dataset.id;
+        go('accounts');
+      });
+
       el.querySelectorAll('[data-share]').forEach((b) => b.addEventListener('click', async () => {
         if (busy) return;
+        if (['ig', 'tt', 'sc'].includes(b.dataset.share) && !isLinked(state.user, b.dataset.share)) {
+          closeSheet();
+          openNeed(b.dataset.share);
+          return;
+        }
         busy = true;
         b.classList.add('is-busy');
         try {
@@ -1394,14 +1799,82 @@ const DE_TILES = {
 const initials = (h) => (h.replace(/[^a-zA-Z]/g, '').slice(0, 2) || '?').toUpperCase();
 const avatar = (r, cls = '') => `<span class="avatar ${cls}" style="--c:${tierFor(r.amount).css}">${esc(initials(r.handle))}</span>`;
 
+// Ranking-Fenster: einmal Land, Bundesland und den Namen (mind. eine verbundene Plattform) wählen.
+// Danach geht „Ranking“ direkt in die Rangliste; ändern lässt sich alles über ⚙.
+function joinSheet() {
+  const u = state.user;
+  const joined = !!u.ranking?.joined;
+  const c = u.ranking?.country || u.country || 'DE';
+  return `<div class="msheet msheet--join" data-join${joined || state.joinDismissed ? ' hidden' : ''}>
+    <div class="msheet-bg" data-joinclose></div>
+    <form class="msheet-pnl join-form" role="dialog" aria-modal="true" aria-labelledby="jointitle" novalidate>
+      <div class="msheet-grip" aria-hidden="true"></div>
+      <h3 id="jointitle">🏆 ${joined ? 'Ranking-Einstellungen' : 'Beim Ranking mitmachen'}</h3>
+      <p class="msheet-lead">${joined ? 'Wo und mit welchem Namen du im Ranking stehst.' : 'Einmal kurz einrichten – danach landest du direkt im Ranking.'}</p>
+      <div class="field-row">
+        <label class="field"><span>Land</span><select name="country">${COUNTRIES.map((x) => `<option value="${x.id}"${x.id === c ? ' selected' : ''}>${x.flag} ${x.name}</option>`).join('')}</select></label>
+        <label class="field"><span>Bundesland</span><select name="region">${regionOptions(c, u.ranking?.region || u.region)}</select></label>
+      </div>
+      <div class="sec">Mit welchem Namen?<small>Tipp den Namen an, der im Ranking stehen soll – mit Symbol davor.</small></div>
+      <div data-joinlist></div>
+      <div class="req" data-req></div>
+      <button class="btn" type="submit"><span>${joined ? 'Speichern' : 'Mitmachen'}</span></button>
+      <p class="msheet-once">${joined ? '<button class="link" type="button" data-leave>Nicht mehr im Ranking zeigen</button>' : 'Das Fenster kommt nur einmal. Ändern kannst du alles später über ⚙.'}</p>
+    </form>
+  </div>`;
+}
+
+function mountJoin(el) {
+  const sheet = el.querySelector('[data-join]');
+  const form = sheet.querySelector('form');
+  const btn = form.querySelector('[type="submit"]');
+  const req = sheet.querySelector('[data-req]');
+  const open = () => { sheet.hidden = false; requestAnimationFrame(() => sheet.classList.add('is-open')); };
+  const close = () => { state.joinDismissed = true; sheet.classList.remove('is-open'); setTimeout(() => { sheet.hidden = true; }, 250); };
+  if (!sheet.hidden) requestAnimationFrame(() => sheet.classList.add('is-open'));
+  form.country.addEventListener('change', () => { form.region.innerHTML = regionOptions(form.country.value); });
+  const ctl = mountConnect(sheet.querySelector('[data-joinlist]'), {
+    get: () => state.user, set: saveUser, card: false, pickMode: true, pick: state.user.ranking?.platform, back: 'ranking',
+    onChange: (picked) => {
+      const ok = !!picked;
+      btn.disabled = !ok;
+      req.classList.toggle('is-ok', ok);
+      req.innerHTML = ok
+        ? `<span>✓ Du erscheinst als ${platIcon(picked)}<b>@${esc(state.user.accounts[picked])}</b>.</span>`
+        : '<span>⚠️ Verbinde mindestens eine Plattform, damit jeder sieht, dass dein Name echt ist.</span>';
+    },
+  });
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!ctl.picked) { buzz(30); return; }
+    const country = form.country.value;
+    const region = form.region.value;
+    const first = !state.user.ranking?.joined;
+    saveUser({ ...state.user, country, region, ranking: { joined: true, country, region, platform: ctl.picked } });
+    state.rankView = {};
+    toast(first ? 'Du bist im Ranking ✓' : 'Gespeichert ✓');
+    buzz([10, 40, 10]);
+    render();
+  });
+  sheet.querySelectorAll('[data-joinclose]').forEach((b) => b.addEventListener('click', close));
+  sheet.querySelector('[data-leave]')?.addEventListener('click', () => {
+    saveUser({ ...state.user, ranking: { ...state.user.ranking, joined: false } });
+    toast('Du stehst nicht mehr im Ranking.');
+    go('');
+  });
+  el.querySelector('[data-joinopen]')?.addEventListener('click', open);
+  return { dispose() {} };
+}
+
 function rankingPage(mode) {
   const me = meEntry();
-  const userCountry = state.user?.country || 'DE';
+  const userCountry = state.user?.ranking?.country || state.user?.country || 'DE';
+  const userRegion = state.user?.ranking?.region || state.user?.region;
   const view = state.rankView;
   const country = countryById(view.country || userCountry);
   const region = mode === 'region'
     ? (country.regions.includes(view.region) ? view.region
-      : country.regions.includes(state.user?.region) ? state.user.region : country.regions[0])
+      : country.regions.includes(userRegion) ? userRegion : country.regions[0])
     : null;
 
   const list = standings({ country: country.id, region, me });
@@ -1420,7 +1893,7 @@ function rankingPage(mode) {
     return `<li class="rrow${r.me ? ' rrow--me' : ''}" style="--rar:${t.css}">
       <span class="rrow-rank">${fmt(r.rank)}</span>
       ${avatar(r)}
-      <span class="rrow-name">@${esc(r.handle)}<small>Edelstein · Stufe ${t.stage}</small></span>
+      <span class="rrow-name">${platIcon(r.platform)}@${esc(r.handle)}<small>Edelstein · Stufe ${t.stage}</small></span>
       <span class="rrow-amount">${money(r.amount)}</span>
     </li>`;
   };
@@ -1452,6 +1925,7 @@ function rankingPage(mode) {
     html: `<section class="screen screen--dark screen--ranking" style="--rar:${state.account.total ? CLASSES[classFor(state.account.total)].color : RARITIES[4].color}">
       <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
       ${backButton('back--dark')}
+      ${state.user ? `<button class="rank-gear" type="button" data-joinopen aria-label="Ranking-Einstellungen">${icons.gear}</button>` : ''}
       <nav class="rank-tabs" aria-label="Ranking">
         <a href="#/ranking/region" class="${mode === 'region' ? 'is-active' : ''}">Bundesland</a>
         <a href="#/ranking/country" class="${mode === 'country' ? 'is-active' : ''}">Länder</a>
@@ -1479,7 +1953,7 @@ function rankingPage(mode) {
           return `<div class="pstep pstep--${place}${p.me ? ' is-me' : ''}" style="--rar:${rar.color}">
             ${place === 1 ? `<span class="pcrown">${icons.crown}</span>` : ''}
             ${avatar(p, 'avatar--big')}
-            <span class="pname">@${esc(p.handle)}</span>
+            <span class="pname">${platIcon(p.platform)}@${esc(p.handle)}</span>
             <span class="pamount">${shortMoney(p.amount)}</span>
             <div class="pblock"><span>${place}</span></div>
           </div>`;
@@ -1499,8 +1973,10 @@ function rankingPage(mode) {
           : `<div><b>${state.user ? 'Noch nicht dabei' : 'Du fehlst noch'}</b><small>Zahl ein und steig ins Ranking ein</small></div>`}
         ${button(mine ? 'Fame steigern' : 'Steig ein', 'data-go="donate"')}
       </div>
+      ${state.user ? joinSheet() : ''}
     </section>`,
     mount(el) {
+      const join = state.user ? mountJoin(el) : null;
       const fx = particles(el.querySelector('[data-fx]'), { color: '#ffb35c', mode: 'embers', density: 0.5 });
       el.querySelectorAll('[data-region]').forEach((b) => b.addEventListener('click', () => {
         state.rankView = { country: country.id, region: b.dataset.region };
@@ -1513,33 +1989,80 @@ function rankingPage(mode) {
       const chips = el.querySelector('.chips');
       const active = chips.querySelector('.chip.is-active');
       if (active) chips.scrollLeft = active.offsetLeft - chips.clientWidth / 2 + active.clientWidth / 2;
-      return () => fx.dispose();
+      return () => { fx.dispose(); join?.dispose(); };
     },
   };
 }
 
-// Zurück von der Anmeldung bei TikTok oder Instagram? Code einlösen und das Formular mit dem
-// bestätigten Namen füllen.
-finishRedirect().then((r) => {
+// ---- Start ------------------------------------------------------------------------------------
+
+// Zurück von Apple/Google oder einem Mail-Link? Erst die Adresse aufräumen, dann zeichnen.
+const urlReturn = auth.takeUrlReturn();
+render();
+
+async function boot() {
+  if (urlReturn?.error) toast(auth.text({ code: urlReturn.code, message: urlReturn.error }));
+  let session = null;
+  if (urlReturn?.access_token) {
+    const r = await auth.applyUrlReturn(urlReturn);
+    if (r.error) toast(r.error);
+    session = r.session;
+    if (session) markAlive();
+  }
+  if (!session) {
+    const r = await auth.getSession();
+    if (r.error) return; // keine Verbindung: der lokale Stand bleibt
+    session = r.session;
+  }
+  // „Angemeldet bleiben“ war aus: beim nächsten Öffnen der App wieder abmelden
+  let alive = false;
+  try { alive = !!sessionStorage.getItem('fame.alive'); } catch { /* privat */ }
+  if (session && store.get('keep') === false && !alive) { await auth.signOut(); session = null; }
+  if (!session) {
+    if (state.user) { clearLocal(); render(); }
+    return;
+  }
+  markAlive();
+  const before = JSON.stringify([state.user, state.account]);
+  await startSession(session);
+  const path = location.hash.replace(/^#\/?/, '');
+  if (urlReturn?.type === 'recovery') { render(); return; }
+  if (!state.user.done) { goOrRender('finish'); return; }
+  if (urlReturn?.access_token) {
+    toast(urlReturn.type === 'signup' ? 'E-Mail bestätigt ✓ Willkommen bei Fam€!' : 'Angemeldet ✓');
+    afterAuth();
+    return;
+  }
+  // Neuer Stand vom Server: neu zeichnen, außer man tippt gerade in einem Formular
+  if (JSON.stringify([state.user, state.account]) !== before && !['login', 'register', 'accounts', 'finish', 'reset'].includes(path)) render();
+}
+
+// Zurück von der Anmeldung bei TikTok oder Instagram? Den bestätigten Namen eintragen.
+async function finishConnect() {
+  const r = await finishRedirect();
   if (!r) return;
-  const d = r.draft || {};
   const id = r.id || 'tt';
   const n = platformName(id);
   if (r.profile) {
-    d.accounts = { ...(d.accounts || {}), [id]: cleanHandle(r.profile.handle) };
-    d.verified = { ...(d.verified || {}), [id]: { name: r.profile.name, avatar: r.profile.avatar, externalId: r.profile.externalId } };
-    if (!d.onCard?.length) d.onCard = [id];
+    const add = (u) => {
+      const x = structuredClone(u || {});
+      x.accounts = { ...(x.accounts || {}), [id]: cleanHandle(r.profile.handle) };
+      x.verified = { ...(x.verified || {}), [id]: { name: r.profile.name, avatar: r.profile.avatar, externalId: r.profile.externalId } };
+      if (!x.onCard?.length) x.onCard = [id];
+      return x;
+    };
+    if (state.user) saveUser(add(state.user));
+    else { state.regDraft = add(r.draft || state.regDraft); saveDraft(); }
     toast(`${n} verbunden ✓`);
   } else {
     toast(r.error === 'denied' ? `${n}: Anmeldung abgebrochen.`
-      : r.error === 'business' ? 'Instagram verbindet nur Business- oder Creator-Konten. Trag deinen Namen von Hand ein.'
+      : r.error === 'business' ? 'Instagram verbindet nur Business- oder Creator-Konten. Trag deinen Namen solange selbst ein.'
         : `${n}-Verbindung hat nicht geklappt. Versuch es nochmal.`);
   }
-  state.loginDraft = d;
   render();
-});
+}
 
-render();
+boot().catch((e) => console.warn('Anmeldung:', e)).finally(() => finishConnect());
 
 // Offline-Cache. Neue Versionen sollen auch in der App vom Home-Bildschirm sofort ankommen:
 // beim Start und bei jeder Rückkehr in die App nach einem Update fragen; ist eins da, einmal neu laden.

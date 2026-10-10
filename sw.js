@@ -1,9 +1,9 @@
 // Einfacher Offline-Cache: App-Dateien zuerst aus dem Netz, sonst aus dem Cache.
-const CACHE = 'fame-v45'; // gleich wie APP_VERSION in js/app.js
+const CACHE = 'fame-v46'; // gleich wie APP_VERSION in js/app.js
 const ASSETS = [
   './', 'index.html', 'css/app.css', 'manifest.webmanifest',
-  'js/app.js', 'js/data.js', 'js/ui.js', 'js/fx.js', 'js/diamond3d.js', 'js/gem3d.js', 'js/gems.js', 'js/refraction.js', 'js/particles.js', 'js/share.js', 'js/cardfx.js', 'js/connect.js', 'js/config.js',
-  'vendor/three.module.min.js', 'vendor/three-mesh-bvh.module.js', 'assets/icon.svg', 'assets/icon-180.png', 'assets/icon-192.png', 'assets/icon-512.png',
+  'js/app.js', 'js/data.js', 'js/ui.js', 'js/fx.js', 'js/diamond3d.js', 'js/gem3d.js', 'js/gems.js', 'js/refraction.js', 'js/particles.js', 'js/share.js', 'js/cardfx.js', 'js/connect.js', 'js/config.js', 'js/auth.js',
+  'vendor/three.module.min.js', 'vendor/supabase.js', 'vendor/three-mesh-bvh.module.js', 'assets/icon.svg', 'assets/icon-180.png', 'assets/icon-192.png', 'assets/icon-512.png',
   'assets/img/cash.jpg', 'assets/img/ranking.jpg', 'assets/img/pin.jpg', 'assets/img/animals.jpg',
 ];
 
