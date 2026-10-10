@@ -147,7 +147,7 @@ function pebbleGeometry(name) {
 export const isPebble = (spec) => spec.cut === 'cabochon' && ['opaque', 'milk', 'labra'].includes(spec.look);
 
 // Rohdiamant: unregelmäßiger Kristall mit großen, flachen Spaltflächen (z. B. The Constellation)
-function roughGeometry(name) {
+function roughGeometry(name, dims = [0.95, 1.3, 0.62]) {
   const rnd = seeded(`rough-${name}`);
   const base = new THREE.IcosahedronGeometry(1, 1);
   // Spaltflächen: Punkte jenseits einer Ebene werden auf die Ebene gedrückt
@@ -167,7 +167,7 @@ function roughGeometry(name) {
         const k = w.dot(n);
         if (k > d) w.addScaledVector(n, d - k);
       }
-      seen.set(key, w.multiply(new THREE.Vector3(0.95, 1.3, 0.62)));
+      seen.set(key, w.multiply(new THREE.Vector3(...dims)));
     }
     t.push(seen.get(key));
   }
@@ -178,7 +178,7 @@ function roughGeometry(name) {
 }
 
 function cutGeometry(spec) {
-  if (spec.cut === 'rough') return roughGeometry(spec.de || spec.name);
+  if (spec.cut === 'rough') return roughGeometry(spec.de || spec.name, spec.dims);
   if (isPebble(spec)) return pebbleGeometry(spec.de || spec.name);
   if (spec.cut === 'cabochon') return cabochonGeometry();
   // Pavillon je nach Brechzahl: Diamant (2,42) wie gehabt, Quarz (1,54) gut ein Viertel tiefer

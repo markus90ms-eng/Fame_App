@@ -100,24 +100,26 @@ export const GEM_LIST = [
   G('Alexandrit', '#2f8a6a', 'brilliant', 'clear', { c2: '#a02e6a', shift: true }),
   G('Diamant', '#ffffff', 'round', 'diamond'),
 
-  // Die Legenden: berühmte Einzelsteine nach Verkaufspreis bzw. Schätzwert – oben die unverkäuflichen
-  G('The Unique Pink', '#ff7d8c', 'pear', 'diamond', { legend: true }),
-  G('De Beers Millennium Jewel 4', '#8ea8ec', 'oval', 'diamond', { legend: true, ratio: 1.38 }),
-  G('The Orange', '#f7a01a', 'pear', 'diamond', { legend: true }),
-  G('Bleu Royal', '#3d78e0', 'pear', 'diamond', { legend: true }),
-  G('Graff Pink', '#f6b3d0', 'cushion', 'diamond', { legend: true, ratio: 1.22 }),
-  G('Blue Moon of Josephine', '#2a62e8', 'cushion', 'diamond', { legend: true, ratio: 1.36 }),
-  G('Pink Legacy', '#f98db2', 'emerald', 'diamond', { legend: true, ratio: 1.2, corner: 0.32 }),
-  G('Lesedi La Rona', '#f4f1e6', 'rough', 'diamond', { legend: true }),
-  G('De Beers Blue', '#3a74d8', 'emerald', 'diamond', { legend: true, ratio: 1.3, corner: 0.2 }),
-  G('Oppenheimer Blue', '#3f6cb4', 'emerald', 'diamond', { legend: true, ratio: 1.48, corner: 0.14 }),
-  G('Williamson Pink Star', '#f47fa6', 'cushion', 'diamond', { legend: true, ratio: 1.15 }),
-  G('The Constellation', '#ffffff', 'rough', 'diamond', { legend: true }),
-  G('The Pink Star', '#f78aa2', 'oval', 'diamond', { legend: true, ratio: 1.3 }),
-  G('Sancy', '#f6eecb', 'pear', 'diamond', { legend: true, ratio: 1.15 }),
-  G('Koh-i-Noor', '#fbfbfd', 'oval', 'diamond', { legend: true, ratio: 1.2 }),
-  G('Hope-Diamant', '#2c4a7a', 'cushion', 'diamond', { legend: true, ratio: 1.2 }),
-  G('Cullinan I', '#ffffff', 'pear', 'diamond', { legend: true, ratio: 1.3 }),
+  // Die Legenden: berühmte Einzelsteine nach Verkaufspreis bzw. Schätzwert – oben die unverkäuflichen.
+  // Schliff, Seitenverhältnis (ratio = Länge zu Breite) und Farbe nach den echten Steinen.
+  // Birne: ratio 1 entspricht Länge zu Breite 1,42. Rohdiamanten: dims = Breite, Höhe, Tiefe.
+  G('The Unique Pink', '#ec6a9f', 'pear', 'diamond', { legend: true, ratio: 1.06 }),
+  G('De Beers Millennium Jewel 4', '#2c70d4', 'oval', 'diamond', { legend: true, ratio: 1.3 }),
+  G('The Orange', '#f27a1c', 'pear', 'diamond', { legend: true, ratio: 0.99 }),
+  G('Bleu Royal', '#2d6ed0', 'pear', 'diamond', { legend: true, ratio: 0.99 }),
+  G('Graff Pink', '#f2a6c2', 'emerald', 'diamond', { legend: true, ratio: 1.1, corner: 0.12 }),
+  G('Blue Moon of Josephine', '#3a7fda', 'cushion', 'diamond', { legend: true, ratio: 1.1 }),
+  G('Pink Legacy', '#f25e9c', 'emerald', 'diamond', { legend: true, ratio: 1.2, corner: 0.32 }),
+  G('Lesedi La Rona', '#e9edef', 'rough', 'diamond', { legend: true, dims: [0.95, 1.14, 0.73] }),
+  G('De Beers Blue', '#2e72d2', 'emerald', 'diamond', { legend: true, ratio: 1.35, corner: 0.2 }),
+  G('Oppenheimer Blue', '#2a68c2', 'emerald', 'diamond', { legend: true, ratio: 1.3, corner: 0.14 }),
+  G('Williamson Pink Star', '#e95a94', 'cushion', 'diamond', { legend: true, ratio: 1.1 }),
+  G('The Constellation', '#edf0f1', 'rough', 'diamond', { legend: true, dims: [0.85, 1.35, 0.6] }),
+  G('The Pink Star', '#e65e9b', 'oval', 'diamond', { legend: true, ratio: 1.3 }),
+  G('Sancy', '#f2eac2', 'pear', 'diamond', { legend: true, ratio: 0.88 }),
+  G('Koh-i-Noor', '#f3f5f7', 'oval', 'diamond', { legend: true, ratio: 1.13 }),
+  G('Hope-Diamant', '#2c4767', 'cushion', 'diamond', { legend: true, ratio: 1.18 }),
+  G('Cullinan I', '#f5f7fa', 'pear', 'diamond', { legend: true, ratio: 0.92 }),
 ];
 
 // Typischer Schliff je Stein (für alle facettierten Steine außer den Legenden)
