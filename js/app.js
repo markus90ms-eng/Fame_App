@@ -2,7 +2,7 @@
 
 import {
   TIERS, GEM_COUNT, RARITIES, CLASSES, classFor, PIN_FROM, COUNTRIES, countryById, tierFor, nextTier, fmt, money,
-  amountFromPos, posFromAmount, rankFor, standings, groupTotals, makeSerial, lookupSerial, normalizeSerial, sampleSerial,
+  amountFromPos, posFromAmount, standings, groupTotals, makeSerial, lookupSerial, normalizeSerial, sampleSerial,
   MAX_AMOUNT, MIN_AMOUNT, CURRENCY, PLATFORMS, normalizeUser, mainAccount, cardAccounts, HOME_COUNTRY, regionName,
 } from './data.js';
 import { t, isEn, lang, LANGS, setLang } from './i18n.js';
@@ -81,7 +81,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '62';
+export const APP_VERSION = '63';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -1047,7 +1047,6 @@ function stepFor(amount, dir) {
 // Einzahlen: Wie ein Diamant aussieht, sieht nur, wer ihn besitzt. Alle anderen sehen nur
 // seine leuchtenden Umrisse – das macht neugierig.
 function donate() {
-  const registered = !!state.user;
   const acc = state.account;
   // Sammlung: alle Steine, die man schon auf einer Card aufgedeckt hat
   const collected = collectedStages();
@@ -1099,7 +1098,6 @@ function donate() {
           </svg>
         </div>
         <button class="nudge" type="button" data-nudge></button>
-        ${registered ? '<p class="rank-preview" data-rankline></p>' : ''}
         <label class="check">
           <input id="donate-accept" type="checkbox" data-accept ${state.accepted ? 'checked' : ''}>
           <span class="check-box" aria-hidden="true"></span>
@@ -1183,11 +1181,6 @@ function donate() {
           nudge.innerHTML = `<span>${t('Nur noch {x} bis {lvl}', { x: `<b>${money(nx.min - after)}</b>`, lvl: `<b>${t('Stufe {n}', { n: nx.stage })}</b>` })}</span><span class="nudge-go">${t('Nächster Edelstein →')}</span>`;
         } else {
           nudge.hidden = true;
-        }
-        const rl = $('[data-rankline]');
-        if (rl) {
-          const { rank, total } = rankFor(after);
-          rl.innerHTML = `${icons.trophy} ${t('Rang danach {r} von {n}', { r: `<b>${fmt(rank)}</b>`, n: fmt(total) })}`;
         }
 
         if (tier.stage !== stage) {
