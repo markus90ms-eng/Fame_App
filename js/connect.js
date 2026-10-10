@@ -56,8 +56,8 @@ export async function finishRedirect() {
   history.replaceState(null, '', `${location.pathname}#/${pending?.back || 'accounts'}`);
   const id = pending?.id;
   const back = pending?.back || 'accounts';
-  if (!pending || pending.state !== q.get('state') || !PATH[id]) return { id, error: 'state', draft: pending?.draft, back };
-  if (q.has('error')) return { id, error: 'denied', draft: pending.draft, back };
+  if (!pending || pending.state !== q.get('state') || !PATH[id]) return { id, error: 'state', detail: pending ? 'state' : 'kein Vorgang gespeichert', draft: pending?.draft, back };
+  if (q.has('error')) return { id, error: 'denied', detail: q.get('error_description') || q.get('error'), draft: pending.draft, back };
   try {
     const r = await fetch(`${SOCIAL.server.replace(/\/$/, '')}/${PATH[id]}/profile`, {
       method: 'POST',
@@ -68,12 +68,12 @@ export async function finishRedirect() {
       }),
     });
     const p = await r.json();
-    if (!r.ok || !p.id) return { id, error: p.error === 'not_professional' ? 'business' : 'server', draft: pending.draft, back };
+    if (!r.ok || !p.id) return { id, error: p.error === 'not_professional' ? 'business' : 'server', detail: [p.error, p.detail].filter(Boolean).join(': ') || `HTTP ${r.status}`, draft: pending.draft, back };
     return {
       id, draft: pending.draft, back,
       profile: { id, handle: p.username || p.name, name: p.name || p.username, avatar: p.avatar || '', externalId: p.id, verified: true },
     };
-  } catch {
-    return { id, error: 'server', draft: pending.draft, back };
+  } catch (e) {
+    return { id, error: 'server', detail: e?.message || 'Netzwerk', draft: pending.draft, back };
   }
 }

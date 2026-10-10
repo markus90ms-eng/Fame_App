@@ -80,7 +80,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '57';
+export const APP_VERSION = '58';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -2066,7 +2066,7 @@ async function finishConnect() {
   } else {
     toast(r.error === 'denied' ? `${n}: Anmeldung abgebrochen.`
       : r.error === 'business' ? 'Instagram verbindet nur Business- oder Creator-Konten. Trag deinen Namen solange selbst ein.'
-        : `${n}-Verbindung hat nicht geklappt. Versuch es nochmal.`);
+        : `${n}-Verbindung hat nicht geklappt. Versuch es nochmal.${r.detail ? ` (${r.detail})` : ''}`);
   }
   render();
 }
