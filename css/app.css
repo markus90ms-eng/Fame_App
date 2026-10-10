@@ -2605,8 +2605,9 @@ button, input { font: inherit; color: inherit; }
   background:
     linear-gradient(170deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.18) 30%, transparent 46%),
     linear-gradient(115deg, transparent 42%, rgba(255, 255, 255, 0.4) 50%, transparent 58%);
-  background-size: 100% 100%, 300% 100%;
-  background-position: 0 calc(var(--ly, 0) * 14px), calc(50% - var(--lx, 0) * 45%) 0;
+  /* Glanz größer als die Kachel: beim Kippen wandert er mit, ohne oben eine Kante freizulegen */
+  background-size: 100% 150%, 300% 100%;
+  background-position: 0 calc(15% + var(--ly, 0) * 15%), calc(50% - var(--lx, 0) * 45%) 0;
   background-repeat: no-repeat;
 }
 .sparkle {
