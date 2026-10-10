@@ -81,7 +81,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '61';
+export const APP_VERSION = '62';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -1162,7 +1162,7 @@ function donate() {
         const afterEl = $('[data-after]');
         if (afterEl) afterEl.textContent = money(after);
 
-        $('[data-tier]').innerHTML = `${t('Edelstein')} <span>${t('Stufe {n} von {m}', { n: tier.stage, m: GEM_COUNT })}</span>`;
+        $('[data-tier]').textContent = t('Edelstein');
         $('[data-teaser]').textContent = locked
           ? t('Welcher es ist, zeigt dir erst deine Card.')
           : t('Den hast du schon in deiner Sammlung.');
