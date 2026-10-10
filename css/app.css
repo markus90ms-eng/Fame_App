@@ -2487,3 +2487,13 @@ button, input { font: inherit; color: inherit; }
 .sc-ask-row { display: flex; gap: 8px; }
 .sc-ask-row input { flex: 1; min-width: 0; height: 46px; padding: 0 12px; border: 3px solid var(--ink); background: #fff; font: 600 15px var(--mono); }
 .sc-ask-row button { padding: 0 16px; border: 3px solid var(--ink); background: var(--ink); color: var(--green); font: 800 14px var(--mono); cursor: pointer; }
+
+/* Startseite: farbige Kachel-Symbole, goldener Pokal mit Glanz */
+.hub-ico { height: 46px; }
+.hub-svg { width: 44px; height: 44px; display: block; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25)); }
+.hub-trophy { filter: drop-shadow(0 0 6px rgba(255, 200, 40, 0.7)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3)); animation: trophy-glow 3.2s ease-in-out infinite; }
+.hub-shine { animation: trophy-shine 3.2s ease-in-out infinite; }
+@keyframes trophy-shine { 0%, 55% { transform: translateX(0) skewX(-20deg); } 85%, 100% { transform: translateX(80px) skewX(-20deg); } }
+@keyframes trophy-glow { 0%, 100% { filter: drop-shadow(0 0 5px rgba(255, 200, 40, 0.55)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3)); } 70% { filter: drop-shadow(0 0 11px rgba(255, 210, 60, 0.95)) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3)); } }
+@media (prefers-reduced-motion: reduce) { .hub-trophy, .hub-shine { animation: none; } }
+.hub-ico .seal { width: 42px; height: 42px; font-size: 7px; margin-top: 4px; }

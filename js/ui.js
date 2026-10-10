@@ -148,6 +148,28 @@ export const icons = {
   mail: `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="1.5"/><path d="M3.5 6.5 12 13l8.5-6.5"/></svg>`,
   eye: `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>`,
   gear: `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3 M12 18.5v3 M2.5 12h3 M18.5 12h3 M5.3 5.3l2.1 2.1 M16.6 16.6l2.1 2.1 M5.3 18.7l2.1-2.1 M16.6 7.4l2.1-2.1"/></svg>`,
+  // Farbige Symbole für die Kacheln der Startseite (ohne Währungszeichen – gilt in jeder Sprache)
+  bill: `<svg class="hub-svg" viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="hubBill" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7dffa6"/><stop offset=".55" stop-color="#2fd866"/><stop offset="1" stop-color="#139c45"/></linearGradient></defs>
+    <rect x="6" y="15" width="38" height="22" rx="3" fill="#0f7a36" transform="rotate(-8 25 26)"/>
+    <rect x="4" y="13" width="38" height="22" rx="3" fill="url(#hubBill)" stroke="#141414" stroke-width="2.2"/>
+    <rect x="8" y="17" width="30" height="14" rx="2" fill="none" stroke="#0e6b2f" stroke-width="1.4" opacity=".7"/>
+    <circle cx="23" cy="24" r="5.6" fill="#e9ffef" stroke="#0e6b2f" stroke-width="1.6"/>
+    <path d="M19.6 22.6 L21 21 L25 21 L26.4 22.6 L23 27.2 Z" fill="#0e6b2f"/><path d="M19.6 22.6 H26.4" stroke="#e9ffef" stroke-width=".8"/>
+    <path d="M36 18 v6 M33.5 20.5 L36 18 L38.5 20.5" fill="none" stroke="#e9ffef" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/>
+    <path d="M7 16 L17 16 L9 22 Z" fill="#fff" opacity=".35"/></svg>`,
+  goldTrophy: `<svg class="hub-svg hub-trophy" viewBox="0 0 48 48" aria-hidden="true"><defs>
+    <linearGradient id="hubGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff6c2"/><stop offset=".3" stop-color="#ffd84a"/><stop offset=".6" stop-color="#e3a500"/><stop offset="1" stop-color="#9c6a00"/></linearGradient>
+    <linearGradient id="hubGoldD" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d79a00"/><stop offset="1" stop-color="#7a5200"/></linearGradient>
+    <linearGradient id="hubShine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <clipPath id="hubCup"><path d="M14 7h20v9a10 10 0 0 1-20 0z M16 32h16l2 6H14z"/></clipPath></defs>
+    <path d="M14 10H8a6 6 0 0 0 7 7 M34 10h6a6 6 0 0 1-7 7" fill="none" stroke="url(#hubGoldD)" stroke-width="3" stroke-linecap="round"/>
+    <path d="M14 7h20v9a10 10 0 0 1-20 0z" fill="url(#hubGold)" stroke="#6b4700" stroke-width="1.8"/>
+    <path d="M18 9 Q19 18 23 22" fill="none" stroke="#fffbe0" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+    <rect x="21.5" y="25" width="5" height="7" fill="url(#hubGoldD)"/>
+    <path d="M16 32h16l2 6H14z" fill="url(#hubGold)" stroke="#6b4700" stroke-width="1.8" stroke-linejoin="round"/>
+    <rect x="12" y="38" width="24" height="4" rx="1" fill="#3a2a00"/>
+    <path d="M24 11l1.4 2.9 3.1.4-2.3 2.2.6 3.1-2.8-1.5-2.8 1.5.6-3.1-2.3-2.2 3.1-.4z" fill="#fff8d6"/>
+    <g clip-path="url(#hubCup)"><rect class="hub-shine" x="-16" y="0" width="10" height="48" fill="url(#hubShine)"/></g></svg>`,
   bottle: `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2h4v4l1.5 3v12a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V9L10 6z M8.5 13h7"/></svg>`,
 };
 

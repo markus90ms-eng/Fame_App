@@ -80,7 +80,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '59';
+export const APP_VERSION = '60';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -249,11 +249,11 @@ function splash() {
           <div class="stage3d" data-diamond></div>
         </div>
         <p class="welcome-hi">Hey ${esc(displayName(state.user) || 'du')} – ${hi}</p>
-        <p class="welcome-sub">${own ? `Dein Konto <b>${money(acc.total)}</b> · Klasse <b>${CLASSES[cls].name}</b>` : 'Noch kein Fame auf deinem Konto'}</p>
+        <p class="welcome-sub">${own ? `Dein Fame-Wert <b>${money(acc.total)}</b> · Klasse <b>${CLASSES[cls].name}</b>` : 'Noch kein Fame-Wert'}</p>
         <div class="splash-login">${main}</div>
         <nav class="hub" aria-label="Übersicht">
-          ${tile('donate', icons.cash, own ? 'Fame steigern' : 'Einzahlen', own ? 'Leg nach, steig auf' : 'Betrag wählen')}
-          ${tile('ranking', icons.trophy, 'Ranking', 'Wer hat den meisten Fame?')}
+          ${tile('donate', icons.bill, own ? 'Fame steigern' : 'Einzahlen', own ? 'Leg nach, steig auf' : 'Betrag wählen')}
+          ${tile('ranking', icons.goldTrophy, 'Ranking', 'Wer hat den meisten Fame?')}
           ${tile('check', '<span class="seal" aria-hidden="true">ECHT<br>FAM€</span>', 'Code prüfen', 'Ist eine Card echt?')}
         </nav>
         <a class="connect-cta" href="#/accounts">
@@ -1030,7 +1030,7 @@ function donate() {
         </div>
       </div>
       <div class="donate-body">
-        ${acc.total ? `<div class="account">Dein Konto <b>${money(acc.total)}</b> → danach <b data-after></b></div>` : ''}
+        ${acc.total ? `<div class="account">Dein Fame-Wert <b>${money(acc.total)}</b> → danach <b data-after></b></div>` : ''}
         <div class="amount-box">
           <button class="stepper" type="button" data-step="-1" aria-label="Weniger">−</button>
           <label class="amount-field">
@@ -1212,7 +1212,7 @@ function donate() {
         if (!accept.checked) return;
         if (!state.user) {
           state.after = 'donate';
-          toast('Log dich ein, damit der Betrag auf deinem Konto landet.');
+          toast('Log dich ein, damit der Betrag deinem Fame-Wert gutgeschrieben wird.');
           go('login');
           return;
         }
