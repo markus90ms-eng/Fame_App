@@ -81,7 +81,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '65';
+export const APP_VERSION = '66';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -110,6 +110,43 @@ const routes = {
 
 export const go = (path) => { location.hash = '#/' + path; };
 
+// Ab Klasse Gold (500.000) bzw. Diamant-Holo (1 Mio.) bekommt die ganze App den Schwarz-Gold-Look
+// mit Kristallglas. Nicht auf den Seiten vor dem Login.
+const PLAIN = /^(intro\/|login|register|confirm|reset)/;
+function luxClass() {
+  if (!state.user || !state.account.total) return '';
+  const cls = classFor(state.account.total);
+  return cls >= 8 ? (cls === 9 ? 'holo' : 'gold') : '';
+}
+function luxify(el, path) {
+  const lux = PLAIN.test(path) ? '' : luxClass();
+  document.documentElement.dataset.lux = lux;
+  if (!lux) return;
+  el.classList.add('lux', `lux--${lux}`);
+  luxTilt();
+}
+
+// Glas schimmert je nachdem, wie man das Handy hält: Neigung -> --lx / --ly (-1 … 1) auf <html>
+let tiltOn = false;
+function luxTilt() {
+  if (tiltOn) return;
+  tiltOn = true;
+  const root = document.documentElement.style;
+  let tx = 0, ty = 0, x = 0, y = 0, raf = 0;
+  const step = () => {
+    x += (tx - x) * 0.12; y += (ty - y) * 0.12;
+    root.setProperty('--lx', x.toFixed(3)); root.setProperty('--ly', y.toFixed(3));
+    raf = Math.abs(tx - x) + Math.abs(ty - y) > 0.002 ? requestAnimationFrame(step) : 0;
+  };
+  const aim = (nx, ny) => { tx = Math.max(-1, Math.min(1, nx)); ty = Math.max(-1, Math.min(1, ny)); raf ||= requestAnimationFrame(step); };
+  window.addEventListener('deviceorientation', (e) => { if (e.gamma != null) aim(e.gamma / 30, (e.beta - 45) / 30); });
+  // Ohne Lagesensor (Computer): dem Finger bzw. der Maus folgen
+  window.addEventListener('pointermove', (e) => aim((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1));
+  // iPhone: Bewegungssensor erst nach einer Berührung freigeben
+  const ask = () => { window.DeviceOrientationEvent?.requestPermission?.().catch(() => {}); };
+  window.addEventListener('pointerup', ask, { once: true });
+}
+
 function render() {
   const path = location.hash.replace(/^#\/?/, '');
   const screen = routes[path] || (path.startsWith('check/') ? () => checkPage(decodeURIComponent(path.slice(6))) : splash);
@@ -118,6 +155,7 @@ function render() {
   const { html, mount } = screen();
   app.innerHTML = html;
   const el = app.firstElementChild;
+  luxify(el, path);
   el.classList.add('is-entering');
   requestAnimationFrame(() => el.classList.remove('is-entering'));
   app.scrollTop = 0;
@@ -252,7 +290,7 @@ function splash() {
     const sparkles = (n) => (cls === 9 ? Array.from({ length: n }, (_, i) => `<i class="sparkle" style="--d:${(i * 1.3).toFixed(1)}s" aria-hidden="true"></i>`).join('') : '');
     const tile = (go, icon, title, sub) => `<a class="hub-tile" href="#/${go}"><span class="hub-ico">${icon}</span><b>${title}</b><small>${sub}</small>${sparkles(1)}</a>`;
     return {
-      html: `<section class="screen screen--splash screen--welcome cls-${cls}${cls >= 8 ? ` lux lux--${cls === 9 ? 'holo' : 'gold'}` : ''}" style="--rar:${CLASSES[cls].color}">
+      html: `<section class="screen screen--splash screen--welcome cls-${cls}" style="--rar:${CLASSES[cls].color}">
         <div class="donate-aura" aria-hidden="true"></div>
         <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
         <div class="sweep" aria-hidden="true"></div>

@@ -46,6 +46,9 @@ export function diamondShadowed(cls = '') {
 
 // Gläserner Diamant: halbtransparente Facetten, Lichtreflexe, wandernder Glanz und Funkeln.
 let glassId = 0;
+// Regenbogen-Feuer auf einzelnen Facetten (nur sichtbar in der Klasse Diamant-Holo)
+const FIRE = [[1, '#ff9ad5'], [4, '#9fd0ff'], [7, '#fff3a8'], [10, '#b6ffd9'], [13, '#c6b6ff'], [15, '#ff9ad5']];
+
 export function glassDiamond(cls = '') {
   const id = `g${++glassId}`;
   // Glas-Look: jede Facette mit eigenem Verlauf und eigener Deckkraft
@@ -69,6 +72,7 @@ export function glassDiamond(cls = '') {
     <path class="glass-shadow" d="${DIA_SHAPE}" transform="translate(3 3)"/>
     <g clip-path="url(#${id}k)">
       ${facets.map(([pts, o, g]) => `<polygon points="${pts}" fill="url(#${id}${g})" fill-opacity="${o}"/>`).join('')}
+      ${FIRE.map(([i, c]) => `<polygon class="glass-fire" points="${facets[i][0]}" fill="${c}"/>`).join('')}
       <polygon points="${sheen}" fill="#fff" fill-opacity=".85"/>
       <rect class="glass-shine" x="-30" y="-5" width="16" height="50" fill="url(#${id}s)" transform="skewX(-20)"/>
     </g>

@@ -2537,9 +2537,18 @@ button, input { font: inherit; color: inherit; }
 .lux--holo .logo-word { background-image: var(--holo); background-size: 200% 100%; animation: holo-flow 6s linear infinite !important; }
 .lux .logo-word::after { background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.95) 48%, rgba(255, 240, 200, 0.7) 53%, transparent 62%); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; }
 .lux .logo-dia { filter: sepia(1) saturate(2.6) hue-rotate(-8deg) brightness(1.05) drop-shadow(0 0 10px rgba(230, 190, 90, 0.5)); }
-.lux--holo .logo-dia { filter: sepia(0.6) saturate(1.4) hue-rotate(200deg) drop-shadow(0 0 10px rgba(198, 182, 255, 0.7)); animation: holo-hue 6s linear infinite; }
 @keyframes holo-flow { to { background-position: 200% 0; } }
-@keyframes holo-hue { from { filter: sepia(0.6) saturate(1.4) hue-rotate(200deg) drop-shadow(0 0 10px rgba(198, 182, 255, 0.7)); } to { filter: sepia(0.6) saturate(1.4) hue-rotate(560deg) drop-shadow(0 0 10px rgba(198, 182, 255, 0.7)); } }
+/* Diamant-Holo: Logo-Diamant aus klarem Glas mit Regenbogen-Feuer */
+.lux--holo .logo-dia { filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.55)) drop-shadow(0 0 18px rgba(198, 182, 255, 0.35)); }
+.lux--holo .logo-dia linearGradient[id$="a"] stop:nth-child(2) { stop-color: #ffd6f0; }
+.lux--holo .logo-dia linearGradient[id$="b"] stop:nth-child(2) { stop-color: #e4f3ff; }
+.lux--holo .logo-dia linearGradient[id$="b"] stop:nth-child(3) { stop-color: #a9c8ff; }
+.lux--holo .logo-dia linearGradient[id$="c"] stop:nth-child(1) { stop-color: #c7b8ff; }
+.lux--holo .logo-dia linearGradient[id$="c"] stop:nth-child(2) { stop-color: #fff6c8; }
+.lux--holo .logo-dia .glass-line { stroke: rgba(255, 255, 255, 0.9); stroke-width: 1.2; }
+.lux--holo .logo-dia .glass-shadow { fill: rgba(160, 140, 220, 0.35); }
+.glass-fire { display: none; }
+.lux--holo .logo-dia .glass-fire { display: inline; fill-opacity: 0.45; }
 
 /* Texte */
 .lux .welcome-hi { color: #f6ecd0 !important; }
@@ -2586,6 +2595,20 @@ button, input { font: inherit; color: inherit; }
   background-size: cover;
 }
 .lux--holo .hub-tile b, .lux--holo .cc-txt b { text-shadow: 0 0 12px rgba(255, 255, 255, 0.25); }
+/* Kristallglas (Diamant-Holo): klar, weiße Kante, Glanz oben und ein Lichtreflex, der der Neigung des Handys folgt */
+.lux--holo .hub-tile, .lux--holo .connect-cta, .lux--holo .glass {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.9), inset 0 -10px 24px rgba(255, 255, 255, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.15), 0 0 22px rgba(255, 255, 255, 0.12), 0 14px 34px rgba(0, 0, 0, 0.6);
+}
+.lux--holo .hub-tile::before, .lux--holo .connect-cta::before, .lux--holo .glass::before {
+  background:
+    linear-gradient(170deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.18) 30%, transparent 46%),
+    linear-gradient(115deg, transparent 42%, rgba(255, 255, 255, 0.4) 50%, transparent 58%);
+  background-size: 100% 100%, 300% 100%;
+  background-position: 0 calc(var(--ly, 0) * 14px), calc(50% - var(--lx, 0) * 45%) 0;
+  background-repeat: no-repeat;
+}
 .sparkle {
   position: absolute; width: 14px; height: 14px; pointer-events: none; z-index: 3; opacity: 0;
   background: radial-gradient(circle, #fff 0 1.5px, transparent 2.5px), linear-gradient(0deg, transparent 45%, rgba(255, 255, 255, 0.95) 50%, transparent 55%), linear-gradient(90deg, transparent 45%, rgba(255, 255, 255, 0.95) 50%, transparent 55%);
@@ -2598,4 +2621,75 @@ button, input { font: inherit; color: inherit; }
 .connect-cta .sparkle:nth-of-type(1) { top: 14%; right: 9%; }
 .connect-cta .sparkle:nth-of-type(2) { bottom: 14%; left: 28%; }
 @keyframes sparkle { 0%, 70%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); } 80% { opacity: 1; transform: scale(1) rotate(45deg); } 90% { opacity: 0.4; transform: scale(0.7) rotate(90deg); } }
-@media (prefers-reduced-motion: reduce) { .sparkle, .lux--holo .logo-word, .lux--holo .logo-dia { animation: none; } .sparkle { opacity: 0.8; } }
+@media (prefers-reduced-motion: reduce) { .sparkle, .lux--holo .logo-word { animation: none; } .sparkle { opacity: 0.8; } }
+
+/* ---- Ganze App ab Gold bzw. Diamant-Holo ------------------------------------------------------
+   Grün wird zu Gold, weiße Flächen werden zu Glas: Gold mattes Glas, Holo klares Kristallglas. */
+.lux {
+  --green: #e6c46a;
+  --glass-bg: rgba(255, 255, 255, 0.07);
+  --glass-line: rgba(255, 240, 200, 0.3);
+  --glass-shine: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  --gold-ink: #1a1408;
+  color: #f3e6c4;
+}
+.lux--holo {
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-line: rgba(255, 255, 255, 0.6);
+  --glass-shine: inset 0 2px 0 rgba(255, 255, 255, 0.75), inset 0 -8px 18px rgba(255, 255, 255, 0.06), 0 0 16px rgba(255, 255, 255, 0.08);
+}
+.lux.screen--login, .lux.screen--dark { background: radial-gradient(ellipse at 50% 30%, #2a2316 0%, #0b0a08 55%, #050505 100%) !important; }
+.lux--gold.screen--login, .lux--gold.screen--dark { background: radial-gradient(ellipse at 50% 30%, #2b2210 0%, #120f0a 60%, #0b0a08 100%) !important; }
+.lux .hero-shape { background: #0d0b08; }
+.lux .headline, .lux h1, .lux h2, .lux h3 { color: #f6ecd0; }
+.lux .sub, .lux .note, .lux .hint, .lux .msheet-lead { color: #b9a679; }
+.lux .link, .lux a { text-decoration-color: #c9a24a; }
+.lux .back, .lux .icon-btn { color: #f3e6c4; }
+
+/* Glasflächen */
+.lux .pf, .lux .signed, .lux .req, .lux .req.is-ok, .lux .amount-field, .lux .field input, .lux .field select,
+.lux .check-field input, .lux .pf input, .lux .sc-ask input, .lux .acc-chip, .lux .msheet-big, .lux .cardback-tap, .lux .stat, .lux .rrow {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-line) !important;
+  border-radius: 14px;
+  color: #f3e6c4 !important;
+  box-shadow: var(--glass-shine) !important;
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+}
+.lux .field select option { background: #1a160f; color: #f3e6c4; }
+.lux .field input::placeholder, .lux .check-field input::placeholder { color: rgba(243, 230, 196, 0.4); }
+.lux .field input:focus, .lux .field select:focus, .lux .check-field input:focus { border-color: #e6c46a !important; box-shadow: var(--glass-shine), 0 0 0 3px rgba(230, 196, 106, 0.25) !important; }
+.lux .amount-field input, .lux .amount-field span { color: #f6ecd0 !important; }
+.lux .pf-ic, .lux .pf-nm, .lux .signed small, .lux .pf-ok, .lux .pf.is-picked .pf-ok { color: #f3e6c4 !important; }
+.lux .pf.is-on, .lux .pf.is-picked { border-color: #e6c46a !important; box-shadow: var(--glass-shine), 0 0 0 1px rgba(230, 196, 106, 0.6), 0 0 18px rgba(230, 196, 106, 0.18) !important; outline: none; }
+.lux .pf-go { background: var(--gold); border: 0; border-radius: 10px; color: var(--gold-ink); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); }
+.lux--gold .pf-go { background: var(--gold-matt); }
+.lux .check-box { border: 1px solid var(--glass-line); border-radius: 6px; background: var(--glass-bg); color: var(--gold-ink); }
+.lux .check.is-on .check-box, .lux input:checked + .check-box, .lux .check-box.is-on { background: var(--gold); border-color: #f6e7b0; }
+.lux .acc-chip.is-on { background: var(--gold) !important; color: var(--gold-ink) !important; }
+.lux .plat { background: rgba(255, 255, 255, 0.9); }
+.lux .msheet-pnl {
+  background: linear-gradient(180deg, rgba(40, 33, 22, 0.94), rgba(12, 10, 8, 0.97));
+  -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+  color: #f3e6c4; border-top: 1px solid var(--glass-line); border-radius: 24px 24px 0 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 -20px 50px rgba(0, 0, 0, 0.6);
+}
+.lux--holo .msheet-pnl { box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.7), 0 -20px 50px rgba(0, 0, 0, 0.6); }
+.lux .msheet-pnl .field { color: #b9a679; }
+
+/* Ranking */
+.lux .rank-tabs a.is-active { background: var(--gold); color: var(--gold-ink); box-shadow: 0 0 18px rgba(230, 196, 106, 0.4); }
+.lux--gold .rank-tabs a.is-active { background: var(--gold-matt); box-shadow: none; }
+.lux .chip.is-active { border-color: #e6c46a; color: #f6e7b0; box-shadow: inset 0 0 12px rgba(230, 196, 106, 0.25); }
+.lux .rrow--me { outline: 1px solid #e6c46a; box-shadow: 0 0 20px rgba(230, 196, 106, 0.3) !important; }
+.lux .stat--me { border-color: rgba(230, 196, 106, 0.6) !important; }
+.lux .duel-row.is-mine .duel-bar i { background: var(--gold); box-shadow: 0 0 10px rgba(230, 196, 106, 0.6); }
+.lux .mebar { border-top-color: rgba(230, 196, 106, 0.4); }
+.lux .check-result.is-valid .check-badge { background: var(--gold); box-shadow: 0 0 14px rgba(230, 196, 106, 0.7); }
+
+/* Kristallglas-Lichtreflex, der der Neigung folgt, auch auf den anderen Glasflächen (nur Holo) */
+.lux--holo .pf, .lux--holo .stat, .lux--holo .amount-field, .lux--holo .msheet-big, .lux--holo .signed {
+  background-image: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.22) 50%, transparent 60%) !important;
+  background-size: 300% 100% !important;
+  background-position: calc(50% - var(--lx, 0) * 45%) 0 !important;
+}
