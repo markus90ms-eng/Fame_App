@@ -80,7 +80,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '58';
+export const APP_VERSION = '59';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -1295,7 +1295,7 @@ function card() {
               </div>
               <div class="famecard-foot">
                 ${onCard.length
-                  ? `<div class="famecard-accts${onCard.length > 1 ? ' is-multi' : ''}">${onCard.map((a) => `<span class="famecard-insta">${platformIcon(a.id)}<span>${esc(a.handle)}</span>${state.user?.verified?.[a.id] ? '<i class="verified" title="Verbunden und bestätigt">✓</i>' : ''}</span>`).join('')}</div>`
+                  ? `<div class="famecard-accts${onCard.length > 1 ? ' is-multi' : ''}">${onCard.map((a) => `<span class="famecard-insta">${platformIcon(a.id)}<span>${esc(a.handle)}</span></span>`).join('')}</div>`
                   : `<div class="famecard-insta">${icons.insta}<input id="card-insta" data-insta placeholder="dein Instagram" autocomplete="off" autocapitalize="off" aria-label="Instagram-Name"></div>`}
                 <span class="seal" title="Echtheitssiegel">ECHT<br>FAM€</span>
               </div>
