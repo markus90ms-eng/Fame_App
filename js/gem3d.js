@@ -239,6 +239,50 @@ function canvasTexture(draw, size = 512) {
   return t;
 }
 
+// Schwarzer Opal (Black Opal, Black Crystal, Semi Black): fast schwarzer Grund, darin ein Mosaik aus
+// scharf begrenzten Farbfeldern ("Harlekin"), jedes mit Lichtstreifen wie beim echten Farbenspiel.
+const darkOpal = (spec) => spec.look === 'opal' && new THREE.Color(spec.c).getHSL({}).l < 0.25;
+function harlequin(g, n, spec, rnd) {
+  // Farbzonen: große, weiche Bereiche bestimmen die Grundfarbe, die Felder darin weichen nur leicht ab
+  // (echte Opale haben grüne, blaue und rote Zonen statt bunt gemischter Felder)
+  const zones = Array.from({ length: 5 }, () => ({ x: rnd() * n, y: rnd() * n, hue: [135, 160, 200, 225, 15, 35, 275][Math.floor(rnd() * 7)] }));
+  const cells = Array.from({ length: 150 }, () => ({
+    x: rnd() * n, y: rnd() * n, on: rnd() < 0.8, a: rnd() * Math.PI, f: 0.03 + rnd() * 0.06, p: rnd() * 6, j: (rnd() - 0.5) * 40,
+  }));
+  const k1 = rnd() * 6, k2 = rnd() * 6;
+  const wrap = (v) => Math.min(Math.abs(v), n - Math.abs(v));
+  const base = new THREE.Color(spec.c);
+  const img = g.createImageData(n, n);
+  const d = img.data;
+  const col = new THREE.Color();
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) {
+      // verzerrte Koordinaten: organische statt gerader Zellgrenzen
+      const wx = x + 14 * Math.sin(y * 0.031 + k1) + 7 * Math.sin(y * 0.083 + x * 0.02);
+      const wy = y + 14 * Math.sin(x * 0.027 + k2) + 7 * Math.sin(x * 0.091 - y * 0.017);
+      let b1 = Infinity, b2 = Infinity, c = null;
+      for (const cell of cells) {
+        const dd = wrap(wx - cell.x) ** 2 + wrap(wy - cell.y) ** 2;
+        if (dd < b1) { b2 = b1; b1 = dd; c = cell; } else if (dd < b2) b2 = dd;
+      }
+      let r = base.r, gg = base.g, bb = base.b;
+      if (c.on) {
+        let zb = Infinity, zh = 0;
+        for (const z of zones) { const dz = wrap(x - z.x) ** 2 + wrap(y - z.y) ** 2; if (dz < zb) { zb = dz; zh = z.hue; } }
+        const edge = Math.sqrt(b2) - Math.sqrt(b1);
+        const stripe = 0.5 + 0.5 * Math.sin((wx * Math.cos(c.a) + wy * Math.sin(c.a)) * c.f + c.p);
+        col.setHSL((((zh + c.j + stripe * 18) % 360) + 360) % 360 / 360, 0.95, 0.32 + 0.3 * stripe);
+        // Felder blitzen auf: hell in der Mitte der Lichtstreifen, weich auslaufend zum Rand
+        const kk = Math.min(1, edge / 4) * (0.25 + 0.75 * stripe ** 1.2);
+        r += (col.r - r) * kk; gg += (col.g - gg) * kk; bb += (col.b - bb) * kk;
+      }
+      const i = (y * n + x) * 4;
+      d[i] = r * 255; d[i + 1] = gg * 255; d[i + 2] = bb * 255; d[i + 3] = 255;
+    }
+  }
+  g.putImageData(img, 0, 0);
+}
+
 const PATTERNS = {
   // Malachit: gewellte, konzentrische Bänder
   bands(g, n, spec, rnd) {
@@ -332,6 +376,7 @@ const PATTERNS = {
   },
   // Opal: Farbspiel – leuchtende Flecken in allen Regenbogenfarben
   opal(g, n, spec, rnd) {
+    if (darkOpal(spec)) { harlequin(g, n, spec, rnd); return; }
     const grd = g.createRadialGradient(n / 2, n / 2, 0, n / 2, n / 2, n * 0.7);
     grd.addColorStop(0, spec.c);
     grd.addColorStop(1, spec.c2 || spec.c);
@@ -492,10 +537,18 @@ function buildMaterials(spec, geo, envCube, style) {
       break;
     case 'opal': {
       const map = tex('opal');
-      outer = new THREE.MeshPhysicalMaterial({
-        ...base, map, emissiveMap: map, emissive: 0xffffff, emissiveIntensity: 0.28,
-        iridescence: 1, iridescenceIOR: 1.8, iridescenceThicknessRange: [200, 1100],
-      });
+      outer = darkOpal(spec)
+        // Schwarzer Opal: hochglänzend poliert, die Farbfelder leuchten aus dem dunklen Grund
+        ? new THREE.MeshPhysicalMaterial({
+          map, emissiveMap: map, emissive: 0xffffff, emissiveIntensity: 0.7,
+          roughness: 0.35, metalness: 0, clearcoat: 0.55, clearcoatRoughness: 0.06, envMapIntensity: 0.16,
+          iridescence: 0.25, iridescenceIOR: 1.6, iridescenceThicknessRange: [300, 900],
+        })
+        : new THREE.MeshPhysicalMaterial({
+          ...base, map, emissiveMap: map, emissive: 0xffffff, emissiveIntensity: 0.28,
+          iridescence: 1, iridescenceIOR: 1.8, iridescenceThicknessRange: [200, 1100],
+        });
+      if (darkOpal(spec)) map.center.set(0.5, 0.5);
       break;
     }
     case 'labra': {
@@ -645,6 +698,10 @@ export function gemObject(spec, { envCube = null, style = 'holo' } = {}) {
         if (outer.uniforms) outer.uniforms.color.value.copy(col);
         else outer.color.copy(col);
         inner?.color.copy(col).multiplyScalar(0.6);
+      }
+      if (darkOpal(spec) && !mystery) {
+        outer.map.rotation = Math.sin(t * 0.25) * 0.35;
+        outer.emissiveIntensity = 0.55 + 0.35 * Math.max(0, Math.sin(t * 1.3));
       }
       if (spec.look === 'moon' && !mystery) outer.emissiveIntensity = 0.08 + (Math.sin(t * 1.4) + 1) * 0.08;
       sparkles.children.forEach((sp) => {
