@@ -281,7 +281,8 @@ button, input { font: inherit; color: inherit; }
 .screen--splash .splash-logo { display: flex; justify-content: center; padding-top: 24%; position: relative; z-index: 1; }
 
 /* Grünes Licht scheint beim Öffnen von rechts nach links über den Screen */
-.sweep { position: absolute; inset: 0; pointer-events: none; z-index: 4; overflow: hidden; }
+/* fest im sichtbaren Fenster (wie die Funken), damit beim Scrollen keine Kante entsteht */
+.sweep { position: fixed; inset: 0; pointer-events: none; z-index: 4; overflow: hidden; }
 .sweep::before {
   content: "";
   position: absolute;
@@ -1720,7 +1721,8 @@ button, input { font: inherit; color: inherit; }
   transition: background 0.5s;
 }
 .donate-aura {
-  position: absolute;
+  /* fest im sichtbaren Fenster: der Schein endet beim Scrollen nicht an einer Kante */
+  position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
