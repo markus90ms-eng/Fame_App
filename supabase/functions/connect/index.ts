@@ -34,14 +34,20 @@ const PROVIDERS: Record<string, (code: string, redirectUri: string, input: Input
     }));
     const token = await getJson(tokenRes);
     if (!tokenRes.ok || !token.access_token) return { error: 'token', detail: token.error_description || token.error || '' };
-    const query = encodeURIComponent('{me{displayName,bitmoji{avatar}}}');
-    const userRes = await fetch(`https://kit.snapchat.com/v1/me?query=${query}`, {
-      headers: { Authorization: `Bearer ${token.access_token}` },
-    });
-    const me = (await getJson(userRes))?.data?.me;
-    if (!userRes.ok || !me?.displayName) return { error: 'user' };
-    // Ohne „External ID“-Berechtigung gibt es keine feste Kennung – der Anzeigename steht dafür
-    return { id: `snap:${me.displayName}`, username: '', name: me.displayName, avatar: me.bitmoji?.avatar || '' };
+    // Erst mit Profil-Link versuchen (daraus lässt sich der Benutzername lesen: snapchat.com/add/<name>),
+    // klappt das nicht, nur Anzeigename und Bitmoji
+    const ask = async (fields: string) => {
+      const res = await fetch(`https://kit.snapchat.com/v1/me?query=${encodeURIComponent(`{me{${fields}}}`)}`, {
+        headers: { Authorization: `Bearer ${token.access_token}` },
+      });
+      const body = await getJson(res);
+      return res.ok && !body?.errors?.length ? body?.data?.me : null;
+    };
+    const me = (await ask('displayName,bitmoji{avatar},profileLink')) || (await ask('displayName,bitmoji{avatar}'));
+    if (!me?.displayName) return { error: 'user' };
+    const username = /snapchat\.com\/add\/([^/?#]+)/i.exec(me.profileLink || '')?.[1] || '';
+    // Ohne „External ID“-Berechtigung gibt es keine feste Kennung – Benutzer- bzw. Anzeigename steht dafür
+    return { id: `snap:${username || me.displayName}`, username: decodeURIComponent(username), name: me.displayName, avatar: me.bitmoji?.avatar || '' };
   },
 
 
