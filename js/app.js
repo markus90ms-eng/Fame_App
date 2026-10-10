@@ -80,7 +80,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '54';
+export const APP_VERSION = '55';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -522,7 +522,7 @@ function connectRows(u, { card, pickMode, picked, focus }) {
     const right = !on
       ? `<button type="button" class="pf-go" data-link="${p.id}">Verbinden</button>`
       : pickMode ? `<span class="pf-ok">${isPicked ? '✓ Im Ranking' : 'Antippen'}</span>`
-        : `<span class="pf-ok">✓ Verbunden</span><button type="button" class="pf-change" data-unlink="${p.id}" aria-label="${p.name} ändern">Ändern</button>`;
+        : `<span class="pf-ok">✓ Verbunden</span><button type="button" class="pf-change" data-unlink="${p.id}" aria-label="${p.name} entfernen">Entfernen</button>`;
     return `<div class="pf${on ? ' is-on' : ''}${isPicked ? ' is-picked' : ''}${focus === p.id ? ' is-focus' : ''}" data-pf="${p.id}"${pickMode && on ? ' data-pick role="button" tabindex="0"' : ''}>
         <span class="pf-ic">${platformIcon(p.id)}</span>
         <span class="pf-nm">${p.name}<small>${sub}</small></span>
