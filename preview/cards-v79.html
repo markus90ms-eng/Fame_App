@@ -163,8 +163,8 @@ import {facetArt,facetMask,svgUrl,holoStrength} from '../js/cardfx.js';
     const mask=svgUrl(facetMask(k));
     const d=collectorFrameSvg(k);
     return '<div class="card-wrap"><div class="flip"><article class="famecard metal-'+escape(tier.metal)+(tier.legend?' is-legend':'')+' flip-front" style="--gem:'+tier.tone+'">'
-      +'<div class="famecard-ring" aria-hidden="true"></div>'+d
-      +'<div class="famecard-inner" style="--holo:'+holoStrength(k)+'">'
+      +'<div class="famecard-ring" aria-hidden="true"></div>'
+      +'<div class="famecard-inner" style="--holo:'+holoStrength(k)+'">'+d
       +'<div class="famecard-facets" aria-hidden="true">'+facetArt(k,'fcDemo'+k+'_')+'</div>'
       +'<div class="famecard-holo" style="-webkit-mask-image:url(\''+mask+'\');mask-image:url(\''+mask+'\')" aria-hidden="true"></div>'
       +'<div class="famecard-glint" style="-webkit-mask-image:url(\''+mask+'\');mask-image:url(\''+mask+'\')" aria-hidden="true"></div>'
