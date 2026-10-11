@@ -36,7 +36,7 @@ button,select{font:inherit;}button{cursor:pointer;}
 .tile{border:0;background:transparent;color:#fff;min-width:0;display:block;text-align:center;padding:5px;border-radius:11px;}
 .tile:hover,.tile:focus-visible{outline:1px solid #9d8fa6;outline-offset:1px;}
 .tile[aria-pressed="true"]{outline:2px solid #fff;outline-offset:0;box-shadow:0 0 22px color-mix(in srgb,var(--rar) 25%,transparent);}
-.tile .tile-class{display:block;font:700 11px/1.2 "Source Code Pro",monospace;letter-spacing:.04em;color:var(--rar);margin:0 0 7px;text-shadow:0 0 9px color-mix(in srgb,var(--rar) 60%,transparent);}
+.tile .tile-class{display:block;font:700 11px/1.2 "Source Code Pro",monospace;letter-spacing:.04em;color:var(--rar);margin:0 0 7px;text-shadow:0 0 9px color-mix(in srgb,var(--rar) 30%,transparent);}
 .tile .tile-caption{display:block;color:#bdb5c1;font:10px/1.4 "Source Code Pro",monospace;margin:8px 0 0;}
 .mini-collector{
   isolation:isolate;position:relative;
@@ -45,7 +45,7 @@ button,select{font:inherit;}button{cursor:pointer;}
   display:flex;flex-direction:column;align-items:center;justify-content:space-between;
   border-radius:15px;
   background:
-    radial-gradient(ellipse at 50% 27%,color-mix(in srgb,var(--rar) 37%,#0a0d17),#08070c 61%),
+    radial-gradient(ellipse at 50% 27%,color-mix(in srgb,var(--rar) 16%,#0a0d17),#08070c 61%),
     #07070b;
   box-shadow:0 0 0 1px color-mix(in srgb,var(--rar) 35%,transparent),0 0 13px color-mix(in srgb,var(--rar) 30%,transparent),0 12px 17px #000b;
 }
@@ -54,7 +54,7 @@ button,select{font:inherit;}button{cursor:pointer;}
 .mini-collector .famecard-collectors-frame{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;}
 .mini-brand{font:800 11px/1 "Source Code Pro",monospace;align-self:flex-start;margin-left:2px;position:relative;z-index:3;text-shadow:0 1px 4px #000;}
 .mini-gem-area{position:relative;z-index:1;width:100%;min-height:0;flex:1;display:grid;place-items:center;}
-.mini-gem-area::before{content:"";position:absolute;inset:19% 2%;background:radial-gradient(ellipse,color-mix(in srgb,var(--rar) 33%,transparent),transparent 72%);}
+.mini-gem-area::before{content:"";position:absolute;inset:19% 2%;background:radial-gradient(ellipse,color-mix(in srgb,var(--rar) 18%,transparent),transparent 72%);}
 .mini-gem-area .collector-gem-thumbnail{display:block;position:relative;width:112%;max-width:none;filter:drop-shadow(0 0 4px color-mix(in srgb,var(--rar) 27%,transparent));animation:mini-sheen 6s ease-in-out infinite alternate;}
 .mini-real-snapshot{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s ease;z-index:2;}
 .mini-real-snapshot.is-ready{opacity:1;}
@@ -69,7 +69,7 @@ button,select{font:inherit;}button{cursor:pointer;}
 @keyframes mini-sheen{0%{transform:translateY(3px) rotate(-3deg);}100%{transform:translateY(-3px) rotate(2deg);}}
 .mini-label{z-index:3;position:relative;display:block;width:100%;max-height:45px;overflow:hidden;text-wrap:balance;font:700 clamp(10px,1.2vw,14px)/1 "Cormorant Garamond",Georgia,serif;color:#fff;text-shadow:0 2px 3px #000;}
 .mini-base{position:relative;z-index:3;display:block;width:70%;height:1px;margin:6px 0 0;background:linear-gradient(90deg,transparent,var(--rar),transparent);}
-.mini-dot{position:absolute;right:12px;bottom:12px;border-radius:100%;width:13px;height:13px;background:conic-gradient(#ffe0f7,#bfe7ff,#fff1c7,#b7ffdf,#ffe0f7);z-index:3;}
+.mini-dot{position:absolute;right:12px;bottom:12px;border-radius:100%;width:13px;height:13px;background:linear-gradient(135deg,#f8f6f0,var(--rar));z-index:3;box-shadow:0 0 0 1px #fff8;} .tile[data-class="9"] .mini-dot{background:conic-gradient(#ffe0f7,#bfe7ff,#fff1c7,#b7ffdf,#ffe0f7);box-shadow:0 0 4px #fff;}
 .explain{padding:17px 18px;margin:22px 0 0;border:1px solid #4a3d53;border-radius:14px;background:linear-gradient(160deg,#1c1724,#0f0d13);}
 .explain strong{font:700 23px "Cormorant Garamond",Georgia,serif;color:#fff;}
 .explain p{color:#c0b2c8;font:11px/1.6 "Source Code Pro",monospace;margin:8px 0 0;}
@@ -81,7 +81,7 @@ button,select{font:inherit;}button{cursor:pointer;}
 .viewer-top .live{display:flex;align-items:center;gap:5px;color:#b4ffc9;font:700 10px "Source Code Pro",monospace;white-space:nowrap;}
 .viewer-top .live i{width:6px;height:6px;background:#7df5a2;border-radius:50%;box-shadow:0 0 8px #7df5a2;}
 .viewer-aura{position:relative;}
-.viewer-aura::before{content:"";position:absolute;inset:7% 5%;pointer-events:none;background:radial-gradient(ellipse,color-mix(in srgb,var(--active) 28%,transparent),transparent 72%);}
+.viewer-aura::before{content:"";position:absolute;inset:7% 5%;pointer-events:none;background:radial-gradient(ellipse,color-mix(in srgb,var(--active) 14%,transparent),transparent 72%);}
 .preview-stage{--rar:#a3a3ab;--lux:0;width:100%;height:auto;min-height:492px;position:relative;display:flex;align-items:center;justify-content:center;padding:21px 0!important;margin:0;background:transparent!important;overflow:visible;}
 .preview-stage .card-wrap{margin:auto;width:100%;padding:0 29px;}
 .preview-stage .flip{width:100%;max-width:300px;cursor:default;}
