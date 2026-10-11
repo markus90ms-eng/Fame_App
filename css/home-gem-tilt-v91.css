@@ -1,0 +1,39 @@
+/*
+ * Fame V91 — Startseiten-Edelstein: sanfter, sensorgesteuerter Hoehenversatz.
+ * Nur der EXISTIERENDE 3D-Canvas schwebt; der Kreis, die Texte, Buttons,
+ * alle Cards und jedes Theme bleiben optisch unveraendert.
+ */
+.screen--welcome .welcome-vault > .stage3d {
+  transform: translate3d(0, var(--home-gem-shift-y, 0px), 0);
+  will-change: transform;
+}
+
+/* Auf iPhones erscheint dies ausschliesslich bis zur Sensorfreigabe.
+   Absolut positioniert: kein Einfluss auf die Anordnung der Startseite. */
+.screen--welcome .welcome-vault > .home-gem-tilt-permission {
+  position: absolute;
+  z-index: 7;
+  left: 50%;
+  bottom: -5px;
+  transform: translateX(-50%);
+  display: block;
+  max-width: calc(100% - 26px);
+  padding: 6px 12px;
+  border: 1px solid color-mix(in srgb, var(--rar) 70%, #fff);
+  border-radius: 999px;
+  background: rgba(18, 18, 22, .86);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, .24);
+  color: #fff;
+  font: 600 11px/1.35 var(--mono);
+  letter-spacing: .01em;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.screen--welcome .home-gem-tilt-permission:focus-visible {
+  outline: 2px solid var(--rar);
+  outline-offset: 3px;
+}
