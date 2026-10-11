@@ -81,7 +81,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '76';
+export const APP_VERSION = '77';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -1417,11 +1417,13 @@ function card() {
         <div class="flip" data-flip role="button" tabindex="0" aria-label="${hidden ? t('Karte aufdecken') : tier.name}">
           <article class="famecard metal-${tier.metal}${tier.legend ? ' is-legend' : ''} flip-front" data-card style="--gem:${tier.tone}">
             <div class="famecard-ring" aria-hidden="true"></div>
+            <div class="famecard-ornaments" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
             <div class="famecard-inner" style="--holo:${holoStrength(tier.cls)}">
               <div class="famecard-facets" aria-hidden="true">${facetArt(tier.cls, `fc${tier.cls}_`)}</div>
               <div class="famecard-holo" aria-hidden="true" style="-webkit-mask-image:url('${svgUrl(facetMask(tier.cls))}');mask-image:url('${svgUrl(facetMask(tier.cls))}')"></div>
               <div class="famecard-glint" aria-hidden="true" style="-webkit-mask-image:url('${svgUrl(facetMask(tier.cls))}');mask-image:url('${svgUrl(facetMask(tier.cls))}')"></div>
               <div class="famecard-photo"><div class="stage3d" data-diamond></div></div>
+              <div class="famecard-class">${t('Stufe')} ${tier.cls + 1} · ${esc(CLASSES[tier.cls].name)}</div>
               <div class="famecard-shine" data-shine></div>
               <div class="famecard-top">
                 <span class="famecard-brand">${LOGO_TEXT}${diamondSvg({ filled: true, cls: 'dia-inline' })}</span>
