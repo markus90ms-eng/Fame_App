@@ -1,0 +1,278 @@
+/*
+  FAME V88 · Prestige refinement of the ORIGINAL Fame UI
+  Matches the approved four-phone concept: Stufe 9 gold / Stufe 10 platinum.
+  Scope: existing app screens only. NO new menus, NO card/collectible styling.
+  Keep rare homage (in particular gem 98 Ocean) exactly as it is.
+  To revert: restore backup-before-royal-diamond-v87 and refresh cache version.
+*/
+:is(.screen.lux--gold,.screen.lux--holo):not(.hom):not(.screen--card) {
+  isolation:isolate;
+}
+
+/* Metallic surfaces are intentionally brighter and more layered than V86. */
+.screen.lux--gold:not(.hom):not(.screen--card){
+  --gold:linear-gradient(112deg,#94712d 0%,#ffefbf 20%,#ce9e48 43%,#fff1ca 57%,#b68129 83%,#f4d898 100%);
+  --gold-matt:linear-gradient(160deg,#f7df9e,#c39442 47%,#9a6d24);
+  --green:#ebc77d;
+  --glass-bg:rgba(26,19,12,.82);
+  --glass-line:rgba(255,217,143,.54);
+  --glass-shine:inset 0 1px 0 rgba(255,230,165,.44),0 12px 27px rgba(0,0,0,.45);
+  --gold-ink:#211707;
+  color:#ffedcc;
+  background:
+    radial-gradient(ellipse 60% 30% at 50% 29%,rgba(189,120,36,.24),transparent 87%),
+    radial-gradient(ellipse 32% 46% at -12% 10%,rgba(213,143,48,.10),transparent 87%),
+    radial-gradient(ellipse 38% 43% at 112% 19%,rgba(255,191,93,.095),transparent 91%),
+    linear-gradient(180deg,#19130b 0%,#110d09 37%,#090807 71%,#050505 100%)!important;
+}
+.screen.lux--holo:not(.hom):not(.screen--card){
+  --gold:linear-gradient(115deg,#bacdeb 0%,#fff 18%,#e2ecff 31%,#ffecf4 53%,#cceefe 73%,#fff 91%,#bfd6fa);
+  --gold-matt:linear-gradient(160deg,#fafcff,#cde3f7 48%,#97b0d4);
+  --green:#e7f3ff;
+  --glass-bg:rgba(18,27,42,.83);
+  --glass-line:rgba(206,237,255,.7);
+  --glass-shine:inset 0 1px 0 rgba(255,255,255,.78),0 14px 28px rgba(0,0,0,.52);
+  --gold-ink:#152031;
+  color:#f2f8ff;
+  background:
+    radial-gradient(ellipse 62% 28% at 50% 28%,rgba(88,147,233,.24),transparent 89%),
+    radial-gradient(ellipse 38% 43% at 0% 17%,rgba(144,133,235,.13),transparent 85%),
+    radial-gradient(ellipse 38% 39% at 100% 23%,rgba(113,216,255,.12),transparent 89%),
+    linear-gradient(180deg,#0c1423 0%,#0a111c 38%,#050b12 72%,#05070c 100%)!important;
+}
+/* Restrained diagonal spotlights, NOT 3D architecture or a layout replacement. */
+.screen.lux--gold:not(.hom):not(.screen--card)::before,
+.screen.lux--holo:not(.hom):not(.screen--card)::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  height:auto;
+  left:0;right:0;top:0;bottom:0;
+  z-index:0;
+  opacity:1;
+  pointer-events:none;
+  -webkit-mask-image:none;
+  mask-image:none;
+  filter:none;
+}
+.screen.lux--gold:not(.hom):not(.screen--card)::before{
+  background:
+    linear-gradient(119deg,transparent 0 10%,rgba(241,189,90,.105) 14%,transparent 21%),
+    linear-gradient(242deg,transparent 0 7%,rgba(247,183,71,.09) 12%,transparent 22%),
+    radial-gradient(ellipse 45% 21% at 50% 32%,rgba(228,166,71,.14),transparent 85%);
+}
+.screen.lux--holo:not(.hom):not(.screen--card)::before{
+  background:
+    linear-gradient(118deg,transparent 0 10%,rgba(185,203,255,.13) 13%,transparent 20%),
+    linear-gradient(242deg,transparent 0 7%,rgba(121,210,255,.11) 12%,transparent 23%),
+    radial-gradient(ellipse 44% 23% at 50% 28%,rgba(205,228,255,.15),transparent 86%);
+}
+:is(.screen.lux--gold,.screen.lux--holo):not(.hom):not(.screen--card) .sweep{opacity:.19;}
+.screen.lux--gold:not(.hom):not(.screen--card) .donate-aura{
+  opacity:.65!important;
+  background:radial-gradient(ellipse 55% 36% at 50% 30%,rgba(202,133,43,.25),transparent 87%)!important;
+}
+.screen.lux--holo:not(.hom):not(.screen--card) .donate-aura{
+  opacity:.58!important;
+  background:radial-gradient(ellipse 55% 36% at 50% 29%,rgba(130,189,255,.22),transparent 87%)!important;
+}
+
+/* Logo: polished champagne gold / luminous pearl platinum; all existing branding retained. */
+.screen.lux--gold:not(.hom):not(.screen--card) .logo-word{
+  background-image:linear-gradient(175deg,#fff6d8 0%,#f0c46e 19%,#986821 48%,#ffe8a4 67%,#c48f3d 93%)!important;
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation:none!important;
+}
+.screen.lux--gold:not(.hom):not(.screen--card) .logo-row{
+  filter:drop-shadow(0 3px 1px rgba(37,19,3,.8)) drop-shadow(0 0 13px rgba(255,199,94,.23))!important;
+}
+.screen.lux--gold:not(.hom):not(.screen--card) .logo-dia{
+  filter:sepia(1) saturate(1.5) hue-rotate(-9deg) brightness(1.08) drop-shadow(0 0 7px rgba(246,199,102,.39))!important;
+}
+.screen.lux--holo:not(.hom):not(.screen--card) .logo-word{
+  background-image:linear-gradient(115deg,#f9faff 0%,#cbdffb 17%,#fff 28%,#f6dafa 48%,#d1eaff 73%,#fff 88%,#c7ddf9 100%)!important;
+  background-size:205% 100%;
+  -webkit-background-clip:text;
+  background-clip:text;
+  -webkit-text-fill-color:transparent;
+  animation:fame-prestige-logo 9s linear infinite!important;
+}
+@keyframes fame-prestige-logo {to{background-position:205% 0;}}
+.screen.lux--holo:not(.hom):not(.screen--card) .logo-row{
+  filter:drop-shadow(0 3px 1px rgba(20,25,54,.7)) drop-shadow(0 0 14px rgba(201,229,255,.45))!important;
+}
+.screen.lux--holo:not(.hom):not(.screen--card) .logo-dia{
+  filter:drop-shadow(0 0 7px rgba(255,255,255,.72)) drop-shadow(0 0 15px rgba(159,218,255,.39))!important;
+}
+:is(.screen.lux--gold,.screen.lux--holo):not(.hom):not(.screen--card) .logo-tag{
+  color:rgba(255,240,211,.77)!important;
+}
+.screen.lux--holo:not(.hom):not(.screen--card) .logo-tag{color:#bfcce0!important;}
+
+/* Showcase: richer concentric metal rings around the existing 3D gemstone. */
+.screen.lux--gold:not(.hom):not(.screen--card) .vault-ring{
+  border:2px solid #f7d89b!important;
+  background:radial-gradient(circle at 50% 50%,transparent 62%,rgba(247,194,85,.055) 76%,transparent 89%);
+  box-shadow:
+    0 0 0 3px rgba(38,24,10,.94),
+    0 0 0 4px rgba(242,185,86,.47),
+    inset 0 0 0 4px rgba(14,12,8,.90),
+    inset 0 0 0 5px rgba(255,224,153,.23),
+    0 0 21px rgba(255,180,69,.59),
+    0 0 56px rgba(204,121,39,.20)!important;
+}
+.screen.lux--holo:not(.hom):not(.screen--card) .vault-ring{
+  border:2px solid #f3faff!important;
+  background:radial-gradient(circle at 50% 50%,transparent 62%,rgba(188,211,255,.045) 77%,transparent 88%);
+  box-shadow:
+    0 0 0 3px rgba(13,27,46,.94),
+    0 0 0 4px rgba(182,227,255,.51),
+    inset 0 0 0 4px rgba(10,18,32,.84),
+    inset 0 0 0 5px rgba(228,246,255,.29),
+    0 0 20px rgba(178,219,255,.63),
+    0 0 50px rgba(95,167,255,.28),
+    0 0 67px rgba(229,190,251,.10)!important;
+}
+.screen.lux--gold:not(.hom):not(.screen--card) .vault-rays{
+  opacity:.50!important;
+  background:repeating-conic-gradient(from 8deg,rgba(250,204,111,.29) 0 2deg,transparent 2deg 17deg)!important;
+  animation-duration:54s!important;
+}
+.screen.lux--holo:not(.hom):not(.screen--card) .vault-rays{
+  opacity:.60!important;
+  background:repeating-conic-gradient(from 8deg,rgba(192,220,255,.28) 0 2deg,transparent 2deg 16deg)!important;
+  animation-duration:49s!important;
+}
+.screen.lux--gold:not(.hom):not(.screen--card) .vault-runes text{fill:#ebbe73!important;}
+.screen.lux--holo:not(.hom):not(.screen--card) .vault-runes text{fill:#e2f1ff!important;}
+/* Four refined glints travel with existing ring; gem canvas remains completely unchanged. */
+:is(.screen.lux--gold,.screen.lux--holo):not(.hom):not(.screen--card) .vault-ring::after{
+  content:"";position:absolute;inset:-5px;border-radius:50%;pointer-events:none;
+  background:conic-gradient(from 12deg,transparent 0 9%,rgba(255,255,255,.9) 10%,transparent 11% 44%,rgba(255,255,255,.5) 45%,transparent 46% 78%,rgba(255,255,255,.63) 79%,transparent 80% 100%);
+  -webkit-mask:radial-gradient(circle,transparent 64%,#000 65% 68%,transparent 69%);
+  mask:radial-gradient(circle,transparent 64%,#000 65% 68%,transparent 69%);
+  opacity:.79;
+}
+.screen.lux--gold:not(.hom):not(.screen--card) .vault-glow{
+  background:radial-gradient(circle,rgba(230,146,45,.25),transparent 66%);
+}
+.screen.lux--holo:not(.hom):not(.screen--card) .vault-glow{
+  background:radial-gradient(circle,rgba(134,191,254,.24),transparent 68%);
+}
+
+/* Preserve original hierarchy/spacing. Readability first, better contrast. */
+:is(.screen.lux--gold,.screen.lux--holo):not(.hom):not(.screen--card) :is(.welcome-hi,h1,h2,h3,.headline){color:#fff7e9!important;}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.welcome-hi,h1,h2,h3,.headline){color:#f7fbff!important;}
+.screen.lux--gold:not(.hom):not(.screen--card) :is(.welcome-sub,.sub,.note,.hint,.msheet-lead){color:#d4bf97!important;}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.welcome-sub,.sub,.note,.hint,.msheet-lead){color:#c5d7ec!important;}
+.screen.lux--gold:not(.hom):not(.screen--card) .welcome-sub b{background:none!important;color:#ffda83!important;-webkit-text-fill-color:#ffda83!important;}
+.screen.lux--holo:not(.hom):not(.screen--card) .welcome-sub b{background:none!important;color:#e7f5ff!important;-webkit-text-fill-color:#e7f5ff!important;}
+.screen.lux--gold:not(.hom):not(.screen--card) :is(.welcome-reset,.welcome-logout,.app-version){color:#c7ad77!important;text-decoration-color:#c9a262!important;}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.welcome-reset,.welcome-logout,.app-version){color:#bed4ee!important;text-decoration-color:#a8d0f8!important;}
+
+/* Primary CTA: physical-metal, gleaming finish. Exact button and text stay the same. */
+.screen.lux--gold:not(.hom):not(.screen--card) .btn:not(:disabled),
+.screen.lux--gold:not(.hom):not(.screen--card) :is(.pf-go,.cc-pill,.rank-tabs a.is-active){
+  color:#251705!important;
+  background:linear-gradient(166deg,#fff0c0 0%,#edcc84 29%,#cb973d 59%,#f1d48d 86%,#fff1cd 100%)!important;
+  border:1px solid rgba(255,238,185,.95)!important;
+  border-radius:8px;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.61),inset 0 -3px 0 rgba(118,72,15,.23),0 0 0 1px rgba(144,88,24,.78),0 7px 22px rgba(205,128,38,.30),0 12px 32px rgba(0,0,0,.31)!important;
+}
+.screen.lux--holo:not(.hom):not(.screen--card) .btn:not(:disabled),
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.pf-go,.cc-pill,.rank-tabs a.is-active){
+  color:#17223c!important;
+  background:linear-gradient(120deg,#fff 0%,#d0e5ff 20%,#f3f5ff 41%,#f1dff7 58%,#c5eeff 76%,#faffff 100%)!important;
+  border:1px solid rgba(255,255,255,.96)!important;
+  border-radius:8px;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.84),inset 0 -3px 0 rgba(75,114,171,.16),0 0 0 1px rgba(140,214,255,.69),0 7px 22px rgba(118,187,250,.28),0 12px 34px rgba(0,0,0,.31)!important;
+}
+:is(.screen.lux--gold,.screen.lux--holo):not(.hom):not(.screen--card) .btn:not(:disabled) span{color:inherit!important;}
+
+/* Menu tiles: polished glowing perimeters + real dark glass, NO imaginary menus. */
+.screen.lux--gold:not(.hom):not(.screen--card) :is(.hub-tile,.connect-cta){
+  position:relative;
+  border:1.5px solid transparent!important;
+  border-radius:20px;
+  color:#fff0d4!important;
+  background:
+    linear-gradient(145deg,rgba(74,47,20,.96),rgba(19,15,12,.96) 52%,rgba(36,25,14,.97)) padding-box,
+    linear-gradient(130deg,#fff3c3 0%,#bb822c 17%,#ffe3a0 43%,#8c5c22 68%,#ffeac0 91%,#c78f3b 100%) border-box!important;
+  box-shadow:inset 0 1px 0 rgba(255,243,217,.20),inset 0 0 23px rgba(242,164,52,.08),0 0 11px rgba(235,162,65,.26),0 8px 23px rgba(0,0,0,.50)!important;
+  -webkit-backdrop-filter:blur(17px) saturate(1.35);
+  backdrop-filter:blur(17px) saturate(1.35);
+}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.hub-tile,.connect-cta){
+  position:relative;
+  border:1.5px solid transparent!important;
+  border-radius:20px;
+  color:#f5faff!important;
+  background:
+    linear-gradient(145deg,rgba(38,56,81,.95),rgba(12,24,42,.96) 51%,rgba(23,35,55,.96)) padding-box,
+    linear-gradient(120deg,#f9fdff 0%,#79cef7 22%,#f9deff 44%,#a7ceff 67%,#fff 86%,#82ceff 100%) border-box!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 23px rgba(162,209,255,.05),0 0 13px rgba(144,215,255,.30),0 9px 25px rgba(0,0,0,.51)!important;
+  -webkit-backdrop-filter:blur(20px) saturate(1.5);
+  backdrop-filter:blur(20px) saturate(1.5);
+}
+:is(.screen.lux--gold,.screen.lux--holo):not(.hom):not(.screen--card) :is(.hub-tile,.connect-cta)::before{
+  position:absolute;inset:0;content:"";border-radius:inherit;pointer-events:none;
+  background:linear-gradient(160deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.05) 28%,transparent 52%,rgba(255,255,255,.035) 86%,transparent);
+  opacity:1!important;
+}
+:is(.screen.lux--gold,.screen.lux--holo):not(.hom):not(.screen--card) :is(.hub-tile,.connect-cta)::after{
+  content:"";position:absolute;height:1px;left:13%;right:13%;top:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.88),transparent);
+  pointer-events:none;
+}
+.screen.lux--gold:not(.hom):not(.screen--card) :is(.hub-tile b,.cc-txt b){color:#fff3d9!important;}
+.screen.lux--gold:not(.hom):not(.screen--card) :is(.hub-tile small,.cc-txt small){color:#d6c09b!important;}
+.screen.lux--gold:not(.hom):not(.screen--card) .hub-ico .ico{stroke:#f2d394!important;}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.hub-tile b,.cc-txt b){color:#f8fdff!important;}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.hub-tile small,.cc-txt small){color:#c7dcf1!important;}
+.screen.lux--holo:not(.hom):not(.screen--card) .hub-ico .ico{stroke:#e4f5ff!important;}
+/* Account status: matching precious-metal badges, retain unchanged labels. */
+.screen.lux--gold:not(.hom):not(.screen--card) .cc-ics span{
+  border-color:rgba(230,190,115,.42);color:#ffe2ad;
+}
+.screen.lux--holo:not(.hom):not(.screen--card) .cc-ics span{
+  border-color:rgba(211,236,255,.52);color:#eaf7ff;
+}
+.screen.lux--gold:not(.hom):not(.screen--card) :is(.cc-ics span.is-on,.acc-chip.is-on){
+  background:linear-gradient(135deg,#fff1bc,#cba052)!important;color:#281a0a!important;
+}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.cc-ics span.is-on,.acc-chip.is-on){
+  background:linear-gradient(135deg,#fff,#c6dcfc)!important;color:#19293d!important;
+}
+.screen.lux--gold:not(.hom):not(.screen--card) .cc-go{color:#ffe5a6!important;}
+.screen.lux--holo:not(.hom):not(.screen--card) .cc-go{color:#d6f5ff!important;}
+
+/* Secondary app surfaces inherit the same materials in both tiers. */
+.screen.lux--gold:not(.hom):not(.screen--card) :is(.pf,.signed,.req,.amount-field,.field input,.field select,.check-field input,.msheet-big,.stat,.rrow){
+  border:1px solid rgba(247,207,134,.49)!important;
+  background:linear-gradient(145deg,rgba(65,43,24,.86),rgba(14,13,12,.92))!important;
+  box-shadow:inset 0 1px 0 rgba(255,237,196,.27),0 8px 22px rgba(0,0,0,.38)!important;
+  color:#faedce!important;
+}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.pf,.signed,.req,.amount-field,.field input,.field select,.check-field input,.msheet-big,.stat,.rrow){
+  border:1px solid rgba(217,238,255,.65)!important;
+  background:linear-gradient(145deg,rgba(42,57,80,.84),rgba(12,20,35,.93))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.52),0 9px 24px rgba(0,0,0,.40)!important;
+  color:#f5faff!important;
+}
+.screen.lux--gold:not(.hom):not(.screen--card) :is(.amount-field input,.amount-field span,.field input,.check-field input){color:#fff3d8!important;}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.amount-field input,.amount-field span,.field input,.check-field input){color:#f8fdff!important;}
+
+/* Stage 10: use already-existing sparkles, brighter but not more numerous. */
+.screen.lux--holo:not(.hom):not(.screen--card) .sparkle{
+  filter:drop-shadow(0 0 7px rgba(205,240,255,.9));
+}
+/* Focus contrast and motion accessibility. */
+:is(.screen.lux--gold,.screen.lux--holo):not(.hom):not(.screen--card) :is(a,button,input,select):focus-visible{
+  outline:2px solid #f8e1a8;outline-offset:3px;
+}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(a,button,input,select):focus-visible{outline-color:#e3f7ff;}
+@media(prefers-reduced-motion:reduce){
+  .screen.lux--holo:not(.hom):not(.screen--card) .logo-word{animation:none!important;}
+}
