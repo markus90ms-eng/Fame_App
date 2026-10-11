@@ -58,7 +58,7 @@ export function outsideMetalFrameSvg(classIndex) {
       <radialGradient id="${token}-gem" cx=".28" cy=".22" r=".8"><stop stop-color="#fff"/><stop offset=".31" stop-color="${light}"/><stop offset=".7" stop-color="${color}"/><stop offset="1" stop-color="${dark}"/></radialGradient>
       <mask id="${token}-outside" maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="470">
         <rect x="0" y="0" width="320" height="470" fill="#fff"/>
-        <rect x="18" y="18" width="284" height="434" rx="15" fill="#000"/>
+        <rect x="16" y="16" width="288" height="438" rx="14" fill="#000"/>
       </mask>
     </defs>
     <g mask="url(#${token}-outside)">
