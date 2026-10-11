@@ -16,6 +16,7 @@
   .preview-tabs {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:20px 0;}
   .preview-tabs button {background:#15121b;color:#e9e1ec;border:1px solid #484050;border-radius:10px;padding:10px 4px;cursor:pointer;font:700 11px/1.45 "Source Code Pro",monospace;min-width:0;}
   .preview-tabs button span {display:block;font-size:9px;opacity:.75;font-weight:400;}
+  .preview-tabs button .tier-count {display:block;margin-top:5px;font:500 8px/1.2 'Source Code Pro',monospace;opacity:.77;}
   .preview-tabs button[aria-pressed="true"] {border-color:var(--color);box-shadow:inset 0 0 0 1px var(--color),0 0 13px color-mix(in srgb,var(--color) 40%,transparent);color:#fff;}
   .preview-layout {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,360px);gap:30px;align-items:center;}
   .preview-details h2 {font:700 28px "Cormorant Garamond",Georgia,serif;margin:8px 0 10px;}
@@ -86,6 +87,8 @@
 <div><span>Fame-Klasse</span><strong id="classNumber">1 / 10</strong></div>
 <div><span>Ab Kontostand</span><strong id="classAmount">0 €</strong></div>
 <div><span>Edelsteinstufe</span><strong id="gemStage">1 / 99</strong></div>
+<div><span>Steine in dieser Klasse</span><strong id="classCount">11</strong></div>
+<div><span>Steine Nr.</span><strong id="classRange">1–11</strong></div>
 </div>
 <label for="gemPick">Edelstein innerhalb der Klasse</label>
 <select id="gemPick" aria-label="Stein auswählen"></select>
@@ -137,7 +140,7 @@ function cardMarkup(tier,cls){
 }
 const etch="<svg class=\"famecard-engraving\" viewBox=\"0 0 300 415\" preserveAspectRatio=\"none\" aria-hidden=\"true\">\n              <g class=\"fe-line\">\n                <path d=\"M8 48V18L18 8H55 M245 8H282L292 18V48 M8 365V397L18 407H55 M245 407H282L292 397V365\"/>\n                <path d=\"M12 98V150 M12 268V317 M288 98V150 M288 268V317\"/>\n              </g>\n              <g class=\"fe-strong\">\n                <path d=\"M15 47V23L23 15H52 M248 15H277L285 23V47 M15 370V391L23 399H52 M248 399H277L285 391V370\"/>\n                <path d=\"M10 184L16 193L10 202 M290 184L284 193L290 202\" />\n              </g>\n              <g class=\"fe-jewel\">\n                <path d=\"M150 5L156 12L150 19L144 12Z M150 397L156 404L150 411L144 404Z\"/>\n                <path d=\"M9 209L16 217L9 225L2 217Z M291 209L298 217L291 225L284 217Z\"/>\n              </g>\n              <g class=\"fe-filigree\">\n                <path d=\"M70 10L95 10L107 18 M230 10H205L193 18 M70 405H95L107 397 M230 405H205L193 397\"/>\n                <path d=\"M11 72L22 84L11 96 M289 72L278 84L289 96 M11 321L22 333L11 345 M289 321L278 333L289 345\"/>\n                <path d=\"M124 10H141 M159 10H176 M124 405H141 M159 405H176\"/>\n              </g>\n              <g class=\"fe-prism\">\n                <path d=\"M150 1L162 12L150 26L138 12Z M150 389L162 403L150 414L138 403Z\"/>\n                <path d=\"M3 217L15 202L27 217L15 232Z M273 217L285 202L297 217L285 232Z\"/>\n              </g>\n            </svg>";
 let motion=true;
-const tabs=CLASSES.map((c,i)=>'<button type="button" style="--color:'+c.color+'" data-cls="'+i+'" aria-pressed="false">'+(i+1)+'<span>'+escapeHtml(c.name)+'</span></button>').join('');
+const tabs=CLASSES.map((c,i)=>'<button type="button" style="--color:'+c.color+'" data-cls="'+i+'" aria-pressed="false">'+(i+1)+'<span>'+escapeHtml(c.name)+'</span><small class="tier-count">'+TIERS.filter(t=>t.cls===i).length+' Steine</small></button>').join('');
 $('tabs').innerHTML=tabs;
 function render(){
   const cls=currentClass,tier=currentStone;
@@ -146,6 +149,9 @@ function render(){
   $('classNumber').textContent=(cls+1)+' / 10';
   $('classAmount').textContent=fmt(CLASSES[cls].from)+' €';
   $('gemStage').textContent=tier.stage+' / 99';
+  const classStones=TIERS.filter(t=>t.cls===cls);
+  $('classCount').textContent=String(classStones.length);
+  $('classRange').textContent=classStones[0].stage+'–'+classStones[classStones.length-1].stage;
   [...document.querySelectorAll('[data-cls]')].forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.cls)===cls)));
   [...document.querySelectorAll('[data-preview]')].forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.preview)===cls)));
   if(three){three.dispose();three=null;}
