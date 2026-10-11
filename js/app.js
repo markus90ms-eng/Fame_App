@@ -12,6 +12,7 @@ import {
 } from './ui.js';
 import { tick, plink, stageTick, classDrop, buzz, unlockAudio, buildup, boost, startTension, revealMusic, startCelebration, themeReveal, themeLoop, themeJingle, isMuted, setMuted } from './fx.js';
 import { createDiamond } from './diamond3d.js';
+import { homeGemTilt } from './home-gem-tilt.js';
 import { facetArt, facetMask, svgUrl, holoStrength } from './cardfx.js';
 import { particles } from './particles.js';
 import { isReady, connectRedirect, finishRedirect } from './connect.js';
@@ -81,7 +82,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '90';
+export const APP_VERSION = '91';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -382,10 +383,11 @@ function splash() {
           gem: open ? top : null, mystery: !open, rim: CLASSES[cls].color, glow: 0.4 + cls * 0.06, interactive: true,
         });
         const fx = particles(el.querySelector('[data-fx]'), { color: CLASSES[cls].color, mode: 'embers', density: 0.25 + cls * 0.15 });
+        const stopGemTilt = homeGemTilt(el);
         const hom = HOMAGE[shownStage()];
         const t = setTimeout(() => { dia.pulse(); if (own) (hom ? themeJingle(hom) : classDrop(cls)); }, 900);
         el.querySelector('[data-logout]').addEventListener('click', logout);
-        return () => { clearTimeout(t); dia.dispose(); fx.dispose(); };
+        return () => { clearTimeout(t); stopGemTilt(); dia.dispose(); fx.dispose(); };
       },
     };
   }
