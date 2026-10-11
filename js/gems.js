@@ -247,34 +247,50 @@ const SAYINGS = {
 };
 
 // Brechzahl und Farbaufspaltung ("Feuer") je Steinart – bestimmen, wie das Licht im Stein läuft.
+// Mineraloptik: Näherungswerte für den mittleren Brechungsindex und eine
+// bewusst begrenzte RGB-Dispersion des Shaders (kein gemessener Abbe-Wert).
+// Muster- und Mondsteine nutzen eigene PhysicalMaterials; die Werte werden
+// für alle 99 Datensätze hinterlegt, damit Fallbacks konsistent bleiben.
 const OPTICS = [
-  [/Diamant|Pink|Blue|Jewel|Constellation|Lesedi/, 2.42, 0.024],
-  [/Demantoid/, 1.89, 0.034],
-  [/Titanit/, 1.95, 0.034],
-  [/Zirkon/, 1.95, 0.022],
-  [/Saphir|Rubin/, 1.77, 0.009],
-  [/Granat|Pyrop|Spessartin|Rhodolith|Hessonit|Tsavorit/, 1.76, 0.012],
-  [/Spinell|Chrysoberyll|Alexandrit/, 1.74, 0.01],
-  [/Peridot|Diopsid|Kyanit|Tansanit|Jeremejewit/, 1.68, 0.01],
-  [/Topas|Andalusit|Apatit/, 1.62, 0.008],
-  [/Turmalin|Verdelith|Indigolith|Rubellit|Siberit|Achroit/, 1.63, 0.009],
-  [/Smaragd|Aquamarin|Beryll|Morganit/, 1.58, 0.007],
+  [/^Diamant$/, 2.42, 0.024],
+  [/^(?:Demantoid)$/, 1.89, 0.022],
+  [/^(?:Titanit)$/, 1.95, 0.028],
+  [/^(?:Zirkon)$/, 1.93, 0.016],
+  [/^(?:Sternsaphir|Sternrubin|.*Saphir|Rubin)$/, 1.77, 0.006],
+  [/^(?:Granat|Pyrop|Spessartin|Rhodolith|Hessonit|Tsavorit)$/, 1.76, 0.011],
+  [/^(?:Spinell)$/, 1.72, 0.008],
+  [/^(?:Chrysoberyll|Alexandrit)$/, 1.75, 0.008],
+  [/^(?:Peridot)$/, 1.66, 0.008],
+  [/^(?:Diopsid|Chromdiopsid)$/, 1.68, 0.008],
+  [/^(?:Kyanit|Tansanit)$/, 1.70, 0.008],
+  [/^(?:Jeremejewit)$/, 1.64, 0.007],
+  [/^(?:Fluorit)$/, 1.43, 0.006],
+  [/^(?:Iolith)$/, 1.55, 0.006],
+  [/^(?:Skapolith)$/, 1.56, 0.006],
+  [/^(?:Apatit)$/, 1.63, 0.008],
+  [/^(?:Andalusit)$/, 1.63, 0.008],
+  [/^(?:Swiss-Blue-Topas|Blautopas|London-Blue-Topas|Champagner-Topas|Naturblauer Topas|Goldtopas|Imperial-Topas)$/, 1.62, 0.008],
+  [/^(?:Bicolor-Turmalin|Paraíba-Turmalin|Chromturmalin|Turmalin|Verdelith|Indigolith|Rubellit|Siberit|Achroit)$/, 1.63, 0.007],
+  [/^(?:Smaragd|Aquamarin|Beryll|Goldberyll|Morganit)$/, 1.58, 0.006],
+  [/^(?:Kunzit)$/, 1.66, 0.006],
+  [/^(?:Opal|Welo-Opal|White Opal|Crystal Opal|Black Opal|Black Crystal Opal|Semi Black Opal|Koroit-Boulder-Opal|Yowah-Boulder-Opal|Boulder-Opal)$/, 1.45, 0.004],
+  [/^(?:Citrin|Amethyst|Prasiolith|Rosenquarz|Rutilquarz|Chalzedon)$/, 1.54, 0.006],
+  [/^(?:Labradorit|Spektrolith|Mondstein|Sonnenstein)$/, 1.56, 0.006],
+  [/^(?:Larimar)$/, 1.54, 0.006],
+  [/^(?:Türkis)$/, 1.62, 0.006],
+  [/^(?:Chrysopras)$/, 1.54, 0.006],
+  [/^(?:Lapislazuli)$/, 1.51, 0.006],
+  [/^(?:Sugilith)$/, 1.61, 0.006],
+  [/^(?:Fibrolith)$/, 1.65, 0.006],
+  [/^(?:Feueropal)$/, 1.45, 0.004],
 ];
 for (const g of GEM_LIST) {
   if (SAYINGS[g.name]) g.flavor = SAYINGS[g.name];
-  if (g.cut === 'cabochon') continue;
-  if (CUTS[g.name]) g.cut = CUTS[g.name];
-  // Alle berühmten Einzelsteine (und der normale Diamant) sind Diamanten.
-  // Nicht anhand ihrer Eigennamen klassifizieren: "Sancy", "Cullinan I",
-  // "The Orange" usw. enthalten keine optische Mineralbezeichnung.
-  if (g.legend || g.name === 'Diamant') {
-    g.ior = 2.42;
-    g.disp = 0.024;
-    continue;
-  }
-  const o = OPTICS.find(([re]) => re.test(g.name));
-  g.ior = o ? o[1] : 1.55;
-  g.disp = o ? o[2] : 0.007;
+  if (CUTS[g.name] && !g.legend) g.cut = CUTS[g.name];
+  const optics = g.legend || g.name === 'Diamant'
+    ? [2.42, 0.024] // alle 17 Legenden sind Diamanten
+    : (OPTICS.find(([re]) => re.test(g.name))?.slice(1) ?? [1.55, 0.007]);
+  [g.ior, g.disp] = optics;
 }
 // Englisch: Anzeigenamen und Sprüche tauschen (erst nach Schliff und Optik, die am deutschen Namen hängen)
 if (isEn) {
