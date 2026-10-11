@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fame – Kartendesign V77 · Testlabor</title>
+<link rel="stylesheet" href="../css/app.css">
+<link rel="stylesheet" href="../css/card-collection-v77.css">
+<style>
+  html,body { min-height:100%;height:auto;overflow:auto; }
+  body.preview-page { display:block; background:radial-gradient(ellipse at 50% 0%,#25212f,#08080d 75%);color:#f9f6fb;font-family:"Source Code Pro",monospace; }
+  .preview-shell { max-width:860px;padding:26px 16px 65px;margin:0 auto; }
+  .preview-head { text-align:center;margin:0 auto 22px; }
+  .preview-head h1 {font:700 clamp(26px,5vw,37px)/1.1 "Cormorant Garamond",Georgia,serif;margin:0 0 10px;color:#fff;}
+  .preview-head p {color:#c2bbca;font:12px/1.7 "Source Code Pro",monospace;max-width:660px;margin:auto;}
+  .preview-tabs {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:20px 0;}
+  .preview-tabs button {background:#15121b;color:#e9e1ec;border:1px solid #484050;border-radius:10px;padding:10px 4px;cursor:pointer;font:700 11px/1.45 "Source Code Pro",monospace;min-width:0;}
+  .preview-tabs button span {display:block;font-size:9px;opacity:.75;font-weight:400;}
+  .preview-tabs button[aria-pressed="true"] {border-color:var(--color);box-shadow:inset 0 0 0 1px var(--color),0 0 13px color-mix(in srgb,var(--color) 40%,transparent);color:#fff;}
+  .preview-layout {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,360px);gap:30px;align-items:center;}
+  .preview-details h2 {font:700 28px "Cormorant Garamond",Georgia,serif;margin:8px 0 10px;}
+  .preview-details p {color:#c6bdc9;font:12px/1.75 "Source Code Pro",monospace;}
+  .preview-stat {margin:14px 0 22px;display:grid;gap:8px;font-size:12px;}
+  .preview-stat div {display:flex;justify-content:space-between;gap:16px;border-bottom:1px solid #3f3546;padding-bottom:9px;}
+  .preview-stat strong {text-align:right;color:#fff;font-size:11px;}
+  .preview-details label {display:block;color:#ccc0d2;margin:20px 0 7px;font-size:11px;font-weight:700;}
+  .preview-details select {width:100%;border:1px solid #6b5c73;color:#fff;background:#19151e;padding:11px;border-radius:8px;font-size:12px;}
+  .preview-actions {display:flex;gap:10px;margin-top:20px;}
+  .preview-actions button {flex:1;border:1px solid #7a6b83;border-radius:9px;background:#211a28;color:white;padding:12px;cursor:pointer;font-weight:700;}
+  .preview-stage {--rar:#a3a3ab;--lux:0;width:100%;max-width:360px;min-height:532px;border-radius:30px;padding:25px 0!important;display:flex;justify-content:center;align-items:center;position:relative;margin:0 auto;overflow:visible;}
+  .preview-stage .card-wrap {width:100%;margin:0;padding:0 27px;}
+  .preview-stage .flip {max-width:300px;cursor:default;}
+  .preview-stage .famecard {width:100%;}
+  .preview-stage .famecard-brand {white-space:nowrap;}
+  .preview-stage .famecard .famecard-foot {align-items:center;}
+  .preview-note {text-align:center;font:10px/1.65 "Source Code Pro",monospace;color:#938799;margin:26px auto;max-width:640px;}
+  @media (max-width:670px) {.preview-layout{display:flex;flex-direction:column-reverse;gap:20px;}.preview-details{width:100%;max-width:400px}.preview-tabs{grid-template-columns:repeat(5,1fr)}.preview-stage{max-width:360px;min-height:515px}.preview-shell{padding:18px 12px 50px;}}
+</style>
+</head>
+<body class="preview-page">
+<main class="preview-shell">
+<header class="preview-head">
+<h1>Fame · Card Collection V77</h1>
+<p>Interaktive Designvorschau auf einem separaten GitHub-Testzweig. Die zehn Klassen folgen der echten Fame-Logik. Die Edelsteine werden mit dem vorhandenen Three.js-Renderer erzeugt.</p>
+</header>
+<nav class="preview-tabs" id="tabs" aria-label="Designklasse wählen"></nav>
+<div class="preview-layout">
+<section class="preview-details">
+<h2 id="classTitle">Kiesel</h2>
+<p id="classDescription">Klasse auswählen, um Rahmen und Effekte zu vergleichen.</p>
+<div class="preview-stat">
+<div><span>Fame-Klasse</span><strong id="classNumber">1 / 10</strong></div>
+<div><span>Ab Kontostand</span><strong id="classAmount">0 €</strong></div>
+<div><span>Edelsteinstufe</span><strong id="gemStage">1 / 99</strong></div>
+</div>
+<label for="gemPick">Edelstein innerhalb der Klasse</label>
+<select id="gemPick" aria-label="Stein auswählen"></select>
+<div class="preview-actions">
+<button id="previous" type="button">← Vorherige</button>
+<button id="next" type="button">Nächste →</button>
+</div>
+<p>Die Klasse steuert den Rahmen. Der jeweilige echte Stein, seine Farbe, sein Name und sein B/C-Spruch bleiben unabhängig davon erhalten.</p>
+</section>
+<section id="stage" class="screen--card cls-0 preview-stage" aria-label="Fame Kartenvorschau" style="--rar:#a3a3ab"></section>
+</div>
+<p class="preview-note">Nur Demo – keine Registrierung, keine Zahlungen, keine Änderungen an deinem Konto. Das echte Design ist in der Test-Branch eingebaut; die öffentliche Fame-App bleibt zunächst auf V76.</p>
+</main>
+<script type="module">
+import { CLASSES,TIERS } from '../js/data.js';
+import { createDiamond } from '../js/diamond3d.js';
+import { LOGO_TEXT, diamondSvg } from '../js/ui.js';
+import { facetArt,facetMask,svgUrl,holoStrength } from '../js/cardfx.js';
+let currentClass=0,currentStone=null,three=null;
+const $=(id)=>document.getElementById(id);
+const fmt=(v)=>new Intl.NumberFormat('de-DE').format(v);
+const explanation=[
+  'Kühles Silber, ruhige Fassung, minimalistische Facetten. Der Einstieg in die Kollektion.',
+  'Mintgrüne Lichtkante und subtil veredeltes Metall. Eine erste erkennbare Aufwertung.',
+  'Türkises Chrom mit stärkerer Tiefe und feineren Eckgravuren.',
+  'Saphirblauer Doppelrahmen mit deutlicher geschliffener Innenkante.',
+  'Violetter Edelmetall-Effekt, mehr Relief und sanfte Studio-Reflexe.',
+  'Rubellit-Rosé mit stärkerer Kantenstruktur und edlerem Glanz.',
+  'Rubinrotes Luxusmetall mit hervorgehobenen, markanten Eckelementen.',
+  'Feuerorange mit reliefartigen Ecken und kleinen Emblemen.',
+  'Die Gold-Edition mit warmen Metallreflexen und aufwendiger Gravur.',
+  'Diamant-Holo: prismatischer Rahmen, schimmerndes Farbspiel und höchste Detailstufe.'
+];
+function escapeHtml(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
+function cardMarkup(tier,cls){
+  const mask=svgUrl(facetMask(cls));
+  return '<div class="card-wrap"><div class="flip"><article class="famecard metal-'+escapeHtml(tier.metal)+(tier.legend?' is-legend':'')+' flip-front" style="--gem:'+tier.tone+'">'
+    +'<div class="famecard-ring" aria-hidden="true"></div>'
+    +'<div class="famecard-ornaments" aria-hidden="true"><i></i><i></i><i></i><i></i></div>'
+    +'<div class="famecard-inner" style="--holo:'+holoStrength(cls)+'">'
+    +'<div class="famecard-facets" aria-hidden="true">'+facetArt(cls,'demo'+cls+'_')+'</div>'
+    +'<div class="famecard-holo" aria-hidden="true" style="-webkit-mask-image:url(\''+mask+'\');mask-image:url(\''+mask+'\')"></div>'
+    +'<div class="famecard-glint" aria-hidden="true" style="-webkit-mask-image:url(\''+mask+'\');mask-image:url(\''+mask+'\')"></div>'
+    +'<div class="famecard-photo"><div class="stage3d" id="diamond"></div></div>'
+    +'<div class="famecard-class">STUFE '+(cls+1)+' · '+escapeHtml(CLASSES[cls].name)+'</div>'
+    +'<div class="famecard-top"><span class="famecard-brand">'+LOGO_TEXT+diamondSvg({filled:true,cls:'dia-inline'})+'</span><span class="famecard-serial">Nr. FM-PREVIEW-'+(cls+1)+'</span></div>'
+    +'<div class="famecard-plate"><h2 class="famecard-name">'+escapeHtml(tier.name)+'</h2><div class="famecard-rule" aria-hidden="true"><i></i>'+diamondSvg({filled:true})+'<i></i></div><p class="famecard-flavor">'+escapeHtml(tier.flavor||'')+'</p></div>'
+    +'<div class="famecard-foot"><span class="famecard-insta">♪ fame.app7</span><span class="seal">ECHT<br>FAME</span></div></div></article></div></div>';
+}
+const tabs=CLASSES.map((c,i)=>'<button type="button" style="--color:'+c.color+'" data-cls="'+i+'" aria-pressed="false">'+(i+1)+'<span>'+escapeHtml(c.name)+'</span></button>').join('');
+$('tabs').innerHTML=tabs;
+function render(){
+  const cls=currentClass,tier=currentStone;
+  $('classTitle').textContent=(cls+1)+' · '+CLASSES[cls].name;
+  $('classDescription').textContent=explanation[cls];
+  $('classNumber').textContent=(cls+1)+' / 10';
+  $('classAmount').textContent=fmt(CLASSES[cls].from)+' €';
+  $('gemStage').textContent=tier.stage+' / 99';
+  [...document.querySelectorAll('[data-cls]')].forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.cls)===cls)));
+  if(three){three.dispose();three=null;}
+  $('stage').className='screen--card cls-'+cls+' preview-stage';
+  $('stage').style.setProperty('--rar',CLASSES[cls].color);
+  $('stage').innerHTML=cardMarkup(tier,cls);
+  try {
+    three=createDiamond($('diamond'),{gem:tier,rim:tier.tone,glow:.18,autoRotate:false,interactive:false,photo:true});
+  } catch(e) { console.warn('WebGL-Vorschau nicht verfügbar',e);$('diamond').innerHTML='<div class="diamond-fallback">3D-Vorschau in diesem Browser nicht verfügbar.</div>'; }
+}
+function chooseClass(idx) {
+  currentClass=(idx+CLASSES.length)%CLASSES.length;
+  const matching=TIERS.filter(t=>t.cls===currentClass);
+  currentStone=matching[0]||TIERS[0];
+  $('gemPick').innerHTML=matching.map(t=>'<option value="'+t.stage+'">'+t.stage+' · '+escapeHtml(t.name)+'</option>').join('');
+  $('gemPick').value=String(currentStone.stage);
+  render();
+}
+$('tabs').addEventListener('click',e=>{const btn=e.target.closest('[data-cls]');if(btn)chooseClass(Number(btn.dataset.cls));});
+$('previous').onclick=()=>chooseClass(currentClass-1);
+$('next').onclick=()=>chooseClass(currentClass+1);
+$('gemPick').addEventListener('change',e=>{currentStone=TIERS.find(t=>t.stage===Number(e.target.value))||currentStone;render();});
+chooseClass(0);
+</script>
+</body>
+</html>
