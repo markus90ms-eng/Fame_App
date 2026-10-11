@@ -357,7 +357,7 @@ export function createDiamond(container, opts = {}) {
 
   if (!webglAvailable()) {
     container.innerHTML = `<div class="diamond-fallback">${glassDiamond()}</div>`;
-    return { setLevel() {}, setGem() {}, setMystery() {}, setRim() {}, setGlow() {}, pulse() {}, snapshot() { return null; }, canvas: null, dispose() { container.innerHTML = ''; } };
+    return { setLevel() {}, setGem() {}, setMystery() {}, setRim() {}, setGlow() {}, setTiltPitch() {}, pulse() {}, snapshot() { return null; }, canvas: null, dispose() { container.innerHTML = ''; } };
   }
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -464,6 +464,8 @@ export function createDiamond(container, opts = {}) {
   scene.add(key);
 
   let spin = 0, velocity = 0, dragging = false, lastX = 0, glowLevel = glow, pulseT = 0;
+  // Nur die Startseite setzt hier eine Sensor-Neigung; bei allen anderen 3D-Steinen bleibt 0.
+  let sensorPitch = 0, targetSensorPitch = 0;
   const onDown = (e) => { dragging = true; lastX = e.clientX; velocity = 0; renderer.domElement.setPointerCapture?.(e.pointerId); };
   const onMove = (e) => {
     if (!dragging) return;
@@ -518,6 +520,12 @@ export function createDiamond(container, opts = {}) {
     }
     // Foto-Modus: der Stein liegt und wiegt sich nur leicht im Licht
     holder.rotation.y = spin + (photo && autoRotate ? Math.sin(now / 1000 * 0.45) * 0.45 : 0);
+    // Echte Rotation des 3D-Meshes um seine X-Achse: Ober- und Unterseite werden sichtbar.
+    // Keine Verschiebung der HTML-Buehne; Drehung per Finger um Y bleibt erhalten.
+    if (!photo) {
+      sensorPitch += (targetSensorPitch - sensorPitch) * (1 - Math.exp(-8 * dt));
+      holder.rotation.x = tilt + sensorPitch;
+    }
     pulseT = Math.max(0, pulseT - dt * 2.2);
     holder.scale.setScalar(1 + glowLevel * 0.04 + pulseT * 0.1);
     gem.update(now / 1000, pulseT);
@@ -543,6 +551,10 @@ export function createDiamond(container, opts = {}) {
     },
     setRim(color) { rimLight.color.set(color); },
     setGlow(v) { glowLevel = Math.max(0, Math.min(1, v)); },
+    // Ausschliesslich der Startbildschirm verwendet diese Schnittstelle.
+    setTiltPitch(radians) {
+      targetSensorPitch = Number.isFinite(radians) ? Math.max(-1.5, Math.min(1.5, radians)) : 0;
+    },
     pulse() { pulseT = 1; },
     // Scharfes Standbild in beliebiger Größe (für Story- und Sharing-Bilder).
     snapshot(w, h) {
