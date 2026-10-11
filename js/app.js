@@ -82,7 +82,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '80';
+export const APP_VERSION = '82';
 
 // ---- Router -----------------------------------------------------------------
 
