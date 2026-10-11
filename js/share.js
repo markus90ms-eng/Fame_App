@@ -113,50 +113,6 @@ function drawDiamondGlyph(g, x, y, s, line, fill) {
   g.restore();
 }
 
-
-/* V82: exterior-only satin metal frame around exported cards.
-   Drawn OUTSIDE x/y/w/h. Existing gemstone, serial and text remain clear. */
-const EXPORT_METALS=[["#38424c","#919eaa","#dae0e4","#596672"],["#244f46","#77ad98","#d9eee3","#4c796b"],["#254e66","#70acbf","#ddf3f8","#4b8096"],["#213969","#7091c9","#dce8ff","#4d68a6"],["#4b2d61","#a084b6","#e9daee","#785b95"],["#6a304f","#c18ca7","#f6dfe9","#945d7a"],["#641e2c","#cc5761","#ffe2db","#9e394a"],["#754018","#d58e43","#ffe5b1","#b56b2c"],["#6a501d","#dab657","#fff5d8","#a88432"],["#708daa","#bad8e9","#fffcff","#dabde8"]];
-function drawOutsideCardMetal(g,x,y,w,h,tier){
- const cls=Math.max(0,Math.min(9,tier.cls??0));
- const [dark,mid,light,shade]=EXPORT_METALS[cls];
- const accent=CLASSES[cls].color;
- const s=w/300,m=16*s,ox=x-m,oy=y-m,ow=w+2*m,oh=h+2*m;
- const color=cls===9?['#e2def6','#b7dfeb','#fff6d7','#d8bcf2','#dcfff0','#f3d6df','#e2def6']:[dark,mid,light,shade,mid,light,dark];
- const metal=g.createLinearGradient(ox,oy,ox+ow,oy+oh);
- color.forEach((c,i)=>metal.addColorStop(i/(color.length-1),c));
- g.save();
- g.shadowBlur=(cls<6?3:cls>=8?11:6)*s;
- g.shadowColor=hexA(accent,cls<6?.16:.31);
- g.strokeStyle=metal;g.lineWidth=(cls>=8?5.5:cls>=6?4.4:cls>=3?3.5:2.7)*s;
- roundRect(g,ox+5*s,oy+5*s,ow-10*s,oh-10*s,21*s);g.stroke();
- g.shadowBlur=0;g.strokeStyle=light;g.globalAlpha=cls<6?.45:.74;g.lineWidth=.85*s;
- roundRect(g,ox+11*s,oy+11*s,ow-22*s,oh-22*s,16*s);g.stroke();g.globalAlpha=1;
- if(cls>=2){
-  for(const [cx,cy,dx,dy] of [[ox+22*s,oy+22*s,1,1],[ox+ow-22*s,oy+22*s,-1,1],[ox+22*s,oy+oh-22*s,1,-1],[ox+ow-22*s,oy+oh-22*s,-1,-1]]){
-   g.strokeStyle=metal;g.lineWidth=(cls>=7?1.8:1.2)*s;
-   g.beginPath();g.moveTo(cx,cy+20*dy*s);g.lineTo(cx,cy+7*dy*s);
-   g.quadraticCurveTo(cx,cy,cx+7*dx*s,cy);g.lineTo(cx+20*dx*s,cy);g.stroke();
-   if(cls>=5){g.fillStyle=light;g.globalAlpha=cls<7?.5:.85;g.beginPath();g.arc(cx,cy,(cls>=8?3:2)*s,0,Math.PI*2);g.fill();g.globalAlpha=1;}
-  }
- }
- if(cls>=7){
-  for(const cy of [oy+9*s,oy+oh-9*s]){
-   const cx=ox+ow/2,r=(cls>=8?6:3.4)*s;
-   g.fillStyle=metal;g.strokeStyle=light;g.lineWidth=.8*s;
-   g.beginPath();g.moveTo(cx,cy-r);g.lineTo(cx+r,cy);g.lineTo(cx,cy+r);g.lineTo(cx-r,cy);g.closePath();g.fill();g.stroke();
-  }
- }
- if(cls>=8){
-  g.strokeStyle=metal;g.lineWidth=2*s;
-  for(const cy of [oy+5*s,oy+oh-5*s]){
-   g.beginPath();g.moveTo(ox+86*s,cy);g.lineTo(ox+124*s,cy);
-   g.moveTo(ox+196*s,cy);g.lineTo(ox+234*s,cy);g.stroke();
-  }
- }
- g.restore();
-}
-
 // ---- Die Card selbst (gleicher Look wie in der App) --------------------------------------
 
 export function drawCard(g, { x, y, w, h, tier, serial, accts = [], gem, facets }) {
@@ -166,8 +122,6 @@ export function drawCard(g, { x, y, w, h, tier, serial, accts = [], gem, facets 
   const s = w / 300; // Maßstab bezogen auf die 300px breite Card in der App
   const r = 18 * s;
   const cx = x + w / 2;
-
-  drawOutsideCardMetal(g,x,y,w,h,tier);
 
   // Leuchten in der Steinfarbe
   g.save();
