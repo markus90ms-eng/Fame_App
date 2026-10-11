@@ -1,0 +1,591 @@
+/* Fame Collector Cards · visual overhaul 3, isolated to cards and preview.
+   Real tier labels and exact colors are defined by CLASSES in js/data.js.
+   The 99 gemstone identities, prices and animated Three.js renderer remain separate. */
+
+.screen--card.cls-0 { --fc-light:#f0f4fa;--fc-shadow:#384957;--fc-depth:3px;--fc-vivid:.22;--fc-facets:.17;--fc-foil:0;--fc-glow:9px;--fc-haze:.12; }
+.screen--card.cls-1 { --fc-light:#e3fff4;--fc-shadow:#075449;--fc-depth:4px;--fc-vivid:.36;--fc-facets:.23;--fc-foil:0;--fc-glow:14px;--fc-haze:.20; }
+.screen--card.cls-2 { --fc-light:#e2faff;--fc-shadow:#105270;--fc-depth:5px;--fc-vivid:.43;--fc-facets:.27;--fc-foil:.05;--fc-glow:18px;--fc-haze:.26; }
+.screen--card.cls-3 { --fc-light:#e3eeff;--fc-shadow:#10277b;--fc-depth:5.5px;--fc-vivid:.52;--fc-facets:.32;--fc-foil:.09;--fc-glow:23px;--fc-haze:.32; }
+.screen--card.cls-4 { --fc-light:#f7ddff;--fc-shadow:#4e127f;--fc-depth:6px;--fc-vivid:.64;--fc-facets:.37;--fc-foil:.12;--fc-glow:28px;--fc-haze:.37; }
+.screen--card.cls-5 { --fc-light:#ffe1f0;--fc-shadow:#72124a;--fc-depth:7px;--fc-vivid:.71;--fc-facets:.38;--fc-foil:.18;--fc-glow:35px;--fc-haze:.42; }
+.screen--card.cls-6 { --fc-light:#ffe0d8;--fc-shadow:#620d21;--fc-depth:8px;--fc-vivid:.83;--fc-facets:.41;--fc-foil:.24;--fc-glow:43px;--fc-haze:.5; }
+.screen--card.cls-7 { --fc-light:#ffe3a9;--fc-shadow:#782809;--fc-depth:9px;--fc-vivid:.9;--fc-facets:.45;--fc-foil:.28;--fc-glow:54px;--fc-haze:.6; }
+.screen--card.cls-8 { --fc-light:#fff3c2;--fc-shadow:#653d05;--fc-depth:10px;--fc-vivid:1;--fc-facets:.46;--fc-foil:.35;--fc-glow:63px;--fc-haze:.66; }
+.screen--card.cls-9 { --fc-light:#fff;--fc-shadow:#476996;--fc-depth:11px;--fc-vivid:1;--fc-facets:.40;--fc-foil:.55;--fc-glow:75px;--fc-haze:.75; }
+
+/* The SVG metal-and-crystal frame is drawn ABOVE, never instead of, the live gem. */
+.screen--card .famecard,
+.screen--card .famecard.metal-gold,
+.screen--card .famecard.metal-rose,
+.screen--card .famecard.metal-legend {
+  --metal-line:var(--fc-light);
+  position:relative;
+  isolation:isolate;
+  padding:6px;
+  border-radius:21px;
+  overflow:hidden;
+  animation:none;
+  background:
+    linear-gradient(132deg,var(--fc-light) 0%,var(--rar) 22%,#08070a 43%,var(--fc-light) 65%,var(--rar) 86%,#090a10 100%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb,var(--fc-light) 40%,transparent),
+    0 7px 0 #0009,0 22px 45px #000c,
+    0 0 var(--fc-glow) color-mix(in srgb,var(--rar) 58%,transparent);
+}
+.screen--card .famecard .famecard-ring,
+.screen--card .famecard.metal-legend .famecard-ring {
+  position:absolute;inset:0;
+  top:0;left:0;width:100%;height:100%;aspect-ratio:auto;
+  transform:none;animation:none;
+  background:linear-gradient(145deg,#141015,var(--fc-shadow) 35%,var(--rar) 64%,#100b13);
+}
+.screen--card .famecard-collectors-frame {
+  position:absolute;
+  display:block;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:12;
+  pointer-events:none;
+  overflow:visible;
+  filter:drop-shadow(0 0 3px color-mix(in srgb,var(--rar) 58%,transparent));
+}
+.screen--card:is(.cls-6,.cls-7,.cls-8,.cls-9) .famecard-collectors-frame {
+  filter:drop-shadow(0 0 5px color-mix(in srgb,var(--rar) 75%,transparent));
+}
+.screen--card.cls-9 .famecard-collectors-frame {
+  filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 9px #9adfff);
+}
+.screen--card .fameframe-glint {
+  animation:fc3-edge-spark 5.5s ease-in-out infinite alternate;
+}
+@keyframes fc3-edge-spark {
+  0%,15%{stroke-dashoffset:0;opacity:.24;}
+  65%,100%{stroke-dashoffset:-132;opacity:.94;}
+}
+
+/* Velvet/obsidian slab behind the gem, kept dark for contrast like the reference. */
+.screen--card .famecard .famecard-inner {
+  --metal-line:var(--fc-light);
+  position:relative;
+  z-index:1;
+  margin:0;
+  padding:18px 19px 15px;
+  min-height:421px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  border-radius:15px;
+  overflow:hidden;
+  background:
+    radial-gradient(ellipse 62% 42% at 50% 18%,color-mix(in srgb,var(--rar) 16%,#0d1015),transparent 93%),
+    linear-gradient(180deg,#06070b 0%,#14101a 50%,#0c0a0e 73%,#06060a 100%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb,var(--fc-light) 28%,transparent),
+    inset 0 0 0 3px #08070a,
+    inset 0 0 0 4px color-mix(in srgb,var(--rar) 24%,transparent);
+}
+.screen--card:is(.cls-6,.cls-7,.cls-8,.cls-9) .famecard .famecard-inner {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb,var(--fc-light) 83%,transparent),
+    inset 0 0 0 4px #08060a,
+    inset 0 0 0 5px color-mix(in srgb,var(--rar) 58%,transparent),
+    inset 0 0 0 9px #08060a;
+}
+/* Large moving WebGL stone: not hidden behind opaque lower facets. */
+.screen--card .famecard .famecard-photo {
+  position:absolute;
+  z-index:1;
+  top:0;left:0;right:0;
+  height:292px;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 70%,rgba(0,0,0,.92) 84%,transparent 100%);
+  mask-image:linear-gradient(to bottom,#000 0%,#000 70%,rgba(0,0,0,.92) 84%,transparent 100%);
+}
+.screen--card .famecard-photo .stage3d{inset:0;pointer-events:none;}
+.screen--card .famecard-ambience {
+  position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:
+    radial-gradient(circle 76px at 28% 19%,color-mix(in srgb,var(--fc-light) 20%,transparent),transparent),
+    radial-gradient(circle 75px at 85% 32%,color-mix(in srgb,var(--rar) 26%,transparent),transparent),
+    radial-gradient(ellipse 52% 9% at 50% 51%,color-mix(in srgb,var(--rar) 31%,transparent),transparent),
+    linear-gradient(180deg,transparent 0 52%,#09080a4d 62%,#08070acb 78%,#070609 95%);
+}
+.screen--card .famecard-ambience::before {
+  content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(2px 2px at 12% 13%,#fff6,transparent),
+    radial-gradient(2px 2px at 91% 22%,#fffc,transparent),
+    radial-gradient(3px 3px at 17% 45%,#fffc,transparent),
+    radial-gradient(2px 2px at 83% 55%,#fff7,transparent);
+  opacity:var(--fc-haze);
+}
+.screen--card .famecard .famecard-facets {
+  z-index:3;
+  opacity:var(--fc-facets);
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0 52%,#000 75% 100%);
+  mask-image:linear-gradient(to bottom,transparent 0 52%,#000 75% 100%);
+}
+.screen--card .famecard .famecard-holo {z-index:3;opacity:var(--fc-foil);}
+.screen--card .famecard .famecard-glint {z-index:4;opacity:.2;}
+.screen--card .famecard .famecard-shine {z-index:5;opacity:.38;}
+
+/* Tiny class emblem separate from the actual gemstone name. */
+.screen--card .famecard .famecard-top {
+  z-index:9;width:100%;
+  min-height:25px;
+  display:flex;justify-content:space-between;align-items:center;gap:4px;
+}
+.screen--card .famecard .famecard-brand {
+  color:white;font-size:17px;line-height:1;
+  text-shadow:0 2px 5px #000,1px 1px 0 var(--green);
+}
+.screen--card .famecard .famecard-brand .dia-line{stroke:#fff;}
+.screen--card .famecard .famecard-serial {
+  max-width:64%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  padding:4px 7px;border-radius:12px;
+  font:600 9px/1.1 "Source Code Pro",monospace;
+  color:#f8f6fa;background:#08080be0;
+  border:1px solid color-mix(in srgb,var(--fc-light) 43%,transparent);
+  box-shadow:0 1px 6px #000a;
+}
+.screen--card .famecard-class {
+  z-index:8;
+  position:absolute;
+  top:56px;left:13px;right:13px;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  color:var(--fc-light);
+  font:700 10px/1.2 "Source Code Pro",monospace;
+  text-transform:uppercase;letter-spacing:.1em;
+  text-shadow:0 1px 5px #000,0 0 10px var(--fc-shadow);
+  pointer-events:none;
+}
+.screen--card .famecard-class::before,
+.screen--card .famecard-class::after {
+  content:"";width:16px;height:1px;opacity:.5;
+  background:linear-gradient(90deg,transparent,var(--fc-light));
+}
+.screen--card .famecard-class::after{transform:rotate(180deg);}
+
+/* Editorial typography over dark film-black pedestal. */
+.screen--card .famecard .famecard-plate {
+  position:relative;
+  z-index:8;
+  margin-top:224px;
+  width:100%;
+  min-height:95px;
+  padding:0;
+  display:flex;flex-direction:column;align-items:center;
+}
+.screen--card .famecard .famecard-plate::before {
+  content:"";position:absolute;z-index:-1;
+  inset:-17px -22px -22px;
+  background:linear-gradient(180deg,transparent,#060609e3 23%,#060608e5 78%,transparent 100%);
+}
+.screen--card .famecard .famecard-name {
+  margin:0;
+  max-width:100%;
+  font-family:"Cormorant Garamond",Georgia,serif;
+  font-size:30px;line-height:1.02;font-weight:700;
+  letter-spacing:0;overflow-wrap:anywhere;text-wrap:balance;
+  background:linear-gradient(180deg,#fff 0%,var(--fc-light) 62%,color-mix(in srgb,var(--rar) 45%,#d8d0d8));
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  color:transparent;text-shadow:none;
+  filter:drop-shadow(0 2px 5px #000);
+}
+.screen--card .famecard .famecard-rule {
+  margin:7px 0 5px;
+  width:73%;color:var(--fc-light);
+}
+.screen--card .famecard-rule i {
+  height:1px;background:linear-gradient(90deg,transparent,var(--fc-light));
+}
+.screen--card .famecard-rule i:last-child{background:linear-gradient(90deg,var(--fc-light),transparent);}
+.screen--card .famecard-rule .dia-line {stroke:var(--fc-light);}
+.screen--card .famecard-rule .dia-fill {fill:var(--rar);}
+.screen--card .famecard .famecard-flavor {
+  margin:0;font:italic 500 15.5px/1.2 "Cormorant Garamond",Georgia,serif;
+  max-width:100%;color:#f2e9df;text-shadow:0 2px 6px #000;
+  text-wrap:balance;
+}
+.screen--card .famecard .famecard-foot {
+  position:relative;z-index:8;
+  width:100%;min-height:54px;
+  margin-top:auto;padding-top:13px;
+  display:flex;align-items:flex-end;justify-content:space-between;gap:6px;
+}
+.screen--card .famecard-foot::before {
+  z-index:-1;
+  left:-21px;right:-21px;top:-8px;bottom:-23px;
+  background:linear-gradient(180deg,transparent,#070609ed 42%,#050508 100%);
+}
+.screen--card .famecard .famecard-insta{
+  min-width:0;max-width:190px;font-size:10px;color:#fff;
+}
+.screen--card .famecard .famecard-insta input {max-width:118px;}
+.screen--card .famecard .seal{
+  flex:0 0 38px;
+  width:38px;height:38px;
+  box-shadow:0 0 0 1px #fffa,0 0 14px color-mix(in srgb,var(--rar) 40%,transparent);
+}
+.screen--card.cls-9 .famecard .seal{box-shadow:0 0 0 1px #fff,0 0 17px #ace9ff,0 0 23px #f2b6e6;}
+
+/* Ascent is more than color: the heavy upper tiers have real gem/crystal crests. */
+.screen--card:is(.cls-7,.cls-8,.cls-9) .famecard {
+  box-shadow:0 0 0 1px var(--fc-light),0 0 15px color-mix(in srgb,var(--rar) 68%,transparent),0 0 var(--fc-glow) color-mix(in srgb,var(--rar) 48%,transparent),0 27px 42px #000c;
+}
+.screen--card.cls-9 .famecard {
+  box-shadow:0 0 0 1px #fff,0 0 16px #f9c6ffb8,0 0 32px #94edffc2,0 0 63px #ffe4a99a,0 27px 42px #000d;
+}
+.screen--card.cls-9 .famecard-collectors-frame{
+  animation:fc3-prism 10s ease-in-out infinite alternate;
+}
+@keyframes fc3-prism{
+  0%{filter:drop-shadow(0 0 4px #f7defe) drop-shadow(0 0 9px #b8e5ff); }
+  50%{filter:hue-rotate(65deg) drop-shadow(0 0 6px #b8fff0) drop-shadow(0 0 14px #ffeeaa);}
+  100%{filter:hue-rotate(140deg) drop-shadow(0 0 7px #f8ddff) drop-shadow(0 0 15px #b7ffea);}
+}
+.screen--card.cls-9 .famecard .famecard-name{
+  background:linear-gradient(105deg,#fff0f9,#daf8ff 26%,#fff6cb 53%,#d9ffe9 77%,#fff0f9);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+
+/* Responsiveness and motion accessibility */
+@media(max-width:370px) {
+  .screen--card .famecard .famecard-inner{padding:16px 14px 12px;min-height:410px;}
+  .screen--card .famecard .famecard-plate{margin-top:217px;}
+  .screen--card .famecard .famecard-name{font-size:26px;}
+  .screen--card .famecard .famecard-flavor{font-size:14px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .screen--card .fameframe-glint,.screen--card.cls-9 .famecard-collectors-frame {animation:none;}
+}
+/* Collector metal refinement V79: matte frames keep the real 3D gems central.
+   Frame ornament density increases 1→10; saturation comes from CLASSES, not the stones. */
+.screen--card.cls-0 {--fc-light:#e4e6eb;--fc-shadow:#4d5963;--fc-frame-visibility:.67;--fc-glow:5px;--fc-facets:.12;--fc-foil:0;--fc-haze:.10;}
+.screen--card.cls-1 {--fc-light:#d7e8dd;--fc-shadow:#36645a;--fc-frame-visibility:.72;--fc-glow:6px;--fc-facets:.13;--fc-foil:0;--fc-haze:.14;}
+.screen--card.cls-2 {--fc-light:#ddeff3;--fc-shadow:#316477;--fc-frame-visibility:.77;--fc-glow:8px;--fc-facets:.15;--fc-foil:0;--fc-haze:.18;}
+.screen--card.cls-3 {--fc-light:#dbe4f6;--fc-shadow:#2a4477;--fc-frame-visibility:.79;--fc-glow:9px;--fc-facets:.16;--fc-foil:.015;--fc-haze:.21;}
+.screen--card.cls-4 {--fc-light:#e4d8ee;--fc-shadow:#68477f;--fc-frame-visibility:.81;--fc-glow:11px;--fc-facets:.18;--fc-foil:.025;--fc-haze:.24;}
+.screen--card.cls-5 {--fc-light:#f1dce7;--fc-shadow:#89536c;--fc-frame-visibility:.84;--fc-glow:14px;--fc-facets:.20;--fc-foil:.045;--fc-haze:.28;}
+.screen--card.cls-6 {--fc-light:#f5d4d0;--fc-shadow:#802f3e;--fc-frame-visibility:.89;--fc-glow:18px;--fc-facets:.23;--fc-foil:.065;--fc-haze:.32;}
+.screen--card.cls-7 {--fc-light:#ffe2b1;--fc-shadow:#8d4b1e;--fc-frame-visibility:.93;--fc-glow:24px;--fc-facets:.25;--fc-foil:.09;--fc-haze:.39;}
+.screen--card.cls-8 {--fc-light:#fff3d2;--fc-shadow:#8b6b2d;--fc-frame-visibility:.96;--fc-glow:32px;--fc-facets:.28;--fc-foil:.13;--fc-haze:.42;}
+.screen--card.cls-9 {--fc-light:#f5f8ff;--fc-shadow:#7a8bad;--fc-frame-visibility:1;--fc-glow:38px;--fc-facets:.30;--fc-foil:.24;--fc-haze:.48;}
+
+.screen--card .famecard,
+.screen--card .famecard.metal-gold,
+.screen--card .famecard.metal-rose,
+.screen--card .famecard.metal-legend{
+  padding:4px;
+  border-radius:19px;
+  background:linear-gradient(130deg,
+    color-mix(in srgb,var(--fc-light) 48%,#11151a) 0%,
+    color-mix(in srgb,var(--fc-shadow) 64%,#08090d) 27%,
+    #17181c 49%,
+    color-mix(in srgb,var(--fc-light) 23%,#181a1e) 73%,#101114 100%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb,var(--fc-light) 22%,transparent),
+    0 5px 0 #050507c9,0 17px 28px #000b,
+    0 0 var(--fc-glow) color-mix(in srgb,var(--rar) 30%,transparent);
+}
+.screen--card .famecard-collectors-frame{
+  opacity:var(--fc-frame-visibility);
+  filter:none;
+  transition:opacity .25s ease;
+}
+.screen--card:is(.cls-6,.cls-7,.cls-8,.cls-9) .famecard-collectors-frame{
+  filter:drop-shadow(0 0 2px color-mix(in srgb,var(--rar) 26%,transparent));
+}
+.screen--card.cls-9 .famecard-collectors-frame{
+  filter:drop-shadow(0 0 4px #9fe8ff83);
+}
+.screen--card .famecard .famecard-ring,
+.screen--card .famecard.metal-legend .famecard-ring {
+  background:linear-gradient(145deg,#15161a,color-mix(in srgb,var(--rar) 26%,#1c2025),#0a0b0e 76%);
+}
+.screen--card .famecard .famecard-inner{
+  border-radius:15px;min-height:421px;
+  background:
+    radial-gradient(ellipse 52% 36% at 50% 22%,color-mix(in srgb,var(--rar) 11%,#111218),transparent 92%),
+    linear-gradient(180deg,#090b10 0%,#101115 33%,#0c0b10 70%,#07080b 100%);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--fc-light) 22%,transparent),
+             inset 0 0 0 3px #07090c,
+             inset 0 0 0 4px color-mix(in srgb,var(--rar) 11%,transparent);
+}
+.screen--card:is(.cls-6,.cls-7,.cls-8,.cls-9) .famecard .famecard-inner{
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--fc-light) 48%,transparent),
+             inset 0 0 0 3px #090a0d,
+             inset 0 0 0 4px color-mix(in srgb,var(--rar) 25%,transparent);
+}
+.screen--card .famecard .famecard-photo{
+  height:310px;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 75%,#000c 90%,transparent 100%);
+  mask-image:linear-gradient(to bottom,#000 0%,#000 75%,#000c 90%,transparent 100%);
+}
+.screen--card .famecard-ambience{
+  opacity:.68;
+  background:
+    radial-gradient(ellipse 32% 22% at 18% 24%,color-mix(in srgb,var(--rar) 13%,transparent),transparent 85%),
+    radial-gradient(ellipse 28% 24% at 85% 15%,color-mix(in srgb,var(--fc-light) 8%,transparent),transparent 87%),
+    radial-gradient(ellipse 42% 10% at 50% 52%,color-mix(in srgb,var(--rar) 18%,transparent),transparent 95%),
+    linear-gradient(180deg,transparent 0 60%,#08090b72 73%,#08090be8 92%);
+}
+.screen--card .famecard-ambience::before{
+  opacity:var(--fc-haze);
+}
+.screen--card .famecard .famecard-facets{
+  opacity:var(--fc-facets);
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0 65%,#000 84% 100%);
+  mask-image:linear-gradient(to bottom,transparent 0 65%,#000 84% 100%);
+}
+.screen--card .famecard .famecard-glint{opacity:.10;}
+.screen--card .famecard .famecard-shine{opacity:.22;}
+.screen--card .famecard-class{font-size:9px;opacity:.82;top:53px;}
+.screen--card .famecard .famecard-plate{margin-top:231px;}
+.screen--card .famecard .famecard-name{
+  background:linear-gradient(180deg,#fff,#e7e5eb 66%,var(--fc-light));
+  -webkit-background-clip:text;background-clip:text;
+  filter:drop-shadow(0 2px 5px #000);
+}
+.screen--card .famecard .famecard-plate::before{
+  background:linear-gradient(180deg,transparent,#08090be8 25%,#08090bf0 76%,#08090b60);
+}
+.screen--card .famecard .famecard-foot::before{
+  background:linear-gradient(180deg,transparent,#08090bea 44%,#06070a 100%);
+}
+/* Upper tiers keep a visible hierarchy without outshining their central gemstone. */
+.screen--card:is(.cls-7,.cls-8,.cls-9) .famecard {
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--fc-light) 45%,transparent),
+     0 0 var(--fc-glow) color-mix(in srgb,var(--rar) 38%,transparent),
+     0 25px 38px #000c;
+}
+.screen--card.cls-9 .famecard{
+  box-shadow:0 0 0 1px #eaf2ffb0,0 0 12px #bddaff80,0 0 35px #e1cdf16e,0 25px 38px #000c;
+}
+.screen--card.cls-9 .famecard-collectors-frame{
+  animation:fc3-matte-prism 12s ease-in-out infinite alternate;
+}
+@keyframes fc3-matte-prism{
+  0%{filter:drop-shadow(0 0 2px #b4ebff6e);}
+  100%{filter:drop-shadow(0 0 5px #e9bdff8c);}
+}
+@media(max-width:370px){
+  .screen--card .famecard .famecard-inner{min-height:410px;}
+  .screen--card .famecard .famecard-plate{margin-top:221px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .screen--card.cls-9 .famecard-collectors-frame{animation:none;}
+}
+
+
+/* V80 content-safety patch.
+   Frame SVG is now a child of .famecard-inner, NOT an overlay sibling.
+   Keep decorative metal below all text, serials, accounts and controls. */
+.screen--card .famecard .famecard-inner > .famecard-collectors-frame {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:5;
+  pointer-events:none;
+}
+.screen--card .famecard .famecard-inner > .famecard-top {
+  position:relative;
+  z-index:20;
+  isolation:isolate;
+  min-height:28px;
+  gap:8px;
+  padding:2px 0 3px;
+}
+.screen--card .famecard .famecard-inner > .famecard-top::before {
+  content:"";
+  position:absolute;
+  z-index:-1;
+  inset:-4px -8px -5px;
+  border-radius:11px;
+  background:linear-gradient(90deg,#07080de8 0%,#08090be6 55%,#07080de9 100%);
+  box-shadow:0 2px 10px #0506076e;
+  pointer-events:none;
+}
+.screen--card .famecard .famecard-inner .famecard-brand {
+  position:relative;
+  z-index:2;
+  flex:0 0 auto;
+  white-space:nowrap;
+}
+.screen--card .famecard .famecard-inner .famecard-serial {
+  position:relative;
+  z-index:2;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  max-width:min(67%,175px);
+  min-width:0;
+  flex:0 1 auto;
+  padding:5px 7px;
+  color:#fff;
+  font-size:9px;
+  text-shadow:0 1px 3px #000;
+  background:rgba(5,6,10,.9);
+  border:1px solid color-mix(in srgb,var(--fc-light) 39%,transparent);
+}
+.screen--card .famecard .famecard-inner > .famecard-class {
+  z-index:16;
+  top:60px;
+}
+.screen--card .famecard .famecard-inner > .famecard-plate {
+  z-index:18;
+}
+.screen--card .famecard .famecard-inner > .famecard-foot {
+  z-index:18;
+}
+.screen--card .famecard .famecard-inner > .famecard-shine { z-index:4; }
+.screen--card .famecard .famecard-inner > .famecard-ambience { z-index:2; }
+.screen--card .famecard .famecard-inner > .famecard-photo { z-index:1; }
+/* Ensure input in actual card remains interactive (decorations never catch clicks). */
+.screen--card .famecard .famecard-inner .famecard-insta,
+.screen--card .famecard .famecard-inner .famecard-accts,
+.screen--card .famecard .famecard-inner .seal {position:relative;z-index:2;}
+@media(max-width:390px) {
+  .screen--card .famecard .famecard-inner > .famecard-top {gap:5px;}
+  .screen--card .famecard .famecard-inner .famecard-brand {font-size:15px;}
+  .screen--card .famecard .famecard-inner .famecard-serial {font-size:8px;padding:4px 5px;max-width:68%;}
+}
+
+
+/* Fame V82 — production card: V81-approved exterior casing.
+   The card itself is unchanged; only an OUTSIDE shell is added.
+   The SVG masks out the central rectangle, so metal never overlaps card data. */
+.screen--card .card-wrap{
+  padding:0 clamp(12px,4vw,24px);
+  overflow:visible;
+}
+.screen--card .flip {
+  width:100%;
+  max-width:334px;
+  overflow:visible;
+  transform-style:preserve-3d;
+}
+.screen--card .collector-shell.flip-front{
+  box-sizing:border-box;
+  width:100%;
+  position:relative;
+  isolation:isolate;
+  padding:16px;
+  margin:0;
+  overflow:visible;
+  transform:translateZ(.1px);
+  -webkit-backface-visibility:hidden;
+  backface-visibility:hidden;
+}
+.screen--card .collector-shell > .collector-outside {
+  position:absolute;
+  inset:0;
+  z-index:4;
+  pointer-events:none;
+  -webkit-user-select:none;
+  user-select:none;
+}
+.screen--card .collector-shell > .collector-outside .famecard-outside-svg {
+  position:absolute;
+  inset:0;
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+  pointer-events:none;
+  opacity:.85;
+  filter:drop-shadow(0 0 2px color-mix(in srgb,var(--rar) 19%,transparent));
+}
+.screen--card:is(.cls-7,.cls-8,.cls-9) .collector-shell > .collector-outside .famecard-outside-svg{
+  filter:drop-shadow(0 0 4px color-mix(in srgb,var(--rar) 27%,transparent));
+}
+.screen--card:is(.cls-8,.cls-9) .collector-shell > .collector-outside .famecard-outside-svg{opacity:1;}
+.screen--card .collector-shell > .famecard,
+.screen--card .collector-shell > .famecard.metal-gold,
+.screen--card .collector-shell > .famecard.metal-rose,
+.screen--card .collector-shell > .famecard.metal-legend{
+  position:relative;
+  z-index:1;
+  box-sizing:border-box;
+  width:100%;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  border-radius:14px;
+  background:#0d1014;
+  animation:none;
+  box-shadow:0 14px 28px #000c,0 0 0 1px #0b0b0c;
+}
+.screen--card .collector-shell .famecard .famecard-ring{
+  position:absolute;
+  z-index:0;
+}
+.screen--card .collector-shell .famecard .famecard-inner{
+  box-sizing:border-box;
+  width:100%;
+  min-height:421px;
+  border-radius:13px;
+  margin:0;
+  padding-left:20px;
+  padding-right:20px;
+  box-shadow:none;
+}
+.screen--card .collector-shell .famecard .famecard-top{
+  position:relative;
+  z-index:20;
+  gap:7px;
+  align-items:center;
+  padding:2px 0;
+}
+.screen--card .collector-shell .famecard .famecard-serial{
+  z-index:21;
+  min-width:0;
+  max-width:66%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:8.5px;
+}
+.screen--card .collector-shell .famecard .famecard-brand{
+  z-index:21;
+  flex-shrink:0;
+  white-space:nowrap;
+}
+.screen--card .collector-shell .famecard .famecard-class{
+  z-index:17;top:59px;
+}
+.screen--card .collector-shell .famecard .famecard-photo{z-index:1;}
+.screen--card .collector-shell .famecard .famecard-ambience{z-index:2;}
+.screen--card .collector-shell .famecard .famecard-glint,
+.screen--card .collector-shell .famecard .famecard-shine{z-index:4;}
+.screen--card .collector-shell .famecard .famecard-plate,
+.screen--card .collector-shell .famecard .famecard-foot{
+  position:relative;
+  z-index:20;
+}
+.screen--card .collector-shell .famecard .famecard-foot{margin-top:auto;}
+/* The reversed back covers the shell footprint. The old neon ring does not leak into the new premium bezel. */
+.screen--card .flip > .cardback.flip-back{
+  box-sizing:border-box;
+  inset:0;
+  border-radius:21px;
+  border:2px solid color-mix(in srgb,var(--rar) 30%,#a2a9ae);
+  background:radial-gradient(ellipse at 50% 38%,#202129,#09090e 76%);
+  box-shadow:inset 0 0 0 3px #111116,0 10px 26px #000a,
+    0 0 22px color-mix(in srgb,var(--rar) 23%,transparent);
+}
+@media(max-width:390px) {
+  .screen--card .card-wrap {padding:0 10px;}
+  .screen--card .collector-shell.flip-front{padding:13px;}
+  .screen--card .collector-shell .famecard .famecard-brand{font-size:15px;}
+  .screen--card .collector-shell .famecard .famecard-serial{font-size:8px;padding:4px 5px;max-width:68%;}
+  .screen--card .collector-shell .famecard .famecard-inner{min-height:410px;padding-left:15px;padding-right:15px;}
+  .screen--card .collector-shell .famecard .famecard-plate{margin-top:221px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .screen--card .collector-shell > .collector-outside .famecard-outside-svg{
+    animation:none;filter:none;
+  }
+}

@@ -43,46 +43,51 @@ export const RARITIES = [
 ];
 RARITIES.forEach((r) => { r.label = t(r.label); r.item = t(r.item); });
 
-// Edelstein-Stufen: Stufe 1 ab 1 €, danach kommt am Anfang alle 5 € ein neuer Stein
-// (5, 10, 15 …). Sobald 5 € zu wenig werden, wachsen die Schritte gleichmäßig (Faktor q)
-// bis zum Diamanten bei 250.000 €. Danach die Legenden von 300.000 € bis 1 Mio. €.
-// Grenzen gut lesbar gerundet: unter 100 € auf 5 €, unter 1.000 € auf 10 €, sonst zwei Stellen.
+// Edelstein-Stufen bleiben immer in ihrer bisherigen Reihenfolge (1..99).
+// Die zehn vorhandenen Euro-Klassengrenzen bleiben unverändert. Innerhalb jeder
+// Klasse verteilen wir die Freischaltwerte gleichmäßig auf ihre eigenen Steine:
+// 8 Klassen mit je 11 Steinen, Gold mit 10, Diamant-Holo exklusiv mit Stein 99.
+// Hinweis: Bisherige Freischaltpreise ändern sich gegenüber V76; historische
+// Karten bleiben über ihre gem-{stage}-ID weiterhin demselben Stein zugeordnet.
+// TOP_AMOUNT bleibt als historischer exportierter Referenzwert erhalten, steuert
+// seit V77 aber keine Freischaltkurve mehr.
 export const TOP_AMOUNT = 250_000;
-const LEGEND_FROM = 300_000;
-const LEGEND_TO = 1_000_000;
 const STEP = 5;
+const CLASS_TIER_COUNTS = [11, 11, 11, 11, 11, 11, 11, 11, 10, 1];
+const FIRST_CLASS_MINS = [1, 5, 10, 15, 20, 30, 40, 50, 65, 80, 95];
 function twoDigits(v) {
   const p = 10 ** Math.max(0, Math.floor(Math.log10(v)) - 1);
   return Math.round(v / p) * p;
 }
 const nice = (v) => (v < 100 ? Math.round(v / 5) * 5 : v < 1000 ? Math.round(v / 10) * 10 : twoDigits(v));
-// Die Preiskurve ist fest (89 Stufen bis 250.000 €, dann 10 bis 1 Mio. €) – unabhängig davon,
-// wie viele Steine Sorten bzw. Legenden sind. So bleiben die Beträge je Stufe stabil.
-const BASE = 89;
-const LEGENDS = GEM_LIST.length - BASE;
-const baseCurve = (q) => {
-  const a = [1, STEP];
-  for (let i = 2; i < BASE; i++) a.push(Math.max(a[i - 1] + STEP, a[i - 1] * q));
-  return a;
-};
-// Wachstumsfaktor so wählen, dass der Diamant (letzter Basisstein) genau bei TOP_AMOUNT liegt
-let qLo = 1, qHi = 2;
-for (let k = 0; k < 50; k++) {
-  const q = (qLo + qHi) / 2;
-  if (baseCurve(q)[BASE - 1] > TOP_AMOUNT) qHi = q; else qLo = q;
+if (CLASS_TIER_COUNTS.length !== CLASSES.length
+  || CLASS_TIER_COUNTS.reduce((sum, count) => sum + count, 0) !== GEM_LIST.length) {
+  throw new Error('Fame: Anzahl der Edelsteine passt nicht zur festen Klassenverteilung (99).');
 }
-const mins = baseCurve(qLo).map((v, i) => (i < 2 ? v : nice(v)));
-for (let i = 0; i < LEGENDS; i++) {
-  mins.push(twoDigits(LEGEND_FROM * (LEGEND_TO / LEGEND_FROM) ** (i / (LEGENDS - 1))));
+const mins = [];
+for (let cls = 0; cls < CLASSES.length; cls++) {
+  const count = CLASS_TIER_COUNTS[cls];
+  const from = Math.max(MIN_AMOUNT, CLASSES[cls].from);
+  const nextFrom = CLASSES[cls + 1]?.from;
+  if (cls === 0) {
+    mins.push(...FIRST_CLASS_MINS);
+    continue;
+  }
+  if (nextFrom === undefined) {
+    // Die letzte Klasse startet exakt bei 1 Mio. € und enthält nur Stein 99.
+    mins.push(from);
+    continue;
+  }
+  for (let i = 0; i < count; i++) {
+    // Gleichmäßige Abstandsschritte *innerhalb* der festen Euro-Klasse.
+    // Rundungen bleiben lesbar und überschreiten nie die nächste Klassengrenze.
+    const raw = from + ((nextFrom - from) * i) / count;
+    const previous = mins[mins.length - 1] ?? 0;
+    const amount = i === 0 ? from
+      : Math.min(nextFrom - STEP, Math.max(previous + STEP, nice(raw)));
+    mins.push(amount);
+  }
 }
-// An jeder Klassengrenze (100 €, 500 €, 1.000 € …) beginnt genau ein Stein: Der nächstgelegene
-// Stein wird auf die Grenze gesetzt, damit die Farbe exakt dort wechselt.
-for (const { from } of CLASSES.slice(1)) {
-  let best = 2;
-  for (let i = 2; i < mins.length; i++) if (Math.abs(mins[i] - from) < Math.abs(mins[best] - from)) best = i;
-  mins[best] = from;
-}
-for (let i = 2; i < mins.length; i++) mins[i] = Math.max(mins[i], mins[i - 1] + STEP);
 
 // Akzentfarbe der Card aus der Steinfarbe: zu dunkle Farben aufhellen, Weiß wird Platin.
 // Dazu das Metall des Rahmens passend zur Farbe.
