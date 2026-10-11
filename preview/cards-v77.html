@@ -3,181 +3,218 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Fame – Luxury Collector Cards V2 · Testlabor</title>
+<meta name="theme-color" content="#0a0911">
+<title>Fame · Collector Cards · Zehn Luxusklassen</title>
 <link rel="stylesheet" href="../css/app.css">
 <link rel="stylesheet" href="../css/card-collection-v77.css">
 <style>
-  html,body { min-height:100%;height:auto;overflow:auto; }
-  body.preview-page { display:block; background:radial-gradient(ellipse at 50% 0%,#25212f,#08080d 75%);color:#f9f6fb;font-family:"Source Code Pro",monospace; }
-  .preview-shell { max-width:860px;padding:26px 16px 65px;margin:0 auto; }
-  .preview-head { text-align:center;margin:0 auto 22px; }
-  .preview-head h1 {font:700 clamp(26px,5vw,37px)/1.1 "Cormorant Garamond",Georgia,serif;margin:0 0 10px;color:#fff;}
-  .preview-head p {color:#c2bbca;font:12px/1.7 "Source Code Pro",monospace;max-width:660px;margin:auto;}
-  .preview-tabs {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:20px 0;}
-  .preview-tabs button {background:#15121b;color:#e9e1ec;border:1px solid #484050;border-radius:10px;padding:10px 4px;cursor:pointer;font:700 11px/1.45 "Source Code Pro",monospace;min-width:0;}
-  .preview-tabs button span {display:block;font-size:9px;opacity:.75;font-weight:400;}
-  .preview-tabs button .tier-count {display:block;margin-top:5px;font:500 8px/1.2 'Source Code Pro',monospace;opacity:.77;}
-  .preview-tabs button[aria-pressed="true"] {border-color:var(--color);box-shadow:inset 0 0 0 1px var(--color),0 0 13px color-mix(in srgb,var(--color) 40%,transparent);color:#fff;}
-  .preview-layout {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,360px);gap:30px;align-items:center;}
-  .preview-details h2 {font:700 28px "Cormorant Garamond",Georgia,serif;margin:8px 0 10px;}
-  .preview-details p {color:#c6bdc9;font:12px/1.75 "Source Code Pro",monospace;}
-  .preview-stat {margin:14px 0 22px;display:grid;gap:8px;font-size:12px;}
-  .preview-stat div {display:flex;justify-content:space-between;gap:16px;border-bottom:1px solid #3f3546;padding-bottom:9px;}
-  .preview-stat strong {text-align:right;color:#fff;font-size:11px;}
-  .preview-details label {display:block;color:#ccc0d2;margin:20px 0 7px;font-size:11px;font-weight:700;}
-  .preview-details select {width:100%;border:1px solid #6b5c73;color:#fff;background:#19151e;padding:11px;border-radius:8px;font-size:12px;}
-  .preview-actions {display:flex;gap:10px;margin-top:20px;}
-  .preview-actions button {flex:1;border:1px solid #7a6b83;border-radius:9px;background:#211a28;color:white;padding:12px;cursor:pointer;font-weight:700;}
-  .preview-stage {--rar:#a3a3ab;--lux:0;width:100%;max-width:360px;min-height:532px;border-radius:30px;padding:25px 0!important;display:flex;justify-content:center;align-items:center;position:relative;margin:0 auto;overflow:visible;}
-  .preview-stage .card-wrap {width:100%;margin:0;padding:0 27px;}
-  .preview-stage .flip {max-width:300px;cursor:default;}
-  .preview-stage .famecard {width:100%;}
-  .preview-stage .famecard-brand {white-space:nowrap;}
-  .preview-stage .famecard .famecard-foot {align-items:center;}
-  .preview-note {text-align:center;font:10px/1.65 "Source Code Pro",monospace;color:#938799;margin:26px auto;max-width:640px;}
-  @media (max-width:670px) {.preview-layout{display:flex;flex-direction:column-reverse;gap:20px;}.preview-details{width:100%;max-width:400px}.preview-tabs{grid-template-columns:repeat(5,1fr)}.preview-stage{max-width:360px;min-height:515px}.preview-shell{padding:18px 12px 50px;}}
-
-  /* V2 presentation: comparison gallery and true live animated hero card */
-  body.preview-page{background:radial-gradient(ellipse 55% 28% at 50% 0%,#322239,#07070b 77%);}
-  .preview-shell{max-width:1050px;padding:30px 18px 65px;}
-  .preview-head h1{font-size:clamp(32px,5vw,48px);letter-spacing:-.02em;}
-  .preview-head:before{content:"FAME / COLLECTOR SERIES";display:block;font:700 10px/1.6 "Source Code Pro",monospace;letter-spacing:.25em;color:#dbc4ef;margin-bottom:10px;}
-  .preview-head p{max-width:630px;font-size:12px;}
-  .preview-tabs button{border-radius:12px;background:linear-gradient(155deg,#231b27,#0b0a0e);min-height:46px;}
-  .preview-tabs button[aria-pressed="true"]{background:linear-gradient(155deg,color-mix(in srgb,var(--color) 22%,#241522),#0a0b0e);}
-  .comparison{margin:16px 0 30px;}
-  .comparison-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:8px;}
-  .comparison-item{position:relative;width:100%;aspect-ratio:.70;background:linear-gradient(135deg,#eee,var(--clr) 44%,#fff 60%,var(--clr) 88%);padding:3px;border:0;border-radius:10px;box-shadow:0 8px 14px #000a;cursor:pointer;min-width:0;}
-  .comparison-item[aria-pressed="true"]{outline:2px solid #fff;outline-offset:3px;transform:translateY(-3px);}
-  .mini-frame{display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;height:100%;border-radius:7px;background:radial-gradient(ellipse at 50% 30%,color-mix(in srgb,var(--clr) 45%,#0c0a10),#09090b 72%);box-shadow:inset 0 0 0 calc(var(--index) * .14px) var(--clr);}
-  .mini-gem{font-size:clamp(14px,2.8vw,31px);font-family:Georgia,serif;background:linear-gradient(135deg,#fff,var(--clr),#fff);background-clip:text;color:transparent;filter:drop-shadow(0 0 8px var(--clr));}
-  .mini-class{position:absolute;left:1px;right:1px;bottom:6px;overflow-wrap:anywhere;font:700 clamp(7px,.7vw,9px)/1.1 "Source Code Pro",monospace;color:#fff;}
-  .comparison-item:nth-child(n+4) .mini-frame{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--clr) 65%,#fff);}
-  .comparison-item:nth-child(n+7) .mini-frame:after{content:"✦";position:absolute;top:4px;left:50%;transform:translateX(-50%);color:#fff6d1;filter:drop-shadow(0 0 6px var(--clr));}
-  .comparison-item:nth-child(9){box-shadow:0 0 15px #ffdc7c99;}
-  .comparison-item:nth-child(10){background:conic-gradient(#ffe1ed,#a1e8ff,#fff9c4,#c9ffe5,#e0baff,#ffe1ed);box-shadow:0 0 17px #a8e8ff99;}
-  .compare-hint{font:10px/1.5 "Source Code Pro",monospace;color:#a99bac;text-align:center;margin:14px 0 0;}
-  .preview-layout{grid-template-columns:minmax(0,1fr) minmax(0,370px);align-items:start;gap:38px;}
-  .preview-stage{min-height:540px;background:transparent;}
-  .preview-stage .card-wrap{padding:0 21px;}
-  .preview-details h2{font-size:34px;}
-  .motion-line{padding:10px 12px;margin:17px 0;background:#211829;border:1px solid #5c456c;border-radius:9px;color:#f3e8ff;font:700 11px/1.35 "Source Code Pro",monospace;}
-  .motion-line label{cursor:pointer;display:flex;align-items:center;gap:10px;}
-  .motion-line input{width:17px;height:17px;accent-color:#b58bfa;}
-  .preview-details{padding-top:12px;}
-  .preview-note{margin-top:40px;}
-  @media(max-width:670px){.preview-shell{padding:22px 12px 46px}.comparison-grid{grid-template-columns:repeat(5,1fr);gap:9px}.mini-gem{font-size:30px}.mini-class{font-size:9px}.preview-layout{display:flex;flex-direction:column-reverse;gap:28px;align-items:stretch}.preview-details{max-width:none}.preview-stage{min-height:535px;max-width:370px}.preview-head h1{font-size:36px}}
-
+:root{color-scheme:dark;}
+html,body{min-height:100%;height:auto;overflow:visible;margin:0;}
+body.preview-page{
+  display:block;color:#fbf7ff;font-family:Inter,system-ui,sans-serif;
+  background:
+    radial-gradient(ellipse 48% 25% at 50% 2%,#323044,#0c0913 78%),
+    radial-gradient(ellipse 48% 28% at 50% 98%,#2b1c31,transparent 70%),#09080e;
+}
+body.preview-page::before{
+  content:"";pointer-events:none;position:fixed;z-index:-1;inset:0;
+  background:radial-gradient(ellipse 20% 30% at 5% 45%,#3b174633,transparent),radial-gradient(ellipse 24% 28% at 93% 30%,#16295455,transparent);
+}
+button,select{font:inherit;}button{cursor:pointer;}
+.lab{width:100%;max-width:1190px;padding:30px 24px 52px;margin:auto;}
+.lab-head{text-align:center;padding:2px 12px 22px;}
+.lab-eyebrow{font:700 10px/1.3 "Source Code Pro",monospace;letter-spacing:.27em;color:#d3c1eb;margin:0 0 13px;}
+.lab-head h1{margin:0 0 11px;font:700 clamp(32px,5vw,51px)/1 "Cormorant Garamond",Georgia,serif;letter-spacing:.005em;color:#fff;}
+.lab-head p{margin:0 auto;max-width:740px;font:12px/1.65 "Source Code Pro",monospace;color:#bdb0c9;}
+.status{margin:12px auto 0;display:inline-block;padding:6px 11px;border-radius:20px;border:1px solid #7c688d;color:#d8c9e0;font:700 10px "Source Code Pro",monospace;}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 365px;gap:31px;align-items:start;}
+.gallery{min-width:0;}
+.gallery-head{margin:0 0 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.gallery-head h2{margin:0;color:#fff;font:700 23px "Cormorant Garamond",Georgia,serif;}
+.gallery-head span{font:10px "Source Code Pro",monospace;color:#a99cac;}
+.tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:15px 10px;}
+.tile{border:0;background:transparent;color:#fff;min-width:0;display:block;text-align:center;padding:5px;border-radius:11px;}
+.tile:hover,.tile:focus-visible{outline:1px solid #9d8fa6;outline-offset:1px;}
+.tile[aria-pressed="true"]{outline:2px solid #fff;outline-offset:0;box-shadow:0 0 22px color-mix(in srgb,var(--rar) 25%,transparent);}
+.tile .tile-class{display:block;font:700 11px/1.2 "Source Code Pro",monospace;letter-spacing:.04em;color:var(--rar);margin:0 0 7px;text-shadow:0 0 9px color-mix(in srgb,var(--rar) 60%,transparent);}
+.tile .tile-caption{display:block;color:#bdb5c1;font:10px/1.4 "Source Code Pro",monospace;margin:8px 0 0;}
+.mini-collector{
+  isolation:isolate;position:relative;
+  width:100%;max-width:142px;aspect-ratio:300 / 430;
+  margin:auto;overflow:hidden;padding:14px 10px 13px;
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+  border-radius:15px;
+  background:
+    radial-gradient(ellipse at 50% 27%,color-mix(in srgb,var(--rar) 37%,#0a0d17),#08070c 61%),
+    #07070b;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--rar) 35%,transparent),0 0 13px color-mix(in srgb,var(--rar) 30%,transparent),0 12px 17px #000b;
+}
+.tile[data-cls="8"] .mini-collector{box-shadow:0 0 11px #e9b253a1,0 0 25px #e9b25368,0 12px 17px #000c;}
+.tile[data-cls="9"] .mini-collector{box-shadow:0 0 14px #c4cbffa6,0 0 24px #e7b3ffa6,0 12px 17px #000c;}
+.mini-collector .famecard-collectors-frame{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none;}
+.mini-brand{font:800 11px/1 "Source Code Pro",monospace;align-self:flex-start;margin-left:2px;position:relative;z-index:3;text-shadow:0 1px 4px #000;}
+.mini-gem-area{position:relative;z-index:1;width:100%;min-height:0;flex:1;display:grid;place-items:center;}
+.mini-gem-area::before{content:"";position:absolute;inset:19% 2%;background:radial-gradient(ellipse,color-mix(in srgb,var(--rar) 33%,transparent),transparent 72%);}
+.mini-gem-area .collector-gem-thumbnail{display:block;position:relative;width:112%;max-width:none;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--rar) 50%,transparent));animation:mini-sheen 6s ease-in-out infinite alternate;}
+@keyframes mini-sheen{0%{transform:translateY(3px) rotate(-3deg);}100%{transform:translateY(-3px) rotate(2deg);}}
+.mini-label{z-index:3;position:relative;display:block;width:100%;max-height:45px;overflow:hidden;text-wrap:balance;font:700 clamp(10px,1.2vw,14px)/1 "Cormorant Garamond",Georgia,serif;color:#fff;text-shadow:0 2px 3px #000;}
+.mini-base{position:relative;z-index:3;display:block;width:70%;height:1px;margin:6px 0 0;background:linear-gradient(90deg,transparent,var(--rar),transparent);}
+.mini-dot{position:absolute;right:12px;bottom:12px;border-radius:100%;width:13px;height:13px;background:conic-gradient(#ffe0f7,#bfe7ff,#fff1c7,#b7ffdf,#ffe0f7);z-index:3;}
+.explain{padding:17px 18px;margin:22px 0 0;border:1px solid #4a3d53;border-radius:14px;background:linear-gradient(160deg,#1c1724,#0f0d13);}
+.explain strong{font:700 23px "Cormorant Garamond",Georgia,serif;color:#fff;}
+.explain p{color:#c0b2c8;font:11px/1.6 "Source Code Pro",monospace;margin:8px 0 0;}
+.explain .progress{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;margin:17px 0 5px;}
+.explain .progress i{height:5px;background:var(--c);border-radius:3px;}
+.viewer{position:sticky;top:12px;min-width:0;}
+.viewer-top{display:flex;align-items:baseline;justify-content:space-between;padding:0 8px;margin:0 0 3px;gap:10px;}
+.viewer-top h2{font:700 24px/1 "Cormorant Garamond",Georgia,serif;margin:0;color:#fff;}
+.viewer-top .live{display:flex;align-items:center;gap:5px;color:#b4ffc9;font:700 10px "Source Code Pro",monospace;white-space:nowrap;}
+.viewer-top .live i{width:6px;height:6px;background:#7df5a2;border-radius:50%;box-shadow:0 0 8px #7df5a2;}
+.viewer-aura{position:relative;}
+.viewer-aura::before{content:"";position:absolute;inset:7% 5%;pointer-events:none;background:radial-gradient(ellipse,color-mix(in srgb,var(--active) 28%,transparent),transparent 72%);}
+.preview-stage{--rar:#a3a3ab;--lux:0;width:100%;height:auto;min-height:492px;position:relative;display:flex;align-items:center;justify-content:center;padding:21px 0!important;margin:0;background:transparent!important;overflow:visible;}
+.preview-stage .card-wrap{margin:auto;width:100%;padding:0 29px;}
+.preview-stage .flip{width:100%;max-width:300px;cursor:default;}
+.preview-stage .famecard{width:100%;}
+.preview-stage .famecard .famecard-foot{align-items:flex-end;}
+.preview-stage .famecard-brand{white-space:nowrap;}
+.viewer-controls{padding:14px 15px;border:1px solid #57435f;background:#1b1522;border-radius:14px;margin:3px 10px 0;}
+.viewer-controls .row{display:flex;justify-content:space-between;align-items:center;gap:7px;}
+.viewer-controls strong{font:700 11px "Source Code Pro",monospace;color:#fff;}
+.viewer-controls label{cursor:pointer;display:inline-flex;align-items:center;gap:7px;color:#f4e8fc;font:700 10px "Source Code Pro",monospace;}
+.viewer-controls input[type="checkbox"]{accent-color:#b996ff;width:16px;height:16px;}
+.viewer-controls p{margin:8px 0 14px;color:#ac9bb5;font:10px/1.5 "Source Code Pro",monospace;}
+.viewer-controls select{width:100%;background:#100d15;color:#fff;padding:10px;border:1px solid #84718c;border-radius:8px;font-size:11px;}
+.nav-btns{display:flex;gap:8px;margin:12px 0 0;}
+.nav-btns button{flex:1;padding:11px 5px;color:#f9f3fa;background:#32273a;border-radius:8px;border:1px solid #7f608d;font:700 11px "Source Code Pro",monospace;}
+.lab-foot{text-align:center;color:#92869c;margin:29px auto 0;max-width:760px;font:10px/1.6 "Source Code Pro",monospace;}
+@media(max-width:980px){.layout{grid-template-columns:minmax(0,1fr) 355px;gap:12px}.tiles{gap:11px 4px}}
+@media(max-width:760px){.lab{padding:20px 12px 38px}.layout{grid-template-columns:1fr;gap:25px}.viewer{position:relative;top:auto;grid-row:1;max-width:400px;margin:0 auto;width:100%}.gallery{grid-row:2}.tiles{grid-template-columns:repeat(5,minmax(0,1fr));gap:10px 4px}.mini-collector{padding:10px 4px 8px;border-radius:8px}.tile .tile-class{font-size:9px}.tile .tile-caption{font-size:8px}.mini-label{font-size:10px}.mini-brand{font-size:8px}.mini-dot{right:5px;bottom:6px;width:8px;height:8px}.preview-stage .card-wrap{padding:0 23px}}
+@media(max-width:410px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 13px}.mini-collector{max-width:160px;padding:15px 11px 13px;border-radius:13px}.mini-brand{font-size:12px}.mini-label{font-size:15px}.mini-dot{right:10px;bottom:10px;width:12px;height:12px}.tile .tile-class{font-size:11px}.tile .tile-caption{font-size:10px}.preview-stage{min-height:490px}}
+@media(prefers-reduced-motion:reduce){.mini-gem-area .collector-gem-thumbnail{animation:none;}}
 </style>
 </head>
 <body class="preview-page">
-<main class="preview-shell">
-<header class="preview-head">
-<h1>Fame · Collector Cards V2</h1>
-<p>Die zweite, deutlich luxuriösere Designrichtung: echtes Fame-Stufensystem, prächtige Rahmen von Kiesel bis Diamant-Holo und animierte 3D-Steine. Nur im Testzweig.</p>
-</header>
-<nav class="preview-tabs" id="tabs" aria-label="Designklasse wählen"></nav>
-<section class="comparison" aria-label="Zehn Designklassen im direkten Vergleich"><div id="compare" class="comparison-grid"></div><p class="compare-hint">Tippe auf eine Miniatur, um die große animierte Karte dieser Klasse zu öffnen.</p></section>
-<div class="preview-layout">
-<section class="preview-details">
-<h2 id="classTitle">Kiesel</h2>
-<p id="classDescription">Klasse auswählen, um Rahmen und Effekte zu vergleichen.</p>
-<div class="motion-line"><label for="motion"><input type="checkbox" id="motion" checked> Stein dreht und wiegt sich sanft in 3D</label></div>
-<div class="preview-stat">
-<div><span>Fame-Klasse</span><strong id="classNumber">1 / 10</strong></div>
-<div><span>Ab Kontostand</span><strong id="classAmount">0 €</strong></div>
-<div><span>Edelsteinstufe</span><strong id="gemStage">1 / 99</strong></div>
-<div><span>Steine in dieser Klasse</span><strong id="classCount">11</strong></div>
-<div><span>Steine Nr.</span><strong id="classRange">1–11</strong></div>
-</div>
-<label for="gemPick">Edelstein innerhalb der Klasse</label>
-<select id="gemPick" aria-label="Stein auswählen"></select>
-<div class="preview-actions">
-<button id="previous" type="button">← Vorherige</button>
-<button id="next" type="button">Nächste →</button>
-</div>
-<p>Die Klasse steuert den Rahmen. Der jeweilige echte Stein, seine Farbe, sein Name und sein B/C-Spruch bleiben unabhängig davon erhalten.</p>
-</section>
-<section id="stage" class="screen--card cls-0 preview-stage" aria-label="Fame Kartenvorschau" style="--rar:#a3a3ab"></section>
-</div>
-<p class="preview-note">Nur Demo – keine Registrierung, keine Zahlungen, keine Änderungen an deinem Konto. Das echte Design ist in der Test-Branch eingebaut; die öffentliche Fame-App bleibt zunächst auf V76.</p>
+<main class="lab">
+  <header class="lab-head">
+    <p class="lab-eyebrow">FAM€ / COLLECTOR'S EDITION</p>
+    <h1>10 Klassen. 99 Steine.</h1>
+    <p>Premium-Kartendesign mit den echten Fame-Stufenfarben. Wähle eine Karte: Rechts siehst du den entsprechenden echten Edelstein im animierten 3D-Renderer.</p>
+    <span class="status">DESIGNENTWURF V3 · NUR TESTZWEIG</span>
+  </header>
+  <div class="layout">
+    <section class="gallery">
+      <div class="gallery-head"><h2>Alle zehn Klassen</h2><span>1–9 gleichmäßig · 10 exklusiv</span></div>
+      <div class="tiles" id="tiles" aria-label="Klassenvergleich"></div>
+      <div class="explain">
+        <strong id="classTitle">1 · Kiesel</strong>
+        <p id="classExplain"></p>
+        <p id="classNumbers"></p>
+        <div class="progress" id="progress"></div>
+        <p>Die <b>Rahmenfarbe</b> folgt der Klasse. Der <b>Edelstein</b> wird unverändert aus der originalen Liste der 99 Steine übernommen. Die kleinen Karten sind Illustrationen des Rahmens; die große Karte ist echte animierte 3D-Grafik.</p>
+      </div>
+    </section>
+    <aside class="viewer">
+      <div class="viewer-top"><h2 id="heroTitle">Kiesel · 1/10</h2><span class="live"><i></i>LIVE 3D</span></div>
+      <div class="viewer-aura" id="aura"><section class="screen--card cls-0 preview-stage" style="--rar:#a3a3ab" id="stage" aria-label="Aktive Fame Karte"></section></div>
+      <div class="viewer-controls">
+        <div class="row"><strong id="threshold">Ab 1 €</strong><label><input type="checkbox" id="moving" checked>Bewegung an</label></div>
+        <p id="stoneCount">11 Steine in dieser Klasse</p>
+        <select id="stone" aria-label="Edelstein auswählen"></select>
+        <div class="nav-btns"><button type="button" id="previous">← Zurück</button><button type="button" id="next">Weiter →</button></div>
+      </div>
+    </aside>
+  </div>
+  <footer class="lab-foot">Dein Konto und die öffentliche Fame-App bleiben unverändert. Version 76 ist zusätzlich als eigener Backup-Zweig gesichert. Die Freischaltbeträge und 99 Steinpositionen stammen aus dem V77-Testzweig.</footer>
 </main>
 <script type="module">
-import { CLASSES,TIERS } from '../js/data.js';
-import { createDiamond } from '../js/diamond3d.js';
-import { LOGO_TEXT, diamondSvg } from '../js/ui.js';
-import { facetArt,facetMask,svgUrl,holoStrength } from '../js/cardfx.js';
-let currentClass=0,currentStone=null,three=null;
-const $=(id)=>document.getElementById(id);
-const fmt=(v)=>new Intl.NumberFormat('de-DE').format(v);
-const explanation=[
-  'Gebürstetes Silber und dunkler Stein-Samt: eine bewusst schlichte Collector-Karte ohne schwere Ornamente.',
-  'Frisches Mint-Chrom mit glänzender Innenkante und zarten Gravuren. Erste sichtbare Luxusdetails.',
-  'Eisiges Aquamarin-Chrom mit doppelter Fassung, ersten Kristalldetails und verstärktem Studioschein.',
-  'Tiefblauer Saphir-Enamel-Look mit dickerem Doppelrahmen und präzise gravierten Ecken.',
-  'Amethyst-Luxus in Violett: kräftiger Metallschimmer, Ziergravuren und eingefasste Kristallakzente.',
-  'Rubellit und Roségold: glamouröse Fassung, prächtiger Glanz, elegante Edelsteinornamente.',
-  'Königliches Rubinrot mit dunklem Metallkern, schärferen Reliefkanten und markanten Edelsteinecken.',
-  'Feuer und geschmolzenes Gold: dicker Schmuckrahmen, stärkere Reflektionen und funkelnde Embleme.',
-  'Die Gold-Edition: schwere Goldfassung, mehrschichtige Innenkante, Filigranornamente und große Fassungsdiamanten.',
-  'Diamant-Holo ist die Collector-Endstufe: facettierte Kristallfassung, prismatisches Hologramm und heller Edelsteinglanz.'
-];
-function escapeHtml(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
-function cardMarkup(tier,cls){
-  const mask=svgUrl(facetMask(cls));
-  return '<div class="card-wrap"><div class="flip"><article class="famecard metal-'+escapeHtml(tier.metal)+(tier.legend?' is-legend':'')+' flip-front" style="--gem:'+tier.tone+'">'
-    +'<div class="famecard-ring" aria-hidden="true"></div>'
-    +'<div class="famecard-ornaments" aria-hidden="true"><i></i><i></i><i></i><i></i></div>'+etch
-    +'<div class="famecard-inner" style="--holo:'+holoStrength(cls)+'">'
-    +'<div class="famecard-facets" aria-hidden="true">'+facetArt(cls,'demo'+cls+'_')+'</div>'
-    +'<div class="famecard-holo" aria-hidden="true" style="-webkit-mask-image:url(\''+mask+'\');mask-image:url(\''+mask+'\')"></div>'
-    +'<div class="famecard-glint" aria-hidden="true" style="-webkit-mask-image:url(\''+mask+'\');mask-image:url(\''+mask+'\')"></div>'
-    +'<div class="famecard-photo"><div class="stage3d" id="diamond"></div></div>'+'<div class="famecard-ambience" aria-hidden="true"></div>'
-    +'<div class="famecard-class">STUFE '+(cls+1)+' · '+escapeHtml(CLASSES[cls].name)+'</div>'
-    +'<div class="famecard-top"><span class="famecard-brand">'+LOGO_TEXT+diamondSvg({filled:true,cls:'dia-inline'})+'</span><span class="famecard-serial">Nr. FM-PREVIEW-'+(cls+1)+'</span></div>'
-    +'<div class="famecard-plate"><h2 class="famecard-name">'+escapeHtml(tier.name)+'</h2><div class="famecard-rule" aria-hidden="true"><i></i>'+diamondSvg({filled:true})+'<i></i></div><p class="famecard-flavor">'+escapeHtml(tier.flavor||'')+'</p></div>'
-    +'<div class="famecard-foot"><span class="famecard-insta">♪ fame.app7</span><span class="seal">ECHT<br>FAME</span></div></div></article></div></div>';
-}
-const etch="<svg class=\"famecard-engraving\" viewBox=\"0 0 300 415\" preserveAspectRatio=\"none\" aria-hidden=\"true\">\n              <g class=\"fe-line\">\n                <path d=\"M8 48V18L18 8H55 M245 8H282L292 18V48 M8 365V397L18 407H55 M245 407H282L292 397V365\"/>\n                <path d=\"M12 98V150 M12 268V317 M288 98V150 M288 268V317\"/>\n              </g>\n              <g class=\"fe-strong\">\n                <path d=\"M15 47V23L23 15H52 M248 15H277L285 23V47 M15 370V391L23 399H52 M248 399H277L285 391V370\"/>\n                <path d=\"M10 184L16 193L10 202 M290 184L284 193L290 202\" />\n              </g>\n              <g class=\"fe-jewel\">\n                <path d=\"M150 5L156 12L150 19L144 12Z M150 397L156 404L150 411L144 404Z\"/>\n                <path d=\"M9 209L16 217L9 225L2 217Z M291 209L298 217L291 225L284 217Z\"/>\n              </g>\n              <g class=\"fe-filigree\">\n                <path d=\"M70 10L95 10L107 18 M230 10H205L193 18 M70 405H95L107 397 M230 405H205L193 397\"/>\n                <path d=\"M11 72L22 84L11 96 M289 72L278 84L289 96 M11 321L22 333L11 345 M289 321L278 333L289 345\"/>\n                <path d=\"M124 10H141 M159 10H176 M124 405H141 M159 405H176\"/>\n              </g>\n              <g class=\"fe-prism\">\n                <path d=\"M150 1L162 12L150 26L138 12Z M150 389L162 403L150 414L138 403Z\"/>\n                <path d=\"M3 217L15 202L27 217L15 232Z M273 217L285 202L297 217L285 232Z\"/>\n              </g>\n            </svg>";
-let motion=true;
-const tabs=CLASSES.map((c,i)=>'<button type="button" style="--color:'+c.color+'" data-cls="'+i+'" aria-pressed="false">'+(i+1)+'<span>'+escapeHtml(c.name)+'</span><small class="tier-count">'+TIERS.filter(t=>t.cls===i).length+' Steine</small></button>').join('');
-$('tabs').innerHTML=tabs;
-function render(){
-  const cls=currentClass,tier=currentStone;
-  $('classTitle').textContent=(cls+1)+' · '+CLASSES[cls].name;
-  $('classDescription').textContent=explanation[cls];
-  $('classNumber').textContent=(cls+1)+' / 10';
-  $('classAmount').textContent=fmt(CLASSES[cls].from)+' €';
-  $('gemStage').textContent=tier.stage+' / 99';
-  const classStones=TIERS.filter(t=>t.cls===cls);
-  $('classCount').textContent=String(classStones.length);
-  $('classRange').textContent=classStones[0].stage+'–'+classStones[classStones.length-1].stage;
-  [...document.querySelectorAll('[data-cls]')].forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.cls)===cls)));
-  [...document.querySelectorAll('[data-preview]')].forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.preview)===cls)));
-  if(three){three.dispose();three=null;}
-  $('stage').className='screen--card cls-'+cls+' preview-stage';
-  $('stage').style.setProperty('--rar',CLASSES[cls].color);
-  $('stage').innerHTML=cardMarkup(tier,cls);
-  try {
-    three=createDiamond($('diamond'),{gem:tier,rim:tier.tone,glow:.18,autoRotate:motion,interactive:false,photo:true});
-  } catch(e) { console.warn('WebGL-Vorschau nicht verfügbar',e);$('diamond').innerHTML='<div class="diamond-fallback">3D-Vorschau in diesem Browser nicht verfügbar.</div>'; }
-}
-function chooseClass(idx) {
-  currentClass=(idx+CLASSES.length)%CLASSES.length;
-  const matching=TIERS.filter(t=>t.cls===currentClass);
-  currentStone=matching[0]||TIERS[0];
-  $('gemPick').innerHTML=matching.map(t=>'<option value="'+t.stage+'">'+t.stage+' · '+escapeHtml(t.name)+'</option>').join('');
-  $('gemPick').value=String(currentStone.stage);
-  render();
-}
-$('tabs').addEventListener('click',e=>{const btn=e.target.closest('[data-cls]');if(btn)chooseClass(Number(btn.dataset.cls));});
-$('previous').onclick=()=>chooseClass(currentClass-1);
-$('next').onclick=()=>chooseClass(currentClass+1);
-$('gemPick').addEventListener('change',e=>{currentStone=TIERS.find(t=>t.stage===Number(e.target.value))||currentStone;render();});
-$('motion').addEventListener('change',e=>{motion=e.target.checked;render();});
-$('compare').addEventListener('click',e=>{const b=e.target.closest('[data-preview]');if(b)chooseClass(Number(b.dataset.preview));});
-$('compare').innerHTML=CLASSES.map((c,i)=>'<button type="button" class="comparison-item" data-preview="'+i+'" style="--clr:'+c.color+';--index:'+i+'"><span class="mini-frame"><span class="mini-gem">◆</span><span class="mini-class">'+(i+1)+' · '+escapeHtml(c.name)+'</span></span></button>').join('');
-chooseClass(0);
+import {CLASSES,TIERS} from '../js/data.js';
+import {createDiamond} from '../js/diamond3d.js';
+import {collectorFrameSvg,collectorGemThumbnailSvg} from '../js/cardframes.js';
+import {LOGO_TEXT,diamondSvg} from '../js/ui.js';
+import {facetArt,facetMask,svgUrl,holoStrength} from '../js/cardfx.js';
+(function startDemo(){
+  const $=(id)=>document.getElementById(id), num=n=>new Intl.NumberFormat("de-DE").format(n);
+  const escape=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const EXPL=[
+    "Gebürstetes Silber: schmale Lichtkante, keine Edelsteinornamente.",
+    "Mint-Chrom: erste polierte Fassungen und hellere Lichtlinien.",
+    "Eiskristall-Aquamarin: klarer Doppelrahmen und stärkere Metallkanten.",
+    "Royalblauer Saphir: geschliffene Konturen und tiefes Edelmetall.",
+    "Amethyst: Violett, filigrane Gravuren und ein deutlich aufwendigerer Rahmen.",
+    "Rubellit: Roségoldglanz, zusätzliche Kristallfassung und rosa Schmuckeffekte.",
+    "Rubin: sattes ROT, dunkles Luxusmetall, vier gefasste Eckdiamanten.",
+    "Feuer: ORANGE, massivere Metallkonturen und größere Edelsteine.",
+    "Gold: schweres GOLD mit symmetrischen Filigranornamenten und großen Kristallfassungen.",
+    "Diamant-Holo: die einzige Klasse für Stein 99, Cullinan I – maximaler prismatischer Schmuckrahmen."
+  ];
+  let cls=0,stone=null,moving=true,renderer=null;
+  function demoCard(tier,k){
+    const mask=svgUrl(facetMask(k));
+    const d=collectorFrameSvg(k);
+    return '<div class="card-wrap"><div class="flip"><article class="famecard metal-'+escape(tier.metal)+(tier.legend?' is-legend':'')+' flip-front" style="--gem:'+tier.tone+'">'
+      +'<div class="famecard-ring" aria-hidden="true"></div>'+d
+      +'<div class="famecard-inner" style="--holo:'+holoStrength(k)+'">'
+      +'<div class="famecard-facets" aria-hidden="true">'+facetArt(k,'fcDemo'+k+'_')+'</div>'
+      +'<div class="famecard-holo" style="-webkit-mask-image:url(\''+mask+'\');mask-image:url(\''+mask+'\')" aria-hidden="true"></div>'
+      +'<div class="famecard-glint" style="-webkit-mask-image:url(\''+mask+'\');mask-image:url(\''+mask+'\')" aria-hidden="true"></div>'
+      +'<div class="famecard-photo"><div class="stage3d" id="stone3d"></div></div>'
+      +'<div class="famecard-ambience" aria-hidden="true"></div>'
+      +'<div class="famecard-class">STUFE '+(k+1)+' · '+escape(CLASSES[k].name)+'</div>'
+      +'<div class="famecard-top"><span class="famecard-brand">'+LOGO_TEXT+diamondSvg({filled:true,cls:'dia-inline'})+'</span><span class="famecard-serial">Nr. FM-COLLECTOR-'+(k+1)+'</span></div>'
+      +'<div class="famecard-plate"><h2 class="famecard-name">'+escape(tier.name)+'</h2><div class="famecard-rule" aria-hidden="true"><i></i>'+diamondSvg({filled:true})+'<i></i></div><p class="famecard-flavor">'+escape(tier.flavor||'')+'</p></div>'
+      +'<div class="famecard-foot"><span class="famecard-insta">♪ fame.app7</span><span class="seal">ECHT<br>FAME</span></div>'
+      +'</div></article></div></div>';
+  }
+  const grouped=CLASSES.map((c,i)=>TIERS.filter(x=>x.cls===i));
+  if(grouped.some((g,i)=>g.length!==[11,11,11,11,11,11,11,11,10,1][i])){
+    $("classExplain").textContent="Warnung: Unerwartete Verteilung der 99 Steine.";
+    console.warn("Fame class mapping mismatch",grouped.map(g=>g.length));
+  }
+  $("progress").innerHTML=CLASSES.map(c=>'<i style="--c:'+c.color+'"></i>').join("");
+  $("tiles").innerHTML=CLASSES.map((c,i)=>{
+    const t=grouped[i][0];
+    return '<button type="button" class="tile" data-class="'+i+'" aria-pressed="false" style="--rar:'+c.color+'">'
+      +'<span class="tile-class">STUFE '+(i+1)+' · '+escape(c.name)+'</span>'
+      +'<span class="mini-collector"><span class="mini-brand">Fam€ ◇</span><span class="mini-gem-area">'+collectorGemThumbnailSvg(t)+'</span>'
+      +'<span class="mini-label">'+escape(t.name)+'</span><span class="mini-base"></span><span class="mini-dot"></span>'
+      +collectorFrameSvg(i)+'</span>'
+      +'<span class="tile-caption">'+grouped[i].length+' Steine · ab '+num(c.from||1)+' €</span>'
+      +'</button>';
+  }).join("");
+  function render(){
+    const c=CLASSES[cls],grp=grouped[cls];
+    $("heroTitle").textContent=c.name+' · '+(cls+1)+'/10';
+    $("classTitle").textContent='Stufe '+(cls+1)+' · '+c.name;
+    $("classExplain").textContent=EXPL[cls];
+    $("classNumbers").textContent='Steine '+grp[0].stage+'–'+grp[grp.length-1].stage+' · '+grp.length+' Steine · ab '+num(c.from||1)+' €';
+    $("threshold").textContent='Ab '+num(c.from||1)+' €';
+    $("stoneCount").textContent='Steine '+grp[0].stage+'–'+grp[grp.length-1].stage+' · '+grp.length+' in dieser Klasse';
+    [...document.querySelectorAll('[data-class]')].forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.class)===cls)));
+    if(renderer){renderer.dispose();renderer=null;}
+    $("stage").className='screen--card cls-'+cls+' preview-stage';
+    $("stage").style.setProperty('--rar',c.color);
+    $("aura").style.setProperty('--active',c.color);
+    $("stage").innerHTML=demoCard(stone,cls);
+    try{renderer=createDiamond($("stone3d"),{gem:stone,photo:true,autoRotate:moving,interactive:false,rim:stone.tone,glow:.28});}
+    catch(e){console.error("3D unavailable",e);$("stone3d").textContent="3D-Darstellung nicht verfügbar.";}
+  }
+  function pickClass(next){
+    cls=(next+CLASSES.length)%CLASSES.length;
+    const grp=grouped[cls];
+    stone=grp[0];
+    $("stone").innerHTML=grp.map(t=>'<option value="'+t.stage+'">'+t.stage+' · '+escape(t.name)+'</option>').join("");
+    $("stone").value=String(stone.stage);
+    render();
+  }
+  $("tiles").addEventListener('click',e=>{const btn=e.target.closest('[data-class]');if(btn)pickClass(Number(btn.dataset.class));});
+  $("previous").onclick=()=>pickClass(cls-1);
+  $("next").onclick=()=>pickClass(cls+1);
+  $("moving").onchange=e=>{moving=e.target.checked;render();};
+  $("stone").onchange=e=>{stone=TIERS.find(t=>t.stage===Number(e.target.value))||stone;render();};
+  window.addEventListener('pagehide',()=>{renderer?.dispose();renderer=null;});
+  pickClass(0);
+})();
 </script>
 </body>
 </html>
