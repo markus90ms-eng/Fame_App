@@ -1,12 +1,8 @@
 /*
- * Fame V91 — Startseiten-Edelstein: sanfter, sensorgesteuerter Hoehenversatz.
- * Nur der EXISTIERENDE 3D-Canvas schwebt; der Kreis, die Texte, Buttons,
- * alle Cards und jedes Theme bleiben optisch unveraendert.
+ * Fame V92 — Echte 3D-Neigung statt Bewegung des Edelstein-Canvas.
+ * Die Ober- und Unterseite wird im Three.js-Renderer durch X-Rotation sichtbar.
+ * Kein Layout-Eingriff; nur der bestehende iPhone-Freigabeknopf bleibt.
  */
-.screen--welcome .welcome-vault > .stage3d {
-  transform: translate3d(0, var(--home-gem-shift-y, 0px), 0);
-  will-change: transform;
-}
 
 /* Auf iPhones erscheint dies ausschliesslich bis zur Sensorfreigabe.
    Absolut positioniert: kein Einfluss auf die Anordnung der Startseite. */
