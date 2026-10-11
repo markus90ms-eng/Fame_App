@@ -21,7 +21,7 @@
   border-radius:19px;
   isolation:isolate;
   box-shadow:0 0 0 1px rgba(255,255,255,.09), 0 20px 45px rgba(0,0,0,.64),
-    0 0 38px color-mix(in srgb,var(--rar) calc(var(--card-shadow)*100%), transparent);
+    0 0 38px color-mix(in srgb,var(--rar) 22%, transparent);
 }
 .screen--card .famecard .famecard-ring {
   inset:0;
