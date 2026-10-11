@@ -1,0 +1,273 @@
+/*
+ * FAME V90 — DIAMOND LIQUID GLASS / 24K GOLD
+ *
+ * Design refinement for the EXISTING stage-10 app controls.
+ * No changes to stage 9, collectible cards, layout, or the stage-98 Ocean homage.
+ * A separate stylesheet makes this entire upgrade easy to remove/roll back.
+ *
+ * Material language: obsidian • polished gold • clear faceted diamond glass
+ * The user's existing tilt engine drives the highlights via --lx / --ly.
+ */
+
+/* White-gold inner spark with a deeper, warmer metallic frame around the real gem. */
+.screen.lux--holo:not(.hom):not(.screen--card) .vault-ring {
+  border-color:#fff1d5!important;
+  box-shadow:
+    0 0 0 2px #100e0c,
+    0 0 0 3px rgba(246,218,161,.76),
+    0 0 0 5px rgba(43,25,10,.96),
+    0 0 0 7px #c99339,
+    0 0 0 8px rgba(255,242,207,.56),
+    inset 0 0 0 3px rgba(14,11,9,.9),
+    inset 0 0 0 4px rgba(255,244,223,.43),
+    inset 0 0 18px rgba(245,195,103,.12),
+    0 0 25px rgba(255,206,112,.46),
+    0 0 64px rgba(217,150,52,.25)!important;
+}
+.screen.lux--holo:not(.hom):not(.screen--card) .vault-ring::after {
+  opacity:.95;
+  background:conic-gradient(from 8deg,
+    transparent 0 10%,#fffefa 10.5%,transparent 11.3% 36%,
+    rgba(255,235,183,.82) 36.5%,transparent 37.3% 64%,
+    #f9fbff 64.6%,transparent 65.4% 88%,
+    rgba(255,232,161,.92) 88.4%,transparent 89.4%);
+}
+.screen.lux--holo:not(.hom):not(.screen--card) .vault-glow {
+  background:radial-gradient(circle,
+    rgba(255,230,169,.22) 0%,
+    rgba(247,173,63,.18) 33%,
+    rgba(124,111,144,.06) 54%,
+    transparent 70%)!important;
+}
+
+/* APPLE-LIKE LIQUID GLASS, BUT FACETED AND GOLD-SET.
+   The real main action button keeps its size, text, click target and route. */
+.screen.lux--holo:not(.hom):not(.screen--card) .btn:not(:disabled) {
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  border:2px solid transparent!important;
+  border-radius:15px!important;
+  color:#221708!important;
+  background:
+    radial-gradient(ellipse 73% 95% at 13% 0%,
+      rgba(255,255,255,.93),rgba(255,251,239,.33) 43%,transparent 76%) padding-box,
+    linear-gradient(145deg,
+      rgba(255,248,224,.94) 0%,
+      rgba(247,216,153,.85) 24%,
+      rgba(216,163,74,.87) 45%,
+      rgba(255,245,221,.95) 68%,
+      rgba(199,141,50,.88) 100%) padding-box,
+    linear-gradient(120deg,
+      #fffcf0 0%,#ae7126 13%,#ffedbd 28%,
+      #fffef9 42%,#ba802a 60%,#fff2cb 79%,#a66a20 100%) border-box!important;
+  box-shadow:
+    inset 0 2px 2px rgba(255,255,255,.96),
+    inset 0 -3px 7px rgba(117,68,16,.22),
+    inset 2px 0 3px rgba(255,248,218,.68),
+    inset -2px 0 3px rgba(128,73,17,.26),
+    0 0 0 1px rgba(255,211,119,.67),
+    0 0 20px rgba(255,205,113,.34),
+    0 12px 26px rgba(0,0,0,.54)!important;
+  -webkit-backdrop-filter:blur(20px) saturate(1.85);
+  backdrop-filter:blur(20px) saturate(1.85);
+}
+
+/* Liquid optical dome: refracted light follows device orientation. */
+.screen.lux--holo:not(.hom):not(.screen--card) .btn:not(:disabled)::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  border-radius:inherit;
+  background:
+    radial-gradient(ellipse 89% 94% at calc(21% + var(--lx,0) * 13%) 1%,
+      rgba(255,255,255,.84),rgba(255,255,255,.29) 37%,transparent 68%),
+    linear-gradient(113deg,
+      transparent 27%,rgba(255,255,255,.09) 34%,
+      rgba(255,255,255,.55) 48%,rgba(255,246,218,.12) 56%,transparent 64%),
+    linear-gradient(180deg,rgba(255,255,255,.32),transparent 47%,rgba(111,67,12,.10));
+  background-size:100% 100%,265% 100%,100% 100%;
+  background-position:0 0,calc(50% - var(--lx,0) * 40%) 0,0 0;
+  opacity:.82;
+}
+
+/* Small diamond-cut corner facets; no extra icons, fake labels or click interception. */
+.screen.lux--holo:not(.hom):not(.screen--card) .btn:not(:disabled)::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  border-radius:inherit;
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.85),transparent 66%) top left/28px 24px no-repeat,
+    linear-gradient(225deg,rgba(255,247,216,.74),transparent 68%) top right/28px 24px no-repeat,
+    linear-gradient(45deg,rgba(255,229,178,.48),transparent 72%) bottom left/27px 21px no-repeat,
+    linear-gradient(315deg,rgba(255,255,255,.47),transparent 70%) bottom right/27px 21px no-repeat,
+    linear-gradient(90deg,transparent,rgba(255,255,255,.86),transparent) top 1px center/74% 1px no-repeat;
+  opacity:.9;
+}
+.screen.lux--holo:not(.hom):not(.screen--card) .btn:not(:disabled) span {
+  position:relative;
+  z-index:1;
+  color:#251906!important;
+  -webkit-text-fill-color:#251906;
+  text-shadow:0 1px 0 rgba(255,255,255,.35);
+  font-weight:800;
+  letter-spacing:.065em;
+}
+
+/* Three real overview tiles AND connect panel become optically thick crystal glass
+   with individually polished gold borders. Stage 9 stays matte Royal Gold. */
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.hub-tile,.connect-cta) {
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  border:2px solid transparent!important;
+  border-radius:19px!important;
+  color:#fff7e8!important;
+  background:
+    radial-gradient(ellipse 135% 80% at 12% -5%,
+      rgba(255,255,255,.26),rgba(255,252,240,.045) 47%,transparent 78%) padding-box,
+    linear-gradient(155deg,
+      rgba(91,72,56,.55) 0%,
+      rgba(37,32,29,.60) 26%,
+      rgba(10,13,17,.71) 54%,
+      rgba(50,39,25,.58) 100%) padding-box,
+    linear-gradient(123deg,
+      #fffef7 0%,
+      #dba646 13%,
+      #a86e22 25%,
+      #fff0bd 40%,
+      #f6f7ff 52%,
+      #ad772c 70%,
+      #ffe9b1 89%,
+      #fffdf5 100%) border-box!important;
+  box-shadow:
+    inset 0 2px 1px rgba(255,255,255,.75),
+    inset 0 -3px 6px rgba(114,76,31,.29),
+    inset 2px 0 2px rgba(255,248,235,.18),
+    inset -2px 0 4px rgba(255,229,164,.25),
+    0 0 0 1px rgba(255,211,122,.42),
+    0 0 17px rgba(247,179,71,.22),
+    0 11px 29px rgba(0,0,0,.59)!important;
+  -webkit-backdrop-filter:blur(26px) saturate(1.9) brightness(1.15);
+  backdrop-filter:blur(26px) saturate(1.9) brightness(1.15);
+}
+
+/* Refractive glass upper layer: a coherent dome + two diagonal crystal planes. */
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.hub-tile,.connect-cta)::before {
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  border-radius:inherit;
+  pointer-events:none;
+  opacity:.95!important;
+  background:
+    radial-gradient(ellipse 118% 76% at calc(15% + var(--lx,0) * 16%) calc(-12% + var(--ly,0) * 7%),
+      rgba(255,255,255,.45),rgba(255,255,255,.105) 42%,transparent 76%),
+    linear-gradient(151deg,
+      rgba(255,255,255,.26) 0 16%,
+      transparent 16.5% 57%,
+      rgba(255,236,190,.095) 59%,
+      transparent 64%),
+    linear-gradient(29deg,
+      transparent 0 37%,
+      rgba(244,246,255,.055) 40%,
+      transparent 44% 100%),
+    linear-gradient(111deg,
+      transparent 33%,rgba(255,255,255,.26) 47%,
+      rgba(249,232,197,.10) 51%,transparent 61%);
+  background-size:100% 100%,100% 100%,100% 100%,320% 100%;
+  background-position:0 0,0 0,0 0,calc(50% - var(--lx,0) * 45%) 0;
+  background-repeat:no-repeat;
+}
+
+/* Ultra-thin glass-cut perimeter and 4 refracted diamond-corner flashes. */
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.hub-tile,.connect-cta)::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  left:0;right:0;top:0;bottom:0;height:auto;
+  z-index:2;
+  pointer-events:none;
+  border-radius:inherit;
+  opacity:1;
+  background:
+    linear-gradient(135deg,rgba(255,255,255,.96),rgba(255,235,192,.06) 82%,transparent) top left/30px 29px no-repeat,
+    linear-gradient(225deg,rgba(255,251,240,.87),rgba(255,235,192,.07) 80%,transparent) top right/30px 29px no-repeat,
+    linear-gradient(45deg,rgba(242,211,151,.82),transparent 83%) bottom left/27px 27px no-repeat,
+    linear-gradient(315deg,rgba(255,255,255,.82),transparent 83%) bottom right/27px 27px no-repeat,
+    linear-gradient(90deg,transparent,rgba(255,255,255,.88),transparent) top 1px center/78% 1px no-repeat,
+    linear-gradient(90deg,transparent,rgba(235,189,104,.49),transparent) bottom 1px center/74% 1px no-repeat;
+}
+
+/* Content is above the refractive layer. Labels remain crisp and touchable. */
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.hub-tile,.connect-cta) > :not(.sparkle) {
+  position:relative;
+  z-index:3;
+}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.hub-tile b,.cc-txt b) {
+  color:#fffaef!important;
+  text-shadow:0 1px 10px rgba(0,0,0,.63),0 0 12px rgba(255,237,200,.18);
+}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.hub-tile small,.cc-txt small) {
+  color:#e8dccb!important;
+  text-shadow:0 1px 6px rgba(0,0,0,.7);
+}
+.screen.lux--holo:not(.hom):not(.screen--card) .hub-ico .ico {
+  stroke:#ffe6a8!important;
+  filter:drop-shadow(0 0 5px rgba(255,209,111,.48));
+}
+.screen.lux--holo:not(.hom):not(.screen--card) .cc-ics span {
+  background:rgba(20,20,22,.35);
+  border:1px solid rgba(255,229,172,.57)!important;
+  color:#ffebc3!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.29),0 0 7px rgba(255,199,108,.1);
+  -webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);
+}
+.screen.lux--holo:not(.hom):not(.screen--card) .cc-ics span.is-on {
+  background:linear-gradient(148deg,#fff9dc,#cca058)!important;
+  color:#281907!important;
+}
+
+/* Smaller interactive pills get the same white-gold glass finish. */
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.cc-pill,.acc-chip,.chip,.pf-go) {
+  border:1px solid rgba(255,243,210,.79)!important;
+  border-radius:10px;
+  background:
+    linear-gradient(155deg,rgba(255,252,234,.9),rgba(237,199,123,.91) 52%,rgba(178,124,47,.83))!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.86),
+    inset 0 -1px 0 rgba(116,73,14,.27),
+    0 3px 11px rgba(0,0,0,.3)!important;
+  color:#231908!important;
+}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.cc-pill,.acc-chip,.chip,.pf-go) span {
+  color:inherit!important;
+}
+
+/* Existing rare sparkle accents: crystalline, restrained and still accessible. */
+.screen.lux--holo:not(.hom):not(.screen--card) .sparkle {
+  z-index:4;
+  filter:drop-shadow(0 0 4px rgba(255,255,255,.85)) drop-shadow(0 0 8px rgba(247,210,136,.55));
+}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.btn,.hub-tile,.connect-cta):active {
+  filter:brightness(.94);
+}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.btn,.hub-tile,.connect-cta):focus-visible {
+  outline:2px solid #fff3d3;
+  outline-offset:4px;
+}
+
+/* The optical surfaces must also work on iOS without motion permission. */
+@media(prefers-reduced-motion:reduce) {
+  .screen.lux--holo:not(.hom):not(.screen--card) :is(.hub-tile,.connect-cta)::before,
+  .screen.lux--holo:not(.hom):not(.screen--card) .btn:not(:disabled)::before {
+    background-position:0 0,0 0,0 0,50% 0;
+  }
+}
