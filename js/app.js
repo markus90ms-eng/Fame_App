@@ -13,7 +13,7 @@ import {
 import { tick, plink, stageTick, classDrop, buzz, unlockAudio, buildup, boost, startTension, revealMusic, startCelebration, themeReveal, themeLoop, themeJingle, isMuted, setMuted } from './fx.js';
 import { createDiamond } from './diamond3d.js';
 import { facetArt, facetMask, svgUrl, holoStrength } from './cardfx.js';
-import { collectorFrameSvg } from './cardframes.js';
+import { outsideMetalFrameSvg } from './outerframe.js';
 import { particles } from './particles.js';
 import { isReady, connectRedirect, finishRedirect } from './connect.js';
 import * as auth from './auth.js';
@@ -1416,10 +1416,11 @@ function card() {
       <button class="sound-btn${isMuted() ? ' is-muted' : ''}" type="button" data-sound aria-label="${t('Ton an/aus')}" aria-pressed="${!isMuted()}">${icons.sound}</button>
       <div class="card-wrap" data-tiltwrap>
         <div class="flip" data-flip role="button" tabindex="0" aria-label="${hidden ? t('Karte aufdecken') : tier.name}">
-          <article class="famecard metal-${tier.metal}${tier.legend ? ' is-legend' : ''} flip-front" data-card style="--gem:${tier.tone}">
+          <div class="collector-shell flip-front">
+            <div class="collector-outside" aria-hidden="true">${outsideMetalFrameSvg(tier.cls)}</div>
+            <article class="famecard metal-${tier.metal}${tier.legend ? ' is-legend' : ''}" data-card style="--gem:${tier.tone}">
             <div class="famecard-ring" aria-hidden="true"></div>
             <div class="famecard-inner" style="--holo:${holoStrength(tier.cls)}">
-              ${collectorFrameSvg(tier.cls)}
               <div class="famecard-facets" aria-hidden="true">${facetArt(tier.cls, `fc${tier.cls}_`)}</div>
               <div class="famecard-holo" aria-hidden="true" style="-webkit-mask-image:url('${svgUrl(facetMask(tier.cls))}');mask-image:url('${svgUrl(facetMask(tier.cls))}')"></div>
               <div class="famecard-glint" aria-hidden="true" style="-webkit-mask-image:url('${svgUrl(facetMask(tier.cls))}');mask-image:url('${svgUrl(facetMask(tier.cls))}')"></div>
@@ -1443,7 +1444,8 @@ function card() {
                 <span class="seal" title="${t('Echtheitssiegel')}">${SEAL_TXT}</span>
               </div>
             </div>
-          </article>
+            </article>
+          </div>
           <div class="cardback flip-back" aria-hidden="true">
             <div class="cardback-pattern"></div>
             <div class="cardback-logo">${logo('md')}</div>
