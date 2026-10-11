@@ -218,25 +218,30 @@ function doubleCrown(outlinePts) {
 // Anders als die radiale Verformung des Rundbrillanten besitzen diese
 // Schliffe mehrere geschlossene Facettenringe mit eigenem Kronen-/Pavillonprofil.
 // Künstlerische Rekonstruktion: kein zertifizierter historischer Facettenplan.
-function legendaryFancyGeometry(spec) {
+function facetedFancyGeometry(spec) {
   const shape = spec.cut;
   const outline = OUTLINES[shape];
   if (!outline) return null;
   const points = outline(spec.ratio);
-  const count = 24; // gleiche Anzahl von Eckpunkten auf jedem Ring
+  const count = shape === 'marquise' ? 32 : 24; // gleiche Anzahl von Eckpunkten auf jedem Ring
   const sampled = Array.from({ length: count }, (_, i) => points[Math.floor(i * points.length / count)]);
   // Relative Abstände der Facettenringe, jeweils vom äußeren Gürtel aus.
   const profiles = {
     pear:    { table: 0.51, crown: 0.32, depth: 0.88 },
     oval:    { table: 0.55, crown: 0.28, depth: 0.84 },
     cushion: { table: 0.57, crown: 0.30, depth: 0.78 },
+    cushionSquare: { table: 0.58, crown: 0.30, depth: 0.80 },
+    marquise: { table: 0.49, crown: 0.29, depth: 0.88 },
   };
   const p = profiles[shape];
+  if (!p) return null;
+  // Steine mit niedrigerem Brechungsindex brauchen eine tiefere Pavillon-Geometrie.
+  const depth = p.depth * (1 + Math.max(0, 2.42 - (spec.ior ?? 2.42)) * 0.17);
   const rings = [
     [p.table, p.crown], [0.73, p.crown * 0.67],
     [0.88, p.crown * 0.34], [1.0, 0.028],
-    [1.0, -0.028], [0.86, -p.depth * 0.19],
-    [0.66, -p.depth * 0.46], [0.36, -p.depth * 0.79],
+    [1.0, -0.028], [0.86, -depth * 0.19],
+    [0.66, -depth * 0.46], [0.36, -depth * 0.79],
   ].map(([radius, y]) => sampled.map(([x, z]) => new THREE.Vector3(x * radius, y, z * radius)));
   const triangles = [];
   const add = (a, b, c) => triangles.push(a, b, c);
@@ -251,14 +256,15 @@ function legendaryFancyGeometry(spec) {
       else { add(a, c, b); add(b, c, d); }
     }
   }
-  const culet = new THREE.Vector3(0, -p.depth, 0);
+  const culet = new THREE.Vector3(0, -depth, 0);
   const last = rings[rings.length - 1];
   for (let i = 0; i < count; i++) add(last[i], culet, last[(i + 1) % count]);
   return facetGeometry(triangles, new THREE.Vector3(0, -0.15, 0));
 }
 
 function cutGeometry(spec) {
-  if (spec.legend && ['pear', 'oval', 'cushion'].includes(spec.cut)) return legendaryFancyGeometry(spec);
+  // Individuell strukturierte Kronen und Pavillons statt radial verzogenem Rundbrillant.
+  if (['pear', 'oval', 'cushion', 'cushionSquare', 'marquise'].includes(spec.cut)) return facetedFancyGeometry(spec);
   if (spec.cut === 'rough') return roughGeometry(spec.de || spec.name, spec.dims, spec.breaks);
   // Schild-Umriss: stumpfe Birne mit 16 Facetten rundum, wie beim alten Schliff
   if (spec.cut === 'sancy') return doubleCrown(curve((t) => [(1.25 * Math.cos(t) - 0.2) * (spec.ratio ?? 1), 0.95 * Math.sin(t) * (0.55 + 0.45 * Math.abs(Math.sin(t / 2)))], 16));
@@ -573,9 +579,9 @@ function buildMaterials(spec, geo, envCube, style) {
 
   // Cabochons: wenig Umgebungsspiegelung, sonst überstrahlt der Glanz das Muster
   const base = style === 'photo'
-    // polierte Oberfläche wie bei Trommelsteinen: klare Glanzlichter, Muster bleibt sichtbar
-    ? { roughness: 0.5, metalness: 0, clearcoat: 0.7, clearcoatRoughness: 0.12, envMapIntensity: 0.3 }
-    : { roughness: 0.55, metalness: 0, clearcoat: 0.5, clearcoatRoughness: 0.05, envMapIntensity: 0.22 };
+    // Glatter, nichtmetallischer Polierschliff mit klaren Reflexen.
+    ? { roughness: 0.27, metalness: 0, clearcoat: 0.85, clearcoatRoughness: 0.055, envMapIntensity: 0.55 }
+    : { roughness: 0.43, metalness: 0, clearcoat: 0.65, clearcoatRoughness: 0.075, envMapIntensity: 0.35 };
   let outer;
   switch (spec.look) {
     case 'opaque':
@@ -586,12 +592,12 @@ function buildMaterials(spec, geo, envCube, style) {
       outer = darkOpal(spec)
         // Schwarzer Opal: hochglänzend poliert, die Farbfelder leuchten aus dem dunklen Grund
         ? new THREE.MeshPhysicalMaterial({
-          map, emissiveMap: map, emissive: 0xffffff, emissiveIntensity: 0.7,
+          map, emissiveMap: map, emissive: 0xffffff, emissiveIntensity: style === 'photo' ? 0.22 : 0.65,
           roughness: 0.35, metalness: 0, clearcoat: 0.55, clearcoatRoughness: 0.06, envMapIntensity: 0.16,
           iridescence: 0.25, iridescenceIOR: 1.6, iridescenceThicknessRange: [300, 900],
         })
         : new THREE.MeshPhysicalMaterial({
-          ...base, map, emissiveMap: map, emissive: 0xffffff, emissiveIntensity: 0.28,
+          ...base, map, emissiveMap: map, emissive: 0xffffff, emissiveIntensity: style === 'photo' ? 0.09 : 0.28,
           iridescence: 1, iridescenceIOR: 1.8, iridescenceThicknessRange: [200, 1100],
         });
       if (darkOpal(spec)) map.center.set(0.5, 0.5);
@@ -600,7 +606,7 @@ function buildMaterials(spec, geo, envCube, style) {
     case 'labra': {
       const map = tex('labra');
       outer = new THREE.MeshPhysicalMaterial({
-        ...base, map, emissiveMap: map, emissive: 0xffffff, emissiveIntensity: 0.95,
+        ...base, map, emissiveMap: map, emissive: 0xffffff, emissiveIntensity: style === 'photo' ? 0.35 : 0.95,
         iridescence: 0.25, iridescenceIOR: 2, iridescenceThicknessRange: [300, 1300],
       });
       break;
@@ -608,21 +614,21 @@ function buildMaterials(spec, geo, envCube, style) {
     case 'moon':
       outer = new THREE.MeshPhysicalMaterial({
         ...base, color: spec.c, transparent: true, opacity: 0.92, sheen: 0.5, sheenColor: new THREE.Color('#9cc4ff'),
-        sheenRoughness: 0.3, emissive: new THREE.Color('#7fa6ff'), emissiveIntensity: 0.12, iridescence: 0.35,
+        sheenRoughness: 0.3, emissive: new THREE.Color('#7fa6ff'), emissiveIntensity: style === 'photo' ? 0.035 : 0.12, iridescence: style === 'photo' ? 0.12 : 0.35,
       });
       break;
     case 'star': {
       const star = asterismTexture();
       disposables.push(star);
       outer = new THREE.MeshPhysicalMaterial({
-        ...base, map: tex('silk'), emissiveMap: star, emissive: 0xffffff, emissiveIntensity: 0.85,
+        ...base, map: tex('silk'), emissiveMap: star, emissive: 0xffffff, emissiveIntensity: style === 'photo' ? 0.42 : 0.85,
       });
       break;
     }
     default: // milk: milchig-durchscheinend mit innerem Leuchten
       outer = new THREE.MeshPhysicalMaterial({
         ...base, color: spec.c, transparent: true, opacity: 0.9, sheen: 0.25, sheenColor: new THREE.Color('#ffffff'),
-        emissive: spec.c, emissiveIntensity: 0.06,
+        emissive: spec.c, emissiveIntensity: style === 'photo' ? 0.015 : 0.06,
       });
   }
   return { outer, inner: null, disposables };
@@ -694,7 +700,7 @@ export function gemObject(spec, { envCube = null, style = 'holo' } = {}) {
   // im Foto-Modus ist die Kamera näher dran: kleinere, feinere Lichtblitze
   const sparkleSize = style === 'photo' ? 0.4 : 1;
   // Legendäre Diamanten in Fotoansicht brauchen keine aufgemalten Glitzersterne.
-  const count = style === 'photo' && spec.legend ? 0 : spec.cut === 'cabochon' ? 2 : 3 + (spec.level ?? 2) * 2 + (spec.legend ? 4 : 0);
+  const count = style === 'photo' ? 0 : spec.cut === 'cabochon' ? 2 : 3 + (spec.level ?? 2) * 2 + (spec.legend ? 4 : 0);
   const pos = geo.attributes.position;
   for (let i = 0; i < count; i++) {
     const v = new THREE.Vector3().fromBufferAttribute(pos, (i * 7919) % pos.count);
