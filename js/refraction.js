@@ -22,7 +22,8 @@ const vertexShader = /* glsl */`
     #endif
     vec4 world = modelMatrix * vec4(position, 1.0);
     vWorldPosition = world.xyz;
-    vNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+    // Inverse Transponierte: korrekte Flächennormale auch bei ungleichmäßiger Skalierung.
+    vNormal = normalize(transpose(inverse(mat3(modelMatrix))) * normal);
     vModelMatrixInverse = inverse(modelMatrix);
     gl_Position = projectionMatrix * viewMatrix * world;
   }
@@ -103,8 +104,14 @@ const fragmentShader = /* glsl */`
     vec3 refl = textureCube(envMap, reflect(rd, n)).rgb;
     // Foto-Look: nur helle Lichter spiegeln sich, dunkle Umgebung legt keinen grauen Schleier über die Farbe
     refl = mix(refl, pow(refl, vec3(1.0 + 1.5 * contrast)) * (1.0 + 0.4 * contrast), step(0.001, contrast));
-    float f = fresnel * pow(1.0 + dot(rd, n), 5.0);
-    c = mix(c, refl, clamp(f, 0.0, 1.0));
+    // Schlick-Approximation: Reflexionsanteil hängt vom Brechungsindex und Blickwinkel ab.
+    // 'fresnel' bleibt als künstlerischer Intensitätsregler für bestehende Looks erhalten.
+    float surfaceIor = max(ior, 1.0);
+    float f0 = pow((surfaceIor - 1.0) / (surfaceIor + 1.0), 2.0);
+    float cosTheta = clamp(dot(-rd, n), 0.0, 1.0);
+    float schlick = f0 + (1.0 - f0) * pow(1.0 - cosTheta, 5.0);
+    float f = clamp(fresnel * schlick, 0.0, 1.0);
+    c = mix(c, refl, f);
     // Holo-Film: zarter Regenbogen je Facette und Blickwinkel, wie bei geschliffenem Glas
     float ndv = abs(dot(n, rd));
     vec3 film = 0.5 + 0.5 * cos(6.2832 * (vec3(0.0, 0.33, 0.67) + ndv * 1.4 + dot(n, vec3(0.6, 0.3, 0.7)) * 0.9));

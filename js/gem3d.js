@@ -214,7 +214,51 @@ function doubleCrown(outlinePts) {
   return facetGeometry(t, new THREE.Vector3(0, 0, 0));
 }
 
+// Individuelle Fancy-Cut-Facetten für berühmte, geschliffene Diamanten.
+// Anders als die radiale Verformung des Rundbrillanten besitzen diese
+// Schliffe mehrere geschlossene Facettenringe mit eigenem Kronen-/Pavillonprofil.
+// Künstlerische Rekonstruktion: kein zertifizierter historischer Facettenplan.
+function legendaryFancyGeometry(spec) {
+  const shape = spec.cut;
+  const outline = OUTLINES[shape];
+  if (!outline) return null;
+  const points = outline(spec.ratio);
+  const count = 24; // gleiche Anzahl von Eckpunkten auf jedem Ring
+  const sampled = Array.from({ length: count }, (_, i) => points[Math.floor(i * points.length / count)]);
+  // Relative Abstände der Facettenringe, jeweils vom äußeren Gürtel aus.
+  const profiles = {
+    pear:    { table: 0.51, crown: 0.32, depth: 0.88 },
+    oval:    { table: 0.55, crown: 0.28, depth: 0.84 },
+    cushion: { table: 0.57, crown: 0.30, depth: 0.78 },
+  };
+  const p = profiles[shape];
+  const rings = [
+    [p.table, p.crown], [0.73, p.crown * 0.67],
+    [0.88, p.crown * 0.34], [1.0, 0.028],
+    [1.0, -0.028], [0.86, -p.depth * 0.19],
+    [0.66, -p.depth * 0.46], [0.36, -p.depth * 0.79],
+  ].map(([radius, y]) => sampled.map(([x, z]) => new THREE.Vector3(x * radius, y, z * radius)));
+  const triangles = [];
+  const add = (a, b, c) => triangles.push(a, b, c);
+  const top = new THREE.Vector3(0, p.crown, 0);
+  for (let i = 0; i < count; i++) add(top, rings[0][i], rings[0][(i + 1) % count]);
+  for (let r = 0; r < rings.length - 1; r++) {
+    for (let i = 0; i < count; i++) {
+      const j = (i + 1) % count;
+      const a = rings[r][i], b = rings[r][j], c = rings[r + 1][i], d = rings[r + 1][j];
+      // Versetzte Diagonalen bilden abwechslungsreichere, klar definierte Facetten.
+      if ((i + r) % 2) { add(a, c, d); add(a, d, b); }
+      else { add(a, c, b); add(b, c, d); }
+    }
+  }
+  const culet = new THREE.Vector3(0, -p.depth, 0);
+  const last = rings[rings.length - 1];
+  for (let i = 0; i < count; i++) add(last[i], culet, last[(i + 1) % count]);
+  return facetGeometry(triangles, new THREE.Vector3(0, -0.15, 0));
+}
+
 function cutGeometry(spec) {
+  if (spec.legend && ['pear', 'oval', 'cushion'].includes(spec.cut)) return legendaryFancyGeometry(spec);
   if (spec.cut === 'rough') return roughGeometry(spec.de || spec.name, spec.dims, spec.breaks);
   // Schild-Umriss: stumpfe Birne mit 16 Facetten rundum, wie beim alten Schliff
   if (spec.cut === 'sancy') return doubleCrown(curve((t) => [(1.25 * Math.cos(t) - 0.2) * (spec.ratio ?? 1), 0.95 * Math.sin(t) * (0.55 + 0.45 * Math.abs(Math.sin(t / 2)))], 16));
@@ -504,8 +548,10 @@ function buildMaterials(spec, geo, envCube, style) {
       bounces: spec.look === 'diamond' ? 5 : 4,
       glow: spec.glow ? 0.18 : 0, vertexColors: !!spec.bicolor,
       ...(style === 'photo'
-        // Foto-Look: satte Farbe, harte weiße Lichtreflexe, kein Holo-Film
-        ? rough ? { body: 0.07, holo: 0, contrast: 0.5, exposure: 1.35 } : photoLook(spec.c, lum)
+        // Legenden: klare Facetten und Tiefe statt künstlichem Farbleuchten.
+        ? rough ? { body: 0.045, holo: 0, contrast: 0.4, exposure: 1.25 }
+          : spec.legend ? { ...photoLook(spec.c, lum), body: 0.025, holo: 0, contrast: 0.68, exposure: 1.35, absorb: 0.38 }
+          : photoLook(spec.c, lum)
         : { body: spec.c === '#ffffff' ? 0.06 : 0.16, holo: spec.c === '#ffffff' ? 0.75 : 0.4, exposure: 1.05 + Math.max(0, 0.5 - lum) * 1.2 }),
     });
     return { outer, inner: null, disposables };
@@ -647,7 +693,8 @@ export function gemObject(spec, { envCube = null, style = 'holo' } = {}) {
   group.add(sparkles);
   // im Foto-Modus ist die Kamera näher dran: kleinere, feinere Lichtblitze
   const sparkleSize = style === 'photo' ? 0.4 : 1;
-  const count = spec.cut === 'cabochon' ? 2 : 3 + (spec.level ?? 2) * 2 + (spec.legend ? 4 : 0);
+  // Legendäre Diamanten in Fotoansicht brauchen keine aufgemalten Glitzersterne.
+  const count = style === 'photo' && spec.legend ? 0 : spec.cut === 'cabochon' ? 2 : 3 + (spec.level ?? 2) * 2 + (spec.legend ? 4 : 0);
   const pos = geo.attributes.position;
   for (let i = 0; i < count; i++) {
     const v = new THREE.Vector3().fromBufferAttribute(pos, (i * 7919) % pos.count);

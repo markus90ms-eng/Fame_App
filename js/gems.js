@@ -270,6 +270,14 @@ for (const g of GEM_LIST) {
   if (SAYINGS[g.name]) g.flavor = SAYINGS[g.name];
   if (g.cut === 'cabochon') continue;
   if (CUTS[g.name]) g.cut = CUTS[g.name];
+  // Alle berühmten Einzelsteine (und der normale Diamant) sind Diamanten.
+  // Nicht anhand ihrer Eigennamen klassifizieren: "Sancy", "Cullinan I",
+  // "The Orange" usw. enthalten keine optische Mineralbezeichnung.
+  if (g.legend || g.name === 'Diamant') {
+    g.ior = 2.42;
+    g.disp = 0.024;
+    continue;
+  }
   const o = OPTICS.find(([re]) => re.test(g.name));
   g.ior = o ? o[1] : 1.55;
   g.disp = o ? o[2] : 0.007;
