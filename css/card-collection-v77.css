@@ -148,7 +148,7 @@
     radial-gradient(circle 48px at 6% 24%,color-mix(in srgb,var(--rar) 24%,transparent),transparent 95%),
     radial-gradient(circle 45px at 94% 32%,color-mix(in srgb,var(--fc-white) 20%,transparent),transparent 90%),
     linear-gradient(180deg,transparent 0 53%,#080609 72%,transparent 95%);
-  opacity:calc(.55 + var(--fc-bokeh)*.5);
+  opacity:.82;
 }
 .screen--card .famecard-ambience::before {
   content:"";
@@ -314,7 +314,7 @@
 .screen--card .famecard-engraving .fe-strong {opacity:var(--fc-emboss);}
 .screen--card .famecard-engraving .fe-jewel {opacity:var(--fc-jewel);fill:var(--fc-white);stroke:var(--fc-edge);stroke-width:1.5;}
 .screen--card .famecard-engraving .fe-filigree {opacity:0;}
-.screen--card:is(.cls-4,.cls-5,.cls-6,.cls-7,.cls-8,.cls-9) .famecard-engraving .fe-filigree {opacity:calc(var(--fc-engrave)*.72);}
+.screen--card:is(.cls-4,.cls-5,.cls-6,.cls-7,.cls-8,.cls-9) .famecard-engraving .fe-filigree {opacity:var(--fc-engrave);}
 .screen--card:is(.cls-7,.cls-8,.cls-9) .famecard-engraving .fe-filigree {opacity:var(--fc-engrave);}
 .screen--card .famecard-engraving .fe-prism {opacity:0;}
 .screen--card.cls-9 .famecard-engraving .fe-prism {opacity:1;fill:#f5fcff;}
