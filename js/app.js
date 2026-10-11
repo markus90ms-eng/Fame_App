@@ -1418,8 +1418,8 @@ function card() {
         <div class="flip" data-flip role="button" tabindex="0" aria-label="${hidden ? t('Karte aufdecken') : tier.name}">
           <article class="famecard metal-${tier.metal}${tier.legend ? ' is-legend' : ''} flip-front" data-card style="--gem:${tier.tone}">
             <div class="famecard-ring" aria-hidden="true"></div>
-            ${collectorFrameSvg(tier.cls)}
             <div class="famecard-inner" style="--holo:${holoStrength(tier.cls)}">
+              ${collectorFrameSvg(tier.cls)}
               <div class="famecard-facets" aria-hidden="true">${facetArt(tier.cls, `fc${tier.cls}_`)}</div>
               <div class="famecard-holo" aria-hidden="true" style="-webkit-mask-image:url('${svgUrl(facetMask(tier.cls))}');mask-image:url('${svgUrl(facetMask(tier.cls))}')"></div>
               <div class="famecard-glint" aria-hidden="true" style="-webkit-mask-image:url('${svgUrl(facetMask(tier.cls))}');mask-image:url('${svgUrl(facetMask(tier.cls))}')"></div>
