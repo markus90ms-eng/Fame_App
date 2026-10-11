@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0a0911">
-<title>Fame · Collector Cards · Zehn Luxusklassen</title>
+<title>Fame · Collector Cards V79 · Matte Metallrahmen</title>
 <link rel="stylesheet" href="../css/app.css">
 <link rel="stylesheet" href="../css/card-collection-v77.css">
 <style>
@@ -55,7 +55,17 @@ button,select{font:inherit;}button{cursor:pointer;}
 .mini-brand{font:800 11px/1 "Source Code Pro",monospace;align-self:flex-start;margin-left:2px;position:relative;z-index:3;text-shadow:0 1px 4px #000;}
 .mini-gem-area{position:relative;z-index:1;width:100%;min-height:0;flex:1;display:grid;place-items:center;}
 .mini-gem-area::before{content:"";position:absolute;inset:19% 2%;background:radial-gradient(ellipse,color-mix(in srgb,var(--rar) 33%,transparent),transparent 72%);}
-.mini-gem-area .collector-gem-thumbnail{display:block;position:relative;width:112%;max-width:none;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--rar) 50%,transparent));animation:mini-sheen 6s ease-in-out infinite alternate;}
+.mini-gem-area .collector-gem-thumbnail{display:block;position:relative;width:112%;max-width:none;filter:drop-shadow(0 0 4px color-mix(in srgb,var(--rar) 27%,transparent));animation:mini-sheen 6s ease-in-out infinite alternate;}
+.mini-real-snapshot{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .45s ease;z-index:2;}
+.mini-real-snapshot.is-ready{opacity:1;}
+.tile .mini-collector .famecard-collectors-frame{opacity:.75;filter:none;}
+.tile[data-class="7"] .mini-collector .famecard-collectors-frame,.tile[data-class="8"] .mini-collector .famecard-collectors-frame{opacity:.88;}
+.tile[data-class="9"] .mini-collector .famecard-collectors-frame{opacity:1;}
+.mini-gem-area{overflow:hidden;border-radius:7px;}
+.mini-real-snapshot.is-ready~.collector-gem-thumbnail{opacity:0;}
+.tile .mini-collector{box-shadow:0 0 0 1px color-mix(in srgb,var(--rar) 22%,transparent),0 6px 14px #000a;}
+.tile[data-class="8"] .mini-collector{box-shadow:0 0 0 1px #dbc18899,0 0 9px #ac813852,0 7px 18px #000b;}
+.tile[data-class="9"] .mini-collector{box-shadow:0 0 0 1px #e2edffbf,0 0 11px #adcee678,0 7px 18px #000b;}
 @keyframes mini-sheen{0%{transform:translateY(3px) rotate(-3deg);}100%{transform:translateY(-3px) rotate(2deg);}}
 .mini-label{z-index:3;position:relative;display:block;width:100%;max-height:45px;overflow:hidden;text-wrap:balance;font:700 clamp(10px,1.2vw,14px)/1 "Cormorant Garamond",Georgia,serif;color:#fff;text-shadow:0 2px 3px #000;}
 .mini-base{position:relative;z-index:3;display:block;width:70%;height:1px;margin:6px 0 0;background:linear-gradient(90deg,transparent,var(--rar),transparent);}
@@ -99,8 +109,8 @@ button,select{font:inherit;}button{cursor:pointer;}
   <header class="lab-head">
     <p class="lab-eyebrow">FAM€ / COLLECTOR'S EDITION</p>
     <h1>10 Klassen. 99 Steine.</h1>
-    <p>Premium-Kartendesign mit den echten Fame-Stufenfarben. Wähle eine Karte: Rechts siehst du den entsprechenden echten Edelstein im animierten 3D-Renderer.</p>
-    <span class="status">DESIGNENTWURF V3 · NUR TESTZWEIG</span>
+    <p>Original-Edelsteine aus deiner App: mattere Metallrahmen, zehn aufsteigende Designklassen und originalgetreue 3D-Steine. Wähle eine Klasse oder einen Stein.</p>
+    <span class="status">DESIGNTEST V79 · MATTE METALLRAHMEN · NUR TESTZWEIG</span>
   </header>
   <div class="layout">
     <section class="gallery">
@@ -111,7 +121,7 @@ button,select{font:inherit;}button{cursor:pointer;}
         <p id="classExplain"></p>
         <p id="classNumbers"></p>
         <div class="progress" id="progress"></div>
-        <p>Die <b>Rahmenfarbe</b> folgt der Klasse. Der <b>Edelstein</b> wird unverändert aus der originalen Liste der 99 Steine übernommen. Die kleinen Karten sind Illustrationen des Rahmens; die große Karte ist echte animierte 3D-Grafik.</p>
+        <p>Die <b>Rahmenfarbe</b> folgt der Klasse und bleibt bis Stufe 6 matt. Der <b>Edelstein</b> ist immer einer der originalen 99 Steine. Auch die kleinen Vorschauen werden nach dem Laden aus dem echten 3D-Modell erzeugt.</p>
       </div>
     </section>
     <aside class="viewer">
@@ -125,7 +135,7 @@ button,select{font:inherit;}button{cursor:pointer;}
       </div>
     </aside>
   </div>
-  <footer class="lab-foot">Dein Konto und die öffentliche Fame-App bleiben unverändert. Version 76 ist zusätzlich als eigener Backup-Zweig gesichert. Die Freischaltbeträge und 99 Steinpositionen stammen aus dem V77-Testzweig.</footer>
+  <footer class="lab-foot">Dein Konto und die öffentliche Fame-App bleiben unverändert. Version 76 ist zusätzlich als eigener Backup-Zweig gesichert. Die Freischaltbeträge und 99 Steinpositionen stammen aus dem aktuellen Testzweig.</footer>
 </main>
 <script type="module">
 import {CLASSES,TIERS} from '../js/data.js';
@@ -137,17 +147,17 @@ import {facetArt,facetMask,svgUrl,holoStrength} from '../js/cardfx.js';
   const $=(id)=>document.getElementById(id), num=n=>new Intl.NumberFormat("de-DE").format(n);
   const escape=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const EXPL=[
-    "Gebürstetes Silber: schmale Lichtkante, keine Edelsteinornamente.",
-    "Mint-Chrom: erste polierte Fassungen und hellere Lichtlinien.",
-    "Eiskristall-Aquamarin: klarer Doppelrahmen und stärkere Metallkanten.",
-    "Royalblauer Saphir: geschliffene Konturen und tiefes Edelmetall.",
-    "Amethyst: Violett, filigrane Gravuren und ein deutlich aufwendigerer Rahmen.",
-    "Rubellit: Roségoldglanz, zusätzliche Kristallfassung und rosa Schmuckeffekte.",
-    "Rubin: sattes ROT, dunkles Luxusmetall, vier gefasste Eckdiamanten.",
-    "Feuer: ORANGE, massivere Metallkonturen und größere Edelsteine.",
-    "Gold: schweres GOLD mit symmetrischen Filigranornamenten und großen Kristallfassungen.",
-    "Diamant-Holo: die einzige Klasse für Stein 99, Cullinan I – maximaler prismatischer Schmuckrahmen."
-  ];
+    "Stufe 1: klarer, schmaler Edelstahlrahmen – fast unsichtbar, damit der Stein dominiert.",
+    "Stufe 2: seidenmattes Mint-Titan mit dezenten Eckplättchen.",
+    "Stufe 3: gefrosteter Aquamarin-Stahl mit erstmals doppelter Innenkontur.",
+    "Stufe 4: kühles Saphir-Metall mit geometrischen Kerben und Facetten.",
+    "Stufe 5: satinierter Amethyst-Rahmen mit feinen eingravierten Ornamenten.",
+    "Stufe 6: Rosé-Metall mit gefassten winzigen Nieten und eleganter Liniengravur.",
+    "Stufe 7: Rubinrot mit zarten Rubin-Ecksteinen; der Rahmen wird sichtbar wertvoller.",
+    "Stufe 8: Bronze-Feuerfassung, zweistufige Lichtkante und zusätzliche Metallornamente.",
+    "Stufe 9: schwere Goldfassung, filigrane Gravur, eingefasster Mittelstein.",
+    "Stufe 10: exklusiver Diamant-Holo-Rahmen; prismatische Fassungen für Cullinan I."
+];
   let cls=0,stone=null,moving=true,renderer=null;
   function demoCard(tier,k){
     const mask=svgUrl(facetMask(k));
@@ -176,7 +186,7 @@ import {facetArt,facetMask,svgUrl,holoStrength} from '../js/cardfx.js';
     const t=grouped[i][0];
     return '<button type="button" class="tile" data-class="'+i+'" aria-pressed="false" style="--rar:'+c.color+'">'
       +'<span class="tile-class">STUFE '+(i+1)+' · '+escape(c.name)+'</span>'
-      +'<span class="mini-collector"><span class="mini-brand">Fam€ ◇</span><span class="mini-gem-area">'+collectorGemThumbnailSvg(t)+'</span>'
+      +'<span class="mini-collector"><span class="mini-brand">Fam€ ◇</span><span class="mini-gem-area">'+collectorGemThumbnailSvg(t)+'<img class="mini-real-snapshot" id="thumb-'+i+'" alt="3D-Vorschau '+escape(t.name)+'" loading="lazy"></span>'
       +'<span class="mini-label">'+escape(t.name)+'</span><span class="mini-base"></span><span class="mini-dot"></span>'
       +collectorFrameSvg(i)+'</span>'
       +'<span class="tile-caption">'+grouped[i].length+' Steine · ab '+num(c.from||1)+' €</span>'
@@ -213,7 +223,40 @@ import {facetArt,facetMask,svgUrl,holoStrength} from '../js/cardfx.js';
   $("moving").onchange=e=>{moving=e.target.checked;render();};
   $("stone").onchange=e=>{stone=TIERS.find(t=>t.stage===Number(e.target.value))||stone;render();};
   window.addEventListener('pagehide',()=>{renderer?.dispose();renderer=null;});
+  // Echte Standbilder der originalen Three.js Edelsteine für die Galerie.
+  // Re-use ONE temporary WebGL context, not ten simultaneously (mobile-safe).
+  // The static SVG is only a temporary visual fallback while actual thumbnails load.
+  async function renderRealThumbnails(){
+    const temp=document.createElement('div');
+    temp.style.cssText='position:fixed;left:-2000px;top:0;width:248px;height:180px;visibility:hidden;pointer-events:none;';
+    document.body.appendChild(temp);
+    let helper=null;
+    try{
+      if(!grouped.every(g=>g.length>0))return;
+      helper=createDiamond(temp,{gem:grouped[0][0],photo:true,autoRotate:false,interactive:false,rim:grouped[0][0].tone,glow:.14});
+      if(!helper.canvas || typeof helper.snapshot!=='function')return;
+      for(let i=0;i<grouped.length;i++){
+        const t=grouped[i][0];
+        if(i>0)helper.setGem(t);
+        helper.setRim(t.tone);
+        const snapshot=helper.snapshot(240,172);
+        const img=$('thumb-'+i);
+        if(img&&snapshot){
+          try{
+            img.onload=()=>img.classList.add('is-ready');
+            img.src=snapshot.toDataURL('image/webp',.90);
+          }catch(err){console.warn('Thumbnail image '+i,err);}
+        }
+        await new Promise(resolve=>setTimeout(resolve,60));
+      }
+    }catch(error){console.warn('3D gallery thumbnail fallback remains visible',error);}
+    finally{
+      try{helper?.dispose();}catch{}
+      temp.remove();
+    }
+  }
   pickClass(0);
+  setTimeout(renderRealThumbnails,320);
 })();
 </script>
 </body>
