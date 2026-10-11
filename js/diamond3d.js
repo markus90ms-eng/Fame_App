@@ -454,11 +454,12 @@ export function createDiamond(container, opts = {}) {
   setGem(opts.gem);
 
   // Farbiges Randlicht von unten (Seltenheit) und ein Spitzlicht
-  const rimLight = new THREE.PointLight(rim, 10, 10, 1.4);
+  // Foto-Modus: zurückhaltendes Kantenlicht statt überstrahltem Edelstein.
+  const rimLight = new THREE.PointLight(rim, photo ? 2.2 : 10, 10, 1.4);
   if (photo) rimLight.position.set(0.8, 1.2, -2.5);
   else rimLight.position.set(0, -2, 1.6);
   scene.add(rimLight);
-  const key = new THREE.DirectionalLight(0xffffff, 1.2);
+  const key = new THREE.DirectionalLight(0xffffff, photo ? 0.9 : 1.2);
   key.position.set(1.5, 3, 4);
   scene.add(key);
 
@@ -521,8 +522,10 @@ export function createDiamond(container, opts = {}) {
     holder.scale.setScalar(1 + glowLevel * 0.04 + pulseT * 0.1);
     gem.update(now / 1000, pulseT);
     if (photo) placeOnFloor(now);
-    rimLight.intensity = 4 + glowLevel * 10 + pulseT * 25;
-    renderer.toneMappingExposure = (photo ? 1.3 : 1.05) + pulseT * 0.6;
+    rimLight.intensity = photo
+      ? 1.8 + glowLevel * 2.2 + pulseT * 6
+      : 4 + glowLevel * 10 + pulseT * 25;
+    renderer.toneMappingExposure = (photo ? 1.12 : 1.05) + pulseT * (photo ? 0.25 : 0.6);
     renderer.render(scene, camera);
     raf = requestAnimationFrame(frame);
   };
