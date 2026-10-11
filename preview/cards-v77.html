@@ -108,16 +108,16 @@ let currentClass=0,currentStone=null,three=null;
 const $=(id)=>document.getElementById(id);
 const fmt=(v)=>new Intl.NumberFormat('de-DE').format(v);
 const explanation=[
-  'Kühles Silber, ruhige Fassung, minimalistische Facetten. Der Einstieg in die Kollektion.',
-  'Mintgrüne Lichtkante und subtil veredeltes Metall. Eine erste erkennbare Aufwertung.',
-  'Türkises Chrom mit stärkerer Tiefe und feineren Eckgravuren.',
-  'Saphirblauer Doppelrahmen mit deutlicher geschliffener Innenkante.',
-  'Violetter Edelmetall-Effekt, mehr Relief und sanfte Studio-Reflexe.',
-  'Rubellit-Rosé mit stärkerer Kantenstruktur und edlerem Glanz.',
-  'Rubinrotes Luxusmetall mit hervorgehobenen, markanten Eckelementen.',
-  'Feuerorange mit reliefartigen Ecken und kleinen Emblemen.',
-  'Die Gold-Edition mit warmen Metallreflexen und aufwendiger Gravur.',
-  'Diamant-Holo: prismatischer Rahmen, schimmerndes Farbspiel und höchste Detailstufe.'
+  'Gebürstetes Silber und dunkler Stein-Samt: eine bewusst schlichte Collector-Karte ohne schwere Ornamente.',
+  'Frisches Mint-Chrom mit glänzender Innenkante und zarten Gravuren. Erste sichtbare Luxusdetails.',
+  'Eisiges Aquamarin-Chrom mit doppelter Fassung, ersten Kristalldetails und verstärktem Studioschein.',
+  'Tiefblauer Saphir-Enamel-Look mit dickerem Doppelrahmen und präzise gravierten Ecken.',
+  'Amethyst-Luxus in Violett: kräftiger Metallschimmer, Ziergravuren und eingefasste Kristallakzente.',
+  'Rubellit und Roségold: glamouröse Fassung, prächtiger Glanz, elegante Edelsteinornamente.',
+  'Königliches Rubinrot mit dunklem Metallkern, schärferen Reliefkanten und markanten Edelsteinecken.',
+  'Feuer und geschmolzenes Gold: dicker Schmuckrahmen, stärkere Reflektionen und funkelnde Embleme.',
+  'Die Gold-Edition: schwere Goldfassung, mehrschichtige Innenkante, Filigranornamente und große Fassungsdiamanten.',
+  'Diamant-Holo ist die Collector-Endstufe: facettierte Kristallfassung, prismatisches Hologramm und heller Edelsteinglanz.'
 ];
 function escapeHtml(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');}
 function cardMarkup(tier,cls){
