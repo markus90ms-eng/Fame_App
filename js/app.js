@@ -1418,11 +1418,35 @@ function card() {
           <article class="famecard metal-${tier.metal}${tier.legend ? ' is-legend' : ''} flip-front" data-card style="--gem:${tier.tone}">
             <div class="famecard-ring" aria-hidden="true"></div>
             <div class="famecard-ornaments" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+            <svg class="famecard-engraving" viewBox="0 0 300 415" preserveAspectRatio="none" aria-hidden="true">
+              <g class="fe-line">
+                <path d="M8 48V18L18 8H55 M245 8H282L292 18V48 M8 365V397L18 407H55 M245 407H282L292 397V365"/>
+                <path d="M12 98V150 M12 268V317 M288 98V150 M288 268V317"/>
+              </g>
+              <g class="fe-strong">
+                <path d="M15 47V23L23 15H52 M248 15H277L285 23V47 M15 370V391L23 399H52 M248 399H277L285 391V370"/>
+                <path d="M10 184L16 193L10 202 M290 184L284 193L290 202" />
+              </g>
+              <g class="fe-jewel">
+                <path d="M150 5L156 12L150 19L144 12Z M150 397L156 404L150 411L144 404Z"/>
+                <path d="M9 209L16 217L9 225L2 217Z M291 209L298 217L291 225L284 217Z"/>
+              </g>
+              <g class="fe-filigree">
+                <path d="M70 10L95 10L107 18 M230 10H205L193 18 M70 405H95L107 397 M230 405H205L193 397"/>
+                <path d="M11 72L22 84L11 96 M289 72L278 84L289 96 M11 321L22 333L11 345 M289 321L278 333L289 345"/>
+                <path d="M124 10H141 M159 10H176 M124 405H141 M159 405H176"/>
+              </g>
+              <g class="fe-prism">
+                <path d="M150 1L162 12L150 26L138 12Z M150 389L162 403L150 414L138 403Z"/>
+                <path d="M3 217L15 202L27 217L15 232Z M273 217L285 202L297 217L285 232Z"/>
+              </g>
+            </svg>
             <div class="famecard-inner" style="--holo:${holoStrength(tier.cls)}">
               <div class="famecard-facets" aria-hidden="true">${facetArt(tier.cls, `fc${tier.cls}_`)}</div>
               <div class="famecard-holo" aria-hidden="true" style="-webkit-mask-image:url('${svgUrl(facetMask(tier.cls))}');mask-image:url('${svgUrl(facetMask(tier.cls))}')"></div>
               <div class="famecard-glint" aria-hidden="true" style="-webkit-mask-image:url('${svgUrl(facetMask(tier.cls))}');mask-image:url('${svgUrl(facetMask(tier.cls))}')"></div>
               <div class="famecard-photo"><div class="stage3d" data-diamond></div></div>
+              <div class="famecard-ambience" aria-hidden="true"></div>
               <div class="famecard-class">${t('Stufe')} ${tier.cls + 1} · ${esc(CLASSES[tier.cls].name)}</div>
               <div class="famecard-shine" data-shine></div>
               <div class="famecard-top">
