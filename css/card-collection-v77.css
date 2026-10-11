@@ -452,3 +452,140 @@
   .screen--card .famecard .famecard-inner .famecard-brand {font-size:15px;}
   .screen--card .famecard .famecard-inner .famecard-serial {font-size:8px;padding:4px 5px;max-width:68%;}
 }
+
+
+/* Fame V82 — production card: V81-approved exterior casing.
+   The card itself is unchanged; only an OUTSIDE shell is added.
+   The SVG masks out the central rectangle, so metal never overlaps card data. */
+.screen--card .card-wrap{
+  padding:0 clamp(12px,4vw,24px);
+  overflow:visible;
+}
+.screen--card .flip {
+  width:100%;
+  max-width:334px;
+  overflow:visible;
+  transform-style:preserve-3d;
+}
+.screen--card .collector-shell.flip-front{
+  box-sizing:border-box;
+  width:100%;
+  position:relative;
+  isolation:isolate;
+  padding:16px;
+  margin:0;
+  overflow:visible;
+  transform:translateZ(.1px);
+  -webkit-backface-visibility:hidden;
+  backface-visibility:hidden;
+}
+.screen--card .collector-shell > .collector-outside {
+  position:absolute;
+  inset:0;
+  z-index:4;
+  pointer-events:none;
+  -webkit-user-select:none;
+  user-select:none;
+}
+.screen--card .collector-shell > .collector-outside .famecard-outside-svg {
+  position:absolute;
+  inset:0;
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+  pointer-events:none;
+  opacity:.85;
+  filter:drop-shadow(0 0 2px color-mix(in srgb,var(--rar) 19%,transparent));
+}
+.screen--card:is(.cls-7,.cls-8,.cls-9) .collector-shell > .collector-outside .famecard-outside-svg{
+  filter:drop-shadow(0 0 4px color-mix(in srgb,var(--rar) 27%,transparent));
+}
+.screen--card:is(.cls-8,.cls-9) .collector-shell > .collector-outside .famecard-outside-svg{opacity:1;}
+.screen--card .collector-shell > .famecard,
+.screen--card .collector-shell > .famecard.metal-gold,
+.screen--card .collector-shell > .famecard.metal-rose,
+.screen--card .collector-shell > .famecard.metal-legend{
+  position:relative;
+  z-index:1;
+  box-sizing:border-box;
+  width:100%;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  border-radius:14px;
+  background:#0d1014;
+  animation:none;
+  box-shadow:0 14px 28px #000c,0 0 0 1px #0b0b0c;
+}
+.screen--card .collector-shell .famecard .famecard-ring{
+  position:absolute;
+  z-index:0;
+}
+.screen--card .collector-shell .famecard .famecard-inner{
+  box-sizing:border-box;
+  width:100%;
+  min-height:421px;
+  border-radius:13px;
+  margin:0;
+  padding-left:20px;
+  padding-right:20px;
+  box-shadow:none;
+}
+.screen--card .collector-shell .famecard .famecard-top{
+  position:relative;
+  z-index:20;
+  gap:7px;
+  align-items:center;
+  padding:2px 0;
+}
+.screen--card .collector-shell .famecard .famecard-serial{
+  z-index:21;
+  min-width:0;
+  max-width:66%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:8.5px;
+}
+.screen--card .collector-shell .famecard .famecard-brand{
+  z-index:21;
+  flex-shrink:0;
+  white-space:nowrap;
+}
+.screen--card .collector-shell .famecard .famecard-class{
+  z-index:17;top:59px;
+}
+.screen--card .collector-shell .famecard .famecard-photo{z-index:1;}
+.screen--card .collector-shell .famecard .famecard-ambience{z-index:2;}
+.screen--card .collector-shell .famecard .famecard-glint,
+.screen--card .collector-shell .famecard .famecard-shine{z-index:4;}
+.screen--card .collector-shell .famecard .famecard-plate,
+.screen--card .collector-shell .famecard .famecard-foot{
+  position:relative;
+  z-index:20;
+}
+.screen--card .collector-shell .famecard .famecard-foot{margin-top:auto;}
+/* The reversed back covers the shell footprint. The old neon ring does not leak into the new premium bezel. */
+.screen--card .flip > .cardback.flip-back{
+  box-sizing:border-box;
+  inset:0;
+  border-radius:21px;
+  border:2px solid color-mix(in srgb,var(--rar) 30%,#a2a9ae);
+  background:radial-gradient(ellipse at 50% 38%,#202129,#09090e 76%);
+  box-shadow:inset 0 0 0 3px #111116,0 10px 26px #000a,
+    0 0 22px color-mix(in srgb,var(--rar) 23%,transparent);
+}
+@media(max-width:390px) {
+  .screen--card .card-wrap {padding:0 10px;}
+  .screen--card .collector-shell.flip-front{padding:13px;}
+  .screen--card .collector-shell .famecard .famecard-brand{font-size:15px;}
+  .screen--card .collector-shell .famecard .famecard-serial{font-size:8px;padding:4px 5px;max-width:68%;}
+  .screen--card .collector-shell .famecard .famecard-inner{min-height:410px;padding-left:15px;padding-right:15px;}
+  .screen--card .collector-shell .famecard .famecard-plate{margin-top:221px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .screen--card .collector-shell > .collector-outside .famecard-outside-svg{
+    animation:none;filter:none;
+  }
+}
