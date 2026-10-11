@@ -82,7 +82,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '91';
+export const APP_VERSION = '92';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -383,7 +383,7 @@ function splash() {
           gem: open ? top : null, mystery: !open, rim: CLASSES[cls].color, glow: 0.4 + cls * 0.06, interactive: true,
         });
         const fx = particles(el.querySelector('[data-fx]'), { color: CLASSES[cls].color, mode: 'embers', density: 0.25 + cls * 0.15 });
-        const stopGemTilt = homeGemTilt(el);
+        const stopGemTilt = homeGemTilt(el, dia);
         const hom = HOMAGE[shownStage()];
         const t = setTimeout(() => { dia.pulse(); if (own) (hom ? themeJingle(hom) : classDrop(cls)); }, 900);
         el.querySelector('[data-logout]').addEventListener('click', logout);
