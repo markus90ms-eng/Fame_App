@@ -47,8 +47,8 @@
   mask-image:linear-gradient(to bottom,#000 0 63%,rgba(0,0,0,.96) 74%,transparent 98%);
 }
 .screen--card .famecard .famecard-facets { opacity:var(--card-pattern); }
-.screen--card .famecard .famecard-holo { opacity:calc(var(--holo, .05) * .65); }
-.screen--card .famecard .famecard-glint { opacity:calc(.05 + var(--holo, .05) * .4); }
+.screen--card .famecard .famecard-holo { opacity:var(--holo,.1); }
+.screen--card .famecard .famecard-glint { opacity:.18; }
 .screen--card .famecard .famecard-brand { font-size:18px; position:relative; z-index:6; }
 .screen--card .famecard .famecard-serial { position:relative; z-index:6; max-width:68%; font-size:9px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .screen--card .famecard .famecard-top { min-height:22px; }
