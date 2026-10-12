@@ -523,7 +523,13 @@ export function createDiamond(container, opts = {}) {
     // Echte Rotation des 3D-Meshes um seine X-Achse: Ober- und Unterseite werden sichtbar.
     // Keine Verschiebung der HTML-Buehne; Drehung per Finger um Y bleibt erhalten.
     if (!photo) {
-      sensorPitch += (targetSensorPitch - sensorPitch) * (1 - Math.exp(-8 * dt));
+      // Sanfter, framerate-unabhaengiger Nachlauf (Zeitkonstante ~0,38 s).
+      // Eine zusaetzliche Begrenzung auf 0,85 rad/s (~49 Grad/s) verhindert
+      // schnelle Spruenge bei groesseren iPhone-Bewegungen.
+      const difference = targetSensorPitch - sensorPitch;
+      const easedStep = difference * (1 - Math.exp(-2.6 * dt));
+      const maxStep = 0.85 * dt;
+      sensorPitch += Math.max(-maxStep, Math.min(maxStep, easedStep));
       holder.rotation.x = tilt + sensorPitch;
     }
     pulseT = Math.max(0, pulseT - dt * 2.2);
