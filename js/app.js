@@ -13,6 +13,7 @@ import {
 import { tick, plink, stageTick, classDrop, buzz, unlockAudio, buildup, boost, startTension, revealMusic, startCelebration, themeReveal, themeLoop, themeJingle, isMuted, setMuted } from './fx.js';
 import { createDiamond } from './diamond3d.js';
 import { homeGemTilt } from './home-gem-tilt.js';
+import { mineStage14Wall } from './cave-reveal.js';
 import { facetArt, facetMask, svgUrl, holoStrength } from './cardfx.js';
 import { particles } from './particles.js';
 import { isReady, connectRedirect, finishRedirect } from './connect.js';
@@ -82,7 +83,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '93';
+export const APP_VERSION = '94';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -153,6 +154,15 @@ function homDecor(el, hom, stage) {
   const logoBox = el.querySelector('.splash-logo');
   const add = (host, html) => host?.insertAdjacentHTML('beforeend', html);
   if (hom === 'cave') {
+    // Extra Höhlen-Tiefe aus selbst gezeichneten CSS-Facetten und vorhandenen Fame-Texturen.
+    // Die Original-Fackeln, Spitzhacke, XP-Anzeige und Inventarleiste bleiben erhalten.
+    add(vault, `<div class="hom-cave-space" aria-hidden="true">
+      <i class="hom-cave-arch"></i><i class="hom-cave-vein"></i><i class="hom-cave-ledger"></i>
+      <i class="hom-cave-crystal hom-cave-crystal--l1"></i>
+      <i class="hom-cave-crystal hom-cave-crystal--l2"></i>
+      <i class="hom-cave-crystal hom-cave-crystal--r1"></i>
+      <i class="hom-cave-crystal hom-cave-crystal--r2"></i>
+    </div>`);
     add(el, `<div class="hom-achv" aria-hidden="true"><i></i><span><b>${t('Erfolg erzielt!')}</b>${t('Amethyst gefunden')}</span></div>
       <div class="hom-hotbar" aria-hidden="true"><span class="i-pick"></span><span class="sel i-gem"></span><span class="i-torch"></span>${'<span></span>'.repeat(6)}</div>`);
     add(vault, `<i class="hom-torch hom-torch--l" aria-hidden="true"></i><i class="hom-torch hom-torch--r" aria-hidden="true"></i>
@@ -1568,14 +1578,33 @@ function card() {
       };
       raf = requestAnimationFrame(loop);
 
+      let mineCleanup = () => {};
+      let mineFinished = false;
       const open = () => {
         if (phase !== 'hidden') return;
+        // Stufe 14: zuerst die Fame-Steinwand mit der vorhandenen Spitzhacke
+        // aufbrechen; danach den unveränderten Original-Card-Reveal starten.
+        if (hidden && tier.stage === 14 && !mineFinished) {
+          phase = 'mining';
+          stopMusic();
+          mineCleanup = mineStage14Wall(el, {
+            onImpact: (hit) => { if (hit <= 3) buzz(8 + hit * 2); else plink(2); },
+            onComplete: () => {
+              mineFinished = true;
+              mineCleanup = () => {};
+              phase = 'hidden';
+              open();
+            },
+          });
+          return;
+        }
         phase = 'charging';
         el.classList.add('is-charging');
         fx.setColor(clsColor);
         fx.setDensity(2 + tier.level);
         stopMusic();
-        const dur = buildup(boost(tier.cls) * 0.45);
+        // Die Wandbruch-Animation ersetzt bei Stage 14 den langen Spannungsaufbau.
+        const dur = tier.stage === 14 && mineFinished ? 0.24 : buildup(boost(tier.cls) * 0.45);
         // Wackeln wird immer stärker
         const t0 = performance.now();
         const grow = setInterval(() => {
@@ -1926,6 +1955,7 @@ function card() {
       });
 
       return () => {
+        mineCleanup(); // laufende Wandbruch-Animation beim Verlassen sicher abbrechen
         timers.forEach((t) => { clearTimeout(t); clearInterval(t); });
         stopMusic();
         document.removeEventListener('visibilitychange', onVisible);
