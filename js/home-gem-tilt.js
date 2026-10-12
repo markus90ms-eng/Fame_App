@@ -34,15 +34,15 @@ export function homeGemTilt(screen, diamond) {
     if (degrees > 180) degrees -= 360;
     else if (degrees < -180) degrees += 360;
 
-    // 1,2 Grad Ruhezone verhindert Zittern des Edelsteins.
-    const deadZone = 1.2;
+    // Groessere Ruhezone: kleine unbewusste Handbewegungen lassen den Stein still.
+    const deadZone = 2;
     const adjusted = Math.abs(degrees) <= deadZone
       ? 0 : degrees - Math.sign(degrees) * deadZone;
 
-    // Ca. 35 Grad Handy-Neigung ergeben 80 Grad Edelstein-Kippung;
-    // man kann die Unterseite und die Oberseite ansehen.
-    // Begrenzung verhindert eine unkontrollierte Komplettumdrehung.
-    const pitch = Math.max(-1.48, Math.min(1.48, adjusted * 0.043));
+    // Halbe Empfindlichkeit gegenueber V92: 40 Grad Handybewegung
+    // ergeben etwa 46 Grad echte Steindrehung statt fast 90 Grad.
+    // Auch die Ober-/Unterseite bleibt bei groesserer Neigung erreichbar.
+    const pitch = Math.max(-1.48, Math.min(1.48, adjusted * 0.022));
     diamond.setTiltPitch(pitch);
   };
 
