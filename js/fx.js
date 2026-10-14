@@ -557,8 +557,21 @@ const whistle = (at, f, dur = 0.4, vol = 0.03) => { tone(f * 1.06, { at: at - 0.
 const harp = (at, f, vol = 0.02) => tone(f, { at, dur: 1.2, vol, type: 'triangle', attack: 0.003, rev: 0.8 });
 const bubble = (at) => { const f = 400 + Math.random() * 500; tone(f, { at, dur: 0.08, vol: 0.015, slideTo: f * 2.2 }); };
 
+// Krimi-Nacht: Seitenrascheln, Turmuhr, Uhrticken, Cembalo-Zupfer, dunkle Streicher
+const rustle = (at) => { noise({ at, dur: 0.32, vol: 0.05, from: 1800, to: 5200, q: 0.8, peak: 0.25 }); noise({ at: at + 0.05, dur: 0.2, vol: 0.025, from: 4000, to: 2500, q: 1.5, peak: 0.3 }); };
+const thud = (at) => { tone(70, { at, dur: 0.25, vol: 0.12, slideTo: 45, attack: 0.003 }); noise({ at, dur: 0.12, vol: 0.05, from: 600, to: 200, q: 1, peak: 0.05 }); };
+const clockTick = (at, hi) => noise({ at, dur: 0.03, vol: 0.03, from: hi ? 3200 : 2400, to: 1500, q: 9, peak: 0.05 });
+const harpsi = (at, f, vol = 0.02) => { tone(f, { at, dur: 0.45, vol, type: 'square', attack: 0.002, rev: 0.5 }); tone(f * 2, { at, dur: 0.25, vol: vol * 0.4, type: 'triangle', attack: 0.002 }); };
+const strings = (at, notes, dur, vol = 0.008) => notes.forEach((n) => { tone(D(n), { at, dur, vol, type: 'sawtooth', attack: 0.5, rev: 0.7, detune: -6 }); tone(D(n), { at, dur, vol, type: 'sawtooth', attack: 0.5, rev: 0.7, detune: 6 }); });
+
 // Aufdecken
 function themeRevealSound(theme) {
+  if (theme === 'moon') {
+    // Grundstimmung während der Buch-Animation; Buchdeckel, Seiten und Lichtblitz kommen von storySound()
+    for (let i = 0; i < 18; i++) clockTick(i * 0.5, i % 2);
+    strings(0, [-12, -9, -5], 9);
+    return 9.5;
+  }
   if (theme === 'cave') {
     [0, 0.35, 0.7].forEach((t, i) => pickHit(t, 0.05 + i * 0.02));
     noise({ at: 0.95, dur: 0.35, vol: 0.06, from: 1200, to: 300, q: 1, peak: 0.1 }); // Block bricht
@@ -586,6 +599,15 @@ function themeRevealSound(theme) {
 
 // Schleifen (ein Takt)
 function themeBar(t0, bar, theme) {
+  if (theme === 'moon') {
+    // ruhige Krimi-Musik: Uhrticken, Cembalo in Moll, dunkle Streicher
+    const beat = 0.7;
+    for (let b = 0; b < 4; b++) clockTick(t0 + b * beat, b % 2);
+    const lines = [[0, 3, 7, 3], [-2, 2, 5, 2], [-4, 0, 3, 0], [-5, -1, 2, 7]];
+    lines[bar % 4].forEach((n, i) => harpsi(t0 + i * beat, D(n), 0.016));
+    if (bar % 2 === 0) strings(t0, [lines[bar % 4][0] - 12, lines[bar % 4][2] - 12], beat * 8, 0.006);
+    return beat * 4;
+  }
   if (theme === 'cave') {
     // ruhige Höhlenmusik: tiefes Brummen, sparsame eigene Melodie, Tropfen, ferne Hacke
     const beat = 0.75;
@@ -637,5 +659,17 @@ export const themeLoop = (theme) => startLoop(themeBar, theme, 0.3);
 export function themeJingle(theme) {
   if (theme === 'cave') { [D(19), D(24)].forEach((f, i) => tone(f, { at: i * 0.16, dur: 0.5, vol: 0.03, type: 'triangle', rev: 0.5 })); for (let i = 0; i < 5; i++) xpPing(0.35 + i * 0.08, 1300 + i * 140); }
   else if (theme === 'neon') { buzzer(0, 0.35); kaching(0.45); }
+  else if (theme === 'moon') { [0, 0.5, 1, 1.5].forEach((t, i) => clockTick(t, i % 2)); rustle(0.3); harpsi(0.9, D(7)); }
   else { horn(0, 1.2); wave(0.3, 2.4, 0.04); }
+}
+
+// Geräusche zur Mondstein-Buch-Animation (story.js), jeweils im Moment des Schritts
+let storyPage = 0;
+export function storySound(kind) {
+  if (kind === 'cover') { storyPage = 0; thud(0); rustle(0.15); }
+  else if (kind === 'page') { rustle(0); harpsi(0.1, D([0, 3, 7][storyPage++ % 3])); }
+  else if (kind === 'glow') {
+    [0, 7, 12, 15, 19].forEach((n, i) => tone(D(n + 12), { at: i * 0.06, dur: 1.6, vol: 0.02, type: 'triangle', rev: 0.8 }));
+    tone(D(31), { at: 0.1, dur: 1.2, vol: 0.012, rev: 0.9 });
+  }
 }

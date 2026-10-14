@@ -133,7 +133,7 @@ export const SAYINGS_EN = {
   "Rhodolith": "Rose red. Your rizz is in the basement.",
   "Sonnenstein": "Sun in a stone. Your mood: night mode.",
   "Chromdiopsid": "Green with punch. Your flex barely simmers.",
-  "Mondstein": "Moonlight. Your glow-up's stuck in traffic.",
+  "Mondstein": "Taken from a temple. Found by you.",
   "Goldberyll": "Gold without a crown. You wear hope.",
   "Andalusit": "Two colors, zero drama. You manage neither.",
   "Verdelith": "Green and pricey. Your budget ghosted you.",

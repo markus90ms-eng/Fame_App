@@ -322,4 +322,6 @@ export const EN = {
   "Schlesien": "Silesia",
   'Erfolg erzielt!': 'Achievement unlocked!',
   'Amethyst gefunden': 'Amethyst found',
+  'Der Mondstein gestohlen!': 'The Moonstone stolen!',
+  'Heiliger Stein aus Tempel geraubt – die Spur führt nach England …': 'Sacred stone taken from a temple – the trail leads to England …',
 };

@@ -174,7 +174,7 @@ const SAYINGS = {
   "Rhodolith": "Rosenrot. Deine Rizz-Quote im Keller.",
   "Sonnenstein": "Sonne im Stein. Deine Laune auf Nachtmodus.",
   "Chromdiopsid": "Grün mit Druck. Dein Flex auf Sparflamme.",
-  "Mondstein": "Mondlicht. Dein Glow-up steckt im Stau.",
+  "Mondstein": "Aus dem Tempel geraubt. Von dir gefunden.",
   "Goldberyll": "Gold ohne Krone. Du trägst nur Hoffnung.",
   "Andalusit": "Zwei Farben, null Drama. Du schaffst beides nicht.",
   "Verdelith": "Grün und teuer. Dein Budget macht Ghosting.",
