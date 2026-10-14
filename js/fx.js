@@ -567,14 +567,10 @@ const strings = (at, notes, dur, vol = 0.008) => notes.forEach((n) => { tone(D(n
 // Aufdecken
 function themeRevealSound(theme) {
   if (theme === 'moon') {
-    // passt zur Buch-Animation (story.js): Einband 0,9 s, Seiten 2,2 / 3,4 / 4,6 s, Lichtblitz 5,5 s
-    for (let i = 0; i < 10; i++) clockTick(i * 0.5, i % 2);
-    strings(0, [-12, -9, -5], 5.6);
-    thud(0.9); rustle(1.05);
-    [2.2, 3.4, 4.6].forEach((t, i) => { rustle(t); harpsi(t + 0.1, D([0, 3, 7][i])); });
-    [0, 7, 12, 15, 19].forEach((n, i) => tone(D(n + 12), { at: 5.5 + i * 0.06, dur: 1.6, vol: 0.02, type: 'triangle', rev: 0.8 }));
-    tone(D(31), { at: 5.6, dur: 1.2, vol: 0.012, rev: 0.9 });
-    return 6.8;
+    // Grundstimmung während der Buch-Animation; Buchdeckel, Seiten und Lichtblitz kommen von storySound()
+    for (let i = 0; i < 18; i++) clockTick(i * 0.5, i % 2);
+    strings(0, [-12, -9, -5], 9);
+    return 9.5;
   }
   if (theme === 'cave') {
     [0, 0.35, 0.7].forEach((t, i) => pickHit(t, 0.05 + i * 0.02));
@@ -665,4 +661,15 @@ export function themeJingle(theme) {
   else if (theme === 'neon') { buzzer(0, 0.35); kaching(0.45); }
   else if (theme === 'moon') { [0, 0.5, 1, 1.5].forEach((t, i) => clockTick(t, i % 2)); rustle(0.3); harpsi(0.9, D(7)); }
   else { horn(0, 1.2); wave(0.3, 2.4, 0.04); }
+}
+
+// Geräusche zur Mondstein-Buch-Animation (story.js), jeweils im Moment des Schritts
+let storyPage = 0;
+export function storySound(kind) {
+  if (kind === 'cover') { storyPage = 0; thud(0); rustle(0.15); }
+  else if (kind === 'page') { rustle(0); harpsi(0.1, D([0, 3, 7][storyPage++ % 3])); }
+  else if (kind === 'glow') {
+    [0, 7, 12, 15, 19].forEach((n, i) => tone(D(n + 12), { at: i * 0.06, dur: 1.6, vol: 0.02, type: 'triangle', rev: 0.8 }));
+    tone(D(31), { at: 0.1, dur: 1.2, vol: 0.012, rev: 0.9 });
+  }
 }

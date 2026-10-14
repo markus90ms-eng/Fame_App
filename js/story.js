@@ -3,10 +3,12 @@
 // am Ende leuchtet der Mondstein auf. Antippen überspringt. Der Roman ist gemeinfrei.
 
 import { isEn } from './i18n.js';
+import { storySound } from './fx.js';
 
 const PAGES = ['kap2', 'kap3', 'kap4'];
-// Zeitplan in Millisekunden (Einband auf, drei Seiten umblättern, Lichtblitz, Ausblenden)
-const T = { open: 900, flips: [2200, 3400, 4600], glow: 5500, end: 6700 };
+// Wie lange jede Szene stehen bleibt (ms). Jeder Schritt startet erst, wenn der vorige wirklich fertig ist –
+// so fehlt auf langsamen Handys kein Kapitel.
+const HOLD = { cover: 700, page: 900, epilog: 1500, glow: 900 };
 
 export function playMoonStory(host, { onDone } = {}) {
   const el = document.createElement('div');
@@ -33,21 +35,45 @@ export function playMoonStory(host, { onDone } = {}) {
     <span class="story-skip">${isEn ? 'Tap to skip' : 'Antippen zum Überspringen'}</span>`;
   host.appendChild(el);
 
-  const timers = [];
-  const at = (ms, fn) => timers.push(setTimeout(fn, ms));
   let done = false;
+  let timer = 0;
+  const wait = (ms) => new Promise((r) => { timer = setTimeout(r, ms); });
+  // auf das Ende einer CSS-Animation warten (mit Sicherheitsgrenze)
+  const animate = (node, cls, max) => new Promise((r) => {
+    const end = (e) => {
+      if (e && e.target !== node) return; // nur die eigene Animation, nicht die von Elementen darin
+      clearTimeout(t); node.removeEventListener('animationend', end); r();
+    };
+    const t = setTimeout(end, max);
+    node.addEventListener('animationend', end);
+    node.classList.add(cls);
+  });
   const finish = () => {
     if (done) return;
     done = true;
-    timers.forEach(clearTimeout);
+    clearTimeout(timer);
     el.classList.add('is-out');
     setTimeout(() => el.remove(), 600);
     onDone?.();
   };
-  at(T.open, () => el.querySelector('[data-cover]').classList.add('is-open'));
-  el.querySelectorAll('[data-page]').forEach((p, i) => at(T.flips[i], () => p.classList.add('is-flip')));
-  at(T.glow, () => el.querySelector('.story-glow').classList.add('is-on'));
-  at(T.end, finish);
   el.addEventListener('click', finish);
+  (async () => {
+    await wait(HOLD.cover);
+    if (done) return;
+    storySound('cover');
+    await animate(el.querySelector('[data-cover]'), 'is-open', 2500);
+    for (const p of el.querySelectorAll('[data-page]')) {
+      await wait(HOLD.page);
+      if (done) return;
+      storySound('page');
+      await animate(p, 'is-flip', 2000);
+    }
+    await wait(HOLD.epilog);
+    if (done) return;
+    storySound('glow');
+    await animate(el.querySelector('.story-glow'), 'is-on', 2000);
+    await wait(HOLD.glow / 3);
+    finish();
+  })();
   return finish;
 }

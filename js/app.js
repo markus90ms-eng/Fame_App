@@ -1598,7 +1598,7 @@ function card() {
           flash.classList.add('is-on');
           stopMusic = HOMAGE[tier.stage] ? themeReveal(HOMAGE[tier.stage]) : revealMusic(tier.cls);
           // Mondstein: das Buch öffnet sich und erzählt die Geschichte, dann erscheint die Card
-          if (HOMAGE[tier.stage] === 'moon') playMoonStory(el);
+          if (HOMAGE[tier.stage] === 'moon') playMoonStory(document.body);
           dia.pulse();
           const [x, y] = centerIn(canvas, flip);
           fx.burst(x, y, 40 + tier.level * 40, rarity.color);
