@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '96';
+export const APP_VERSION = '97';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -145,6 +145,11 @@ function luxify(el, path) {
   if (hom) {
     el.classList.add('hom', `hom--${hom}`);
     if (el.classList.contains('screen--welcome')) homDecor(el, hom, stage);
+  } else if (el.classList.contains('screen--welcome')) {
+    // Gold und Diamant-Holo: Lichtreflex auf den Knöpfen, der der Neigung des Handys folgt
+    el.querySelectorAll('.btn, .hub-tile, .connect-cta, .cc-pill, .cc-ics span.is-on').forEach((b) => {
+      if (!b.querySelector(':scope > .tilt-glare')) b.insertAdjacentHTML('beforeend', '<i class="tilt-glare" aria-hidden="true"></i>');
+    });
   }
   luxTilt();
 }
