@@ -1,0 +1,39 @@
+/*
+  Fame V98 · Diamant-Holo: die übrigen Seiten (Fame steigern, Ranking, Accounts, Code prüfen …)
+  bekommen dasselbe goldgefasste Diamantglas wie die Kacheln der Startseite (V90).
+  Der Glanz ist eine eigene Bildschicht und wandert mit der Neigung (--lx / --ly) –
+  so wirkt er auch bei Listen, die erst nachträglich geladen werden.
+  Card-Seite und Hommagen bleiben unverändert.
+*/
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.pf, .stat, .rrow, .amount-field, .signed, .req, .duel-row, .check-field input, .field input, .field select, .chip, .rank-tabs) {
+  position: relative;
+  border: 2px solid transparent !important;
+  color: #fff7e8 !important;
+  background:
+    linear-gradient(111deg, transparent 33%, rgba(255, 255, 255, 0.26) 47%, rgba(249, 232, 197, 0.1) 51%, transparent 61%) calc(50% - var(--lx, 0) * 45%) 0 / 320% 100% no-repeat padding-box,
+    radial-gradient(ellipse 118% 76% at calc(15% + var(--lx, 0) * 16%) calc(-12% + var(--ly, 0) * 7%), rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.08) 42%, transparent 76%) padding-box,
+    linear-gradient(155deg, rgba(91, 72, 56, 0.55) 0%, rgba(37, 32, 29, 0.6) 26%, rgba(10, 13, 17, 0.71) 54%, rgba(50, 39, 25, 0.58) 100%) padding-box,
+    linear-gradient(123deg, #fffef7 0%, #dba646 13%, #a86e22 25%, #fff0bd 40%, #f6f7ff 52%, #ad772c 70%, #ffe9b1 89%, #fffdf5 100%) border-box !important;
+  box-shadow:
+    inset 0 2px 1px rgba(255, 255, 255, 0.6),
+    inset 0 -3px 6px rgba(114, 76, 31, 0.29),
+    0 0 0 1px rgba(255, 211, 122, 0.35),
+    0 0 14px rgba(247, 179, 71, 0.18),
+    0 9px 22px rgba(0, 0, 0, 0.5) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6);
+}
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.pf, .stat, .signed, .req, .amount-field) { border-radius: 16px !important; }
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.rrow, .duel-row) { border-radius: 14px !important; }
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.check-field input, .field input, .field select) { border-radius: 14px !important; }
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.chip, .rank-tabs) { border-radius: 999px !important; }
+.screen.lux--holo:not(.hom):not(.screen--card) .rank-tabs a:not(.is-active) { background: transparent !important; }
+/* Hervorhebungen (eigener Platz, verbundene Accounts, aktive Auswahl): kräftigerer Goldrand + Leuchten */
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.pf.is-on, .pf.is-picked, .rrow--me, .stat--me, .chip.is-active) {
+  box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.75), 0 0 0 1px rgba(255, 220, 140, 0.8), 0 0 22px rgba(247, 190, 90, 0.4), 0 9px 22px rgba(0, 0, 0, 0.5) !important;
+}
+/* Texte in den Glasflächen hell und gut lesbar */
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.pf-nm, .pf-ic, .stat b, .rrow b, .amount-field input, .amount-field span) { color: #fffaef !important; }
+.screen.lux--holo:not(.hom):not(.screen--card) :is(.pf small, .stat small, .stat span, .rrow small) { color: #d8c9a8 !important; }
+@media (prefers-reduced-motion: reduce) {
+  .screen.lux--holo:not(.hom):not(.screen--card) :is(.pf, .stat, .rrow, .amount-field, .signed, .req, .duel-row, .chip, .rank-tabs) { background-position: 50% 0, 0 0, 0 0, 0 0 !important; }
+}

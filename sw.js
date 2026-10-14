@@ -1,7 +1,7 @@
 // Einfacher Offline-Cache: App-Dateien zuerst aus dem Netz, sonst aus dem Cache.
-const CACHE = 'fame-v97'; // gleich wie APP_VERSION in js/app.js
+const CACHE = 'fame-v98'; // gleich wie APP_VERSION in js/app.js
 const ASSETS = [
-  './', 'index.html', 'css/app.css', 'css/prestige-v88.css', 'css/black-gold-v89.css', 'css/diamond-glass-v90.css', 'css/home-gem-tilt-v91.css', 'css/cave-stage14-v94.css', 'css/card-lux-v96.css', 'css/home-shimmer-v97.css', 'manifest.webmanifest',
+  './', 'index.html', 'css/app.css', 'css/prestige-v88.css', 'css/black-gold-v89.css', 'css/diamond-glass-v90.css', 'css/home-gem-tilt-v91.css', 'css/cave-stage14-v94.css', 'css/card-lux-v96.css', 'css/home-shimmer-v97.css', 'css/holo-pages-v98.css', 'manifest.webmanifest',
   'js/app.js', 'js/home-gem-tilt.js', 'js/cave-reveal.js', 'js/data.js', 'js/ui.js', 'js/fx.js', 'js/diamond3d.js', 'js/gem3d.js', 'js/gems.js', 'js/refraction.js', 'js/particles.js', 'js/share.js', 'js/cardfx.js', 'js/connect.js', 'js/config.js', 'js/auth.js', 'js/i18n.js', 'js/i18n-en.js', 'js/gems-en.js', 'js/story.js',
   'vendor/three.module.min.js', 'vendor/supabase.js', 'vendor/three-mesh-bvh.module.js', 'assets/icon.svg', 'assets/icon-180.png', 'assets/icon-192.png', 'assets/icon-512.png',
   'assets/img/cash.jpg', 'assets/img/ranking.jpg', 'assets/img/pin.jpg', 'assets/img/animals.jpg',

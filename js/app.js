@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '97';
+export const APP_VERSION = '98';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -217,12 +217,26 @@ function luxTilt() {
     raf = Math.abs(tx - x) + Math.abs(ty - y) > 0.002 ? requestAnimationFrame(step) : 0;
   };
   const aim = (nx, ny) => { tx = Math.max(-1, Math.min(1, nx)); ty = Math.max(-1, Math.min(1, ny)); raf ||= requestAnimationFrame(step); };
-  window.addEventListener('deviceorientation', (e) => { if (e.gamma != null) aim(e.gamma / 30, (e.beta - 45) / 30); });
+  // Lagesensor: Ausgangshaltung beim ersten Messwert merken, damit schon kleine Bewegungen
+  // (ca. 12–15 Grad) den vollen Ausschlag geben – egal wie man das Handy gerade hält
+  let base = null;
+  window.addEventListener('deviceorientation', (e) => {
+    if (e.gamma == null || e.beta == null) return;
+    base ??= { g: e.gamma, b: e.beta };
+    // langsam nachführen: hält man das Handy dauerhaft anders, wird das die neue Mitte
+    base.g += (e.gamma - base.g) * 0.004; base.b += (e.beta - base.b) * 0.004;
+    aim((e.gamma - base.g) / 13, (e.beta - base.b) / 15);
+  });
   // Ohne Lagesensor (Computer): dem Finger bzw. der Maus folgen
-  window.addEventListener('pointermove', (e) => aim((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1));
-  // iPhone: Bewegungssensor erst nach einer Berührung freigeben
-  const ask = () => { window.DeviceOrientationEvent?.requestPermission?.().catch(() => {}); };
-  window.addEventListener('pointerup', ask, { once: true });
+  window.addEventListener('pointermove', (e) => { if (base) return; aim((e.clientX / innerWidth) * 2 - 1, (e.clientY / innerHeight) * 2 - 1); });
+  // iPhone: Bewegungssensor nur nach einem echten Antippen freigeben – so lange fragen, bis es klappt
+  const req = window.DeviceOrientationEvent?.requestPermission;
+  if (req) {
+    const ask = () => {
+      req.call(window.DeviceOrientationEvent).then((r) => { if (r === 'granted') ['click', 'touchend'].forEach((ev) => window.removeEventListener(ev, ask, true)); }).catch(() => {});
+    };
+    ['click', 'touchend'].forEach((ev) => window.addEventListener(ev, ask, true));
+  }
 }
 
 function render() {
