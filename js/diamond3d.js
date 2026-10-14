@@ -540,7 +540,8 @@ export function createDiamond(container, opts = {}) {
       ? 1.8 + glowLevel * 2.2 + pulseT * 6
       : 4 + glowLevel * 10 + pulseT * 25;
     renderer.toneMappingExposure = (photo ? 1.12 : 1.05) + pulseT * (photo ? 0.25 : 0.6);
-    renderer.render(scene, camera);
+    // Während eine Vollbild-Animation läuft (z. B. das Mondstein-Buch), ist der Stein verdeckt: nicht rendern
+    if (!document.documentElement.classList.contains('story-on')) renderer.render(scene, camera);
     raf = requestAnimationFrame(frame);
   };
   raf = requestAnimationFrame(frame);

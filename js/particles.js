@@ -80,6 +80,8 @@ export function particles(canvas, { color = '#3dfa74', mode = 'embers', density 
   let acc = 0;
   let last = performance.now();
   const frame = (now) => {
+    // verdeckt von einer Vollbild-Animation: aussetzen
+    if (document.documentElement.classList.contains('story-on')) { last = now; raf = requestAnimationFrame(frame); return; }
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     acc += dt * (mode === 'dust' ? 10 : 22) * rate;

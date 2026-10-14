@@ -1,25 +1,39 @@
 // Hommage Stufe 30 (Mondstein): kurze Buch-Animation beim Aufdecken der Card.
 // Das geschlossene Buch „Der Mondstein“ (Wilkie Collins, 1868) öffnet sich, die Kapitel blättern um,
 // am Ende leuchtet der Mondstein auf. Antippen überspringt. Der Roman ist gemeinfrei.
+//
+// Für flüssigen Ablauf auf dem Handy:
+// - alle Bilder werden vorab geladen und dekodiert (keine leeren oder weißen Seiten)
+// - jede Seite ist eine einzige Ebene ohne Rückseite: ab der Hälfte des Umblätterns ist sie
+//   unsichtbar und gibt die darunterliegende Seite frei
+// - Animationen laufen über die Web Animations API mit transform/opacity (Grafikkarte)
+// - solange das Buch offen ist, pausieren der 3D-Stein und die Funken dahinter (Klasse story-on)
 
 import { isEn } from './i18n.js';
 import { storySound } from './fx.js';
 
-const PAGES = ['kap2', 'kap3', 'kap4'];
-// Wie lange jede Szene stehen bleibt (ms). Jeder Schritt startet erst, wenn der vorige wirklich fertig ist –
-// so fehlt auf langsamen Handys kein Kapitel.
-const HOLD = { cover: 700, page: 900, epilog: 1500, glow: 900 };
+const IMAGES = ['kap2', 'kap3', 'kap4', 'epilog'].map((n) => `assets/moon/${n}.jpg`);
+const TIME = { cover: 1100, flip: 850, hold: 850, epilog: 1500 };
+
+function preload(urls, max = 2500) {
+  const all = Promise.all(urls.map((src) => {
+    const img = new Image();
+    img.src = src;
+    return (img.decode ? img.decode() : new Promise((r) => { img.onload = r; })).catch(() => {});
+  }));
+  return Promise.race([all, new Promise((r) => setTimeout(r, max))]);
+}
 
 export function playMoonStory(host, { onDone } = {}) {
+  const root = document.documentElement;
   const el = document.createElement('div');
   el.className = 'story';
   el.setAttribute('aria-label', isEn ? 'The Moonstone – story' : 'Der Mondstein – Geschichte');
+  // Reihenfolge im DOM = Stapel: unten der Epilog, oben das erste Kapitel, ganz oben der Einband
   el.innerHTML = `
     <div class="story-book">
-      <div class="story-block"></div><div class="story-edge"></div>
-      <div class="story-page story-last"><div class="story-face story-paper"><i style="background-image:url(assets/moon/epilog.jpg)"></i></div></div>
-      ${PAGES.map((p, i) => `<div class="story-page" data-page style="z-index:${PAGES.length + 1 - i}"><div class="story-face story-paper"><i style="background-image:url(assets/moon/${p}.jpg)"></i></div><div class="story-face story-back"></div></div>`).join('')}
-      <div class="story-page story-cover" data-cover><div class="story-face story-front">
+      ${IMAGES.slice().reverse().map((src) => `<div class="story-sheet" style="background-image:url(${src})"><i class="story-dim"></i></div>`).join('')}
+      <div class="story-sheet story-cover">
         <div class="story-frame"></div>
         <span class="story-corner" style="left:8px;top:8px"></span><span class="story-corner" style="right:8px;top:8px"></span>
         <span class="story-corner" style="left:8px;bottom:8px"></span><span class="story-corner" style="right:8px;bottom:8px"></span>
@@ -29,50 +43,63 @@ export function playMoonStory(host, { onDone } = {}) {
         <div class="story-sub">${isEn ? 'A Novel' : 'Ein Kriminalroman'}</div>
         <div class="story-year">LONDON · MDCCCLXVIII</div>
         <div class="story-shine"></div>
-      </div><div class="story-face story-back story-endpaper"></div></div>
+      </div>
     </div>
     <div class="story-glow"></div>
     <span class="story-skip">${isEn ? 'Tap to skip' : 'Antippen zum Überspringen'}</span>`;
   host.appendChild(el);
+  root.classList.add('story-on');
 
   let done = false;
-  let timer = 0;
-  const wait = (ms) => new Promise((r) => { timer = setTimeout(r, ms); });
-  // auf das Ende einer CSS-Animation warten (mit Sicherheitsgrenze)
-  const animate = (node, cls, max) => new Promise((r) => {
-    const end = (e) => {
-      if (e && e.target !== node) return; // nur die eigene Animation, nicht die von Elementen darin
-      clearTimeout(t); node.removeEventListener('animationend', end); r();
-    };
-    const t = setTimeout(end, max);
-    node.addEventListener('animationend', end);
-    node.classList.add(cls);
-  });
+  const anims = [];
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const finish = () => {
     if (done) return;
     done = true;
-    clearTimeout(timer);
-    el.classList.add('is-out');
-    setTimeout(() => el.remove(), 600);
+    anims.forEach((a) => { try { a.cancel(); } catch { /* schon fertig */ } });
+    root.classList.remove('story-on');
+    el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 450, easing: 'ease', fill: 'forwards' })
+      .finished.then(() => el.remove(), () => el.remove());
     onDone?.();
   };
   el.addEventListener('click', finish);
+
+  // Seite umblättern: dreht sich um den linken Rand; die Seite darunter wird dabei heller
+  const flip = (sheet, ms) => {
+    const below = sheet.previousElementSibling?.querySelector('.story-dim');
+    if (below) anims.push(below.animate([{ opacity: 0.55 }, { opacity: 0 }], { duration: ms, easing: 'ease-out', fill: 'forwards' }));
+    const a = sheet.animate([
+      { transform: 'perspective(1400px) rotateY(0deg)', filter: 'brightness(1)' },
+      { transform: 'perspective(1400px) rotateY(-60deg) translateZ(20px)', filter: 'brightness(.75)', offset: 0.45 },
+      { transform: 'perspective(1400px) rotateY(-100deg)', filter: 'brightness(.5)' },
+    ], { duration: ms, easing: 'cubic-bezier(.45,.05,.3,1)', fill: 'forwards' });
+    anims.push(a);
+    return a.finished.then(() => sheet.remove(), () => {});
+  };
+
   (async () => {
-    await wait(HOLD.cover);
+    // Buch erscheint, Glanz läuft über den Einband – währenddessen die Bilder laden
+    const book = el.querySelector('.story-book');
+    anims.push(book.animate([{ opacity: 0, transform: 'translateY(16px) scale(.95)' }, { opacity: 1, transform: 'none' }], { duration: 450, easing: 'ease-out', fill: 'both' }));
+    await Promise.all([preload(IMAGES), wait(TIME.cover)]);
     if (done) return;
-    storySound('cover');
-    await animate(el.querySelector('[data-cover]'), 'is-open', 2500);
-    for (const p of el.querySelectorAll('[data-page]')) {
-      await wait(HOLD.page);
+    const sheets = [...el.querySelectorAll('.story-sheet')].reverse(); // Einband, Kap. 2, 3, 4
+    for (let i = 0; i < sheets.length - 1; i++) {
+      storySound(i === 0 ? 'cover' : 'page');
+      await flip(sheets[i], i === 0 ? TIME.flip + 150 : TIME.flip);
       if (done) return;
-      storySound('page');
-      await animate(p, 'is-flip', 2000);
+      if (i < sheets.length - 2) await wait(TIME.hold);
+      if (done) return;
     }
-    await wait(HOLD.epilog);
+    await wait(TIME.epilog);
     if (done) return;
     storySound('glow');
-    await animate(el.querySelector('.story-glow'), 'is-on', 2000);
-    await wait(HOLD.glow / 3);
+    const glow = el.querySelector('.story-glow');
+    await glow.animate([
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(.05)' },
+      { opacity: 1, transform: 'translate(-50%,-50%) scale(.6)', offset: 0.3 },
+      { opacity: 0, transform: 'translate(-50%,-50%) scale(1.6)' },
+    ], { duration: 1100, easing: 'ease-out', fill: 'forwards' }).finished.catch(() => {});
     finish();
   })();
   return finish;

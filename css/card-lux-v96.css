@@ -1,0 +1,63 @@
+/*
+  Fame V96 · Card-Seite in Gold (Klasse 9) und Diamant-Holo (Klasse 10)
+  Variante B: poliertes Gold bzw. Platin – Teilen-Knöpfe, obere Knöpfe, Podest, Teilen-Fenster.
+  Die Card selbst (V76-Design) bleibt unverändert; Hommagen (.hom) sind ausgenommen.
+  Der Glanz wandert mit der Neigung des Handys (--lx / --ly aus app.js).
+*/
+.screen--card.lux--gold:not(.hom) {
+  --m-dark: #7a5a1e; --m-mid: #c9a24a; --m-light: #f6e7b0; --m-hi: #fff4cf; --m-low: #a8822f;
+  --m-ink: #2a1d08; --m-glow: rgba(230, 190, 90, 0.4); --m-rune: #c9a24a; --m-link: #e6c46a;
+  --m-tint: linear-gradient(transparent, transparent);
+  background: radial-gradient(ellipse at 50% 30%, #3a2c12 0%, #15100a 55%, #070504 100%) !important;
+}
+.screen--card.lux--holo:not(.hom) {
+  --m-dark: #8a8fa0; --m-mid: #c7ccd8; --m-light: #ffffff; --m-hi: #f7f8fc; --m-low: #9aa0b2;
+  --m-ink: #1c1f2a; --m-glow: rgba(220, 215, 255, 0.4); --m-rune: #e9e4ff; --m-link: #e9e4ff;
+  --m-tint: linear-gradient(115deg, rgba(255, 154, 213, 0.22), rgba(159, 208, 255, 0.22) 35%, rgba(255, 243, 168, 0.18) 65%, rgba(198, 182, 255, 0.22));
+  background: radial-gradient(ellipse at 50% 30%, #262330 0%, #0b0a10 55%, #050507 100%) !important;
+}
+:is(.screen--card.lux--gold, .screen--card.lux--holo):not(.hom) {
+  --m-metal: linear-gradient(135deg, var(--m-dark) 0%, var(--m-light) 28%, var(--m-mid) 48%, var(--m-hi) 62%, var(--m-low) 100%);
+  --m-brush: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.07) 0 1px, transparent 1px 3px);
+  --m-shine: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.55) 48%, transparent 58%);
+}
+.screen--card.lux--gold:not(.hom) .loot-rays, .screen--card.lux--gold:not(.hom) .loot-pillar { opacity: 0.55; filter: sepia(1) saturate(2) hue-rotate(-10deg); }
+.screen--card.lux--holo:not(.hom) .loot-rays, .screen--card.lux--holo:not(.hom) .loot-pillar { opacity: 0.55; filter: grayscale(0.4) brightness(1.2); }
+:is(.screen--card.lux--gold, .screen--card.lux--holo):not(.hom) .loot-runes text { fill: var(--m-rune) !important; }
+
+/* Podest: polierte Metallplatte mit Lichtreflex, der der Neigung folgt */
+:is(.screen--card.lux--gold, .screen--card.lux--holo):not(.hom) .loot-ground {
+  border-radius: 50% !important; opacity: 1 !important; filter: none !important;
+  background:
+    radial-gradient(ellipse at calc(50% + var(--lx, 0) * 18%) 30%, var(--m-hi) 0%, var(--m-light) 14%, var(--m-mid) 32%, var(--m-dark) 56%, rgba(0, 0, 0, 0) 72%) !important;
+  box-shadow: 0 0 34px var(--m-glow) !important;
+}
+:is(.screen--card.lux--gold, .screen--card.lux--holo):not(.hom) .famecard {
+  box-shadow: 0 0 0 1px var(--m-mid), 0 0 40px var(--m-glow), 0 30px 60px rgba(0, 0, 0, 0.65) !important;
+}
+
+/* Obere Knöpfe: runde polierte Metallknöpfe */
+:is(.screen--card.lux--gold, .screen--card.lux--holo):not(.hom) :is(.back, .home-btn, .sound-btn) {
+  width: 44px; height: 44px; border: 0 !important; border-radius: 50% !important; color: var(--m-ink) !important;
+  background: var(--m-shine) calc(50% - var(--lx, 0) * 40%) 0 / 300% 100% no-repeat, var(--m-metal) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55), inset 0 -2px 4px rgba(0, 0, 0, 0.25), 0 6px 16px rgba(0, 0, 0, 0.55) !important;
+}
+:is(.screen--card.lux--gold, .screen--card.lux--holo):not(.hom) :is(.back, .home-btn, .sound-btn) :is(svg, .ico) { stroke: var(--m-ink) !important; color: var(--m-ink) !important; }
+
+/* Teilen-Knöpfe und Teilen-Fenster: gebürstetes Metall, Plattformfarbe nur im Symbol */
+:is(.screen--card.lux--gold, .screen--card.lux--holo):not(.hom) :is(.qs, .share-btn) {
+  position: relative; overflow: hidden; border: 0 !important; border-radius: 18px !important; color: var(--m-ink) !important;
+  background: var(--m-shine) calc(50% - var(--lx, 0) * 40%) 0 / 300% 100% no-repeat, var(--m-tint), var(--m-brush), var(--m-metal) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6), inset 0 -3px 6px rgba(0, 0, 0, 0.25), 0 10px 24px rgba(0, 0, 0, 0.55) !important;
+}
+:is(.screen--card.lux--gold, .screen--card.lux--holo):not(.hom) :is(.qs, .share-btn) :is(b, span) { color: var(--m-ink) !important; }
+:is(.screen--card.lux--gold, .screen--card.lux--holo):not(.hom) :is(.qs--ig, .share-btn--ig) .ico { color: #d62976; }
+:is(.screen--card.lux--gold, .screen--card.lux--holo):not(.hom) :is(.qs--tt, .share-btn--tt) .ico { color: #111; filter: drop-shadow(-1.2px -1px 0 #25f4ee) drop-shadow(1.2px 1px 0 #fe2c55); }
+:is(.screen--card.lux--gold, .screen--card.lux--holo):not(.hom) :is(.qs--sc, .share-btn--sc) .ico { color: #fffc00; filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000); }
+:is(.screen--card.lux--gold, .screen--card.lux--holo):not(.hom) :is(.qs, .share-btn):not([class*="--ig"]):not([class*="--tt"]):not([class*="--sc"]) .ico { color: var(--m-ink); }
+:is(.screen--card.lux--gold, .screen--card.lux--holo):not(.hom) .sheet-panel {
+  background: linear-gradient(180deg, rgba(40, 33, 22, 0.96), rgba(10, 9, 8, 0.98)); border-top: 1px solid var(--m-mid);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 -20px 50px rgba(0, 0, 0, 0.6);
+}
+.screen--card.lux--holo:not(.hom) .sheet-panel { background: linear-gradient(180deg, rgba(34, 33, 44, 0.96), rgba(9, 9, 12, 0.98)); }
+:is(.screen--card.lux--gold, .screen--card.lux--holo):not(.hom) .foot-links :is(a, .link) { color: var(--m-link) !important; text-decoration-color: var(--m-mid) !important; }
