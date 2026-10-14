@@ -146,7 +146,7 @@ const CUTS = {
 const SAYINGS = {
   'Malachit': 'Erster Stein, erste Aura. Lowkey ein Flex.',
   'Larimar': 'Karibik-Vibes für ’nen Fünfer. Das crazy.',
-  'Mondstein': 'Leuchtet nachts. Du auch, no cap.',
+  'Mondstein': 'Aus dem Tempel geraubt. Von dir gefunden.',
   'Chalzedon': 'Chill-Aura aktiviert. Respekt, Bro.',
   'Lapislazuli': 'Blau mit Gold drin – it’s giving Königsdrip.',
   'Dendritenachat': 'Ein ganzer Wald im Stein. Du bist der Main Character.',

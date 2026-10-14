@@ -10,6 +10,7 @@ import {
   APP_NAME, LOGO_TEXT, DIA, esc, logo, logoInline, hl, hero, button, backButton, diamondSvg,
   diamondShadowed, icons, platformIcon,
 } from './ui.js';
+import { playMoonStory } from './story.js';
 import { tick, plink, stageTick, classDrop, buzz, unlockAudio, buildup, boost, startTension, revealMusic, startCelebration, themeReveal, themeLoop, themeJingle, isMuted, setMuted } from './fx.js';
 import { createDiamond } from './diamond3d.js';
 import { facetArt, facetMask, svgUrl, holoStrength } from './cardfx.js';
@@ -81,7 +82,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '74';
+export const APP_VERSION = '75';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -114,8 +115,8 @@ export const go = (path) => { location.hash = '#/' + path; };
 // mit Kristallglas. Drei Stufen haben stattdessen einen eigenen Hommage-Look (siehe HOMAGE).
 // Nicht auf den Seiten vor dem Login.
 const PLAIN = /^(intro\/|login|register|confirm|reset)/;
-// Hommagen: Kristallhöhle (Amethyst), Neon-Nacht im Diamantenviertel (Black Opal), Tiefsee (Hope-Diamant)
-const HOMAGE = { 14: 'cave', 76: 'neon', 98: 'ocean' };
+// Hommagen: Kristallhöhle (Amethyst), Krimi-Nacht „Der Mondstein“ (Mondstein), Neon-Nacht im Diamantenviertel (Black Opal), Tiefsee (Hope-Diamant)
+const HOMAGE = { 14: 'cave', 30: 'moon', 76: 'neon', 98: 'ocean' };
 // Stufe der zuletzt aufgedeckten Card: Ein Hommage-Thema erscheint erst, wenn die Card umgedreht
 // wurde – sonst würde es verraten, welcher Stein unter der verdeckten Card liegt.
 function shownStage() {
@@ -156,6 +157,11 @@ function homDecor(el, hom, stage) {
       <div class="hom-hotbar" aria-hidden="true"><span class="i-pick"></span><span class="sel i-gem"></span><span class="i-torch"></span>${'<span></span>'.repeat(6)}</div>`);
     add(vault, `<i class="hom-torch hom-torch--l" aria-hidden="true"></i><i class="hom-torch hom-torch--r" aria-hidden="true"></i>
       <i class="hom-pick" aria-hidden="true"></i><div class="hom-xp" aria-hidden="true"><i></i><b>${stage}</b></div>`);
+  } else if (hom === 'moon') {
+    add(el, '<div class="hom-fog" aria-hidden="true"></div><div class="hom-fog hom-fog--2" aria-hidden="true"></div>');
+    add(vault, `<div class="hom-news" aria-hidden="true"><u>THE MORNING STAR · 1848</u><b>${t('Der Mondstein gestohlen!')}</b><i>${t('Heiliger Stein aus Tempel geraubt – die Spur führt nach England …')}</i></div>
+      <svg class="hom-lens" viewBox="0 0 100 100" aria-hidden="true"><circle cx="40" cy="40" r="28" fill="rgba(200,220,255,.12)" stroke="#c9a46a" stroke-width="6"/><circle cx="40" cy="40" r="28" fill="none" stroke="#7a5a2a" stroke-width="1.5"/><path d="M30 26q6-6 16-4" stroke="#fff" stroke-width="2.5" fill="none" opacity=".7"/><path d="M60 60l32 32" stroke="#3a2a18" stroke-width="10" stroke-linecap="round"/><path d="M60 60l32 32" stroke="#6b4a2a" stroke-width="6" stroke-linecap="round"/></svg>
+      <svg class="hom-rose" viewBox="0 0 40 90" aria-hidden="true"><path d="M20 88q-4-34 2-62" stroke="#2e5a2e" stroke-width="2.5" fill="none"/><path d="M20 56q-14-4-16 6 10-2 16-6z" fill="#3a7a3a"/><circle cx="22" cy="20" r="11" fill="#8a0f24"/><path d="M13 18q9-12 18 0-9 5-18 0z" fill="#b8183a"/><path d="M17 15q5-7 10 0-5 3-10 0z" fill="#e03a62"/></svg>`);
   } else if (hom === 'neon') {
     add(el, '<span class="hom-neon hom-neon--top" aria-hidden="true">★ 47TH STREET · DIAMOND DISTRICT ★</span>');
     add(vault, `<div class="hom-cosmos" aria-hidden="true"></div>
@@ -1591,6 +1597,8 @@ function card() {
           el.classList.add('is-open', 'is-revealing');
           flash.classList.add('is-on');
           stopMusic = HOMAGE[tier.stage] ? themeReveal(HOMAGE[tier.stage]) : revealMusic(tier.cls);
+          // Mondstein: das Buch öffnet sich und erzählt die Geschichte, dann erscheint die Card
+          if (HOMAGE[tier.stage] === 'moon') playMoonStory(el);
           dia.pulse();
           const [x, y] = centerIn(canvas, flip);
           fx.burst(x, y, 40 + tier.level * 40, rarity.color);

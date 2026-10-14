@@ -284,6 +284,31 @@ function harlequin(g, n, spec, rnd) {
 }
 
 const PATTERNS = {
+  // Mondstein: milchig-weißer Grund mit feinen Schleiern
+  moonbase(g, n, spec, rnd) {
+    // leicht grau-blau, damit der Schimmer sich abhebt (echte Mondsteine sind durchscheinend, nicht kreideweiß)
+    g.fillStyle = '#c3cddd';
+    g.fillRect(0, 0, n, n);
+    for (let i = 0; i < 40; i++) {
+      const x = rnd() * n, y = rnd() * n, r = 30 + rnd() * 90;
+      const p = g.createRadialGradient(x, y, 0, x, y, r);
+      p.addColorStop(0, rnd() < 0.5 ? 'rgba(255,255,255,0.5)' : 'rgba(200,210,230,0.35)');
+      p.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = p;
+      g.beginPath(); g.ellipse(x, y, r, r * 0.4, rnd() * Math.PI, 0, Math.PI * 2); g.fill();
+    }
+  },
+  // Mondstein: der bläuliche Schimmer (Adulareszenz) – ein weicher Lichtfleck, der wandert
+  moonsheen(g, n) {
+    g.fillStyle = '#000';
+    g.fillRect(0, 0, n, n);
+    const p = g.createRadialGradient(n * 0.45, n * 0.42, 0, n * 0.45, n * 0.42, n * 0.36);
+    p.addColorStop(0, 'rgba(120,185,255,1)');
+    p.addColorStop(0.35, 'rgba(60,130,255,0.85)');
+    p.addColorStop(1, 'rgba(60,110,255,0)');
+    g.fillStyle = p;
+    g.beginPath(); g.ellipse(n * 0.45, n * 0.42, n * 0.4, n * 0.22, -0.4, 0, Math.PI * 2); g.fill();
+  },
   // Malachit: gewellte, konzentrische Bänder
   bands(g, n, spec, rnd) {
     g.fillStyle = spec.c2;
@@ -559,12 +584,18 @@ function buildMaterials(spec, geo, envCube, style) {
       });
       break;
     }
-    case 'moon':
+    case 'moon': {
+      // milchig-durchscheinend, darin ein blauer Schimmer, der beim Drehen über den Stein wandert
+      const sheen = tex('moonsheen');
+      sheen.center.set(0.5, 0.5);
       outer = new THREE.MeshPhysicalMaterial({
-        ...base, color: spec.c, transparent: true, opacity: 0.92, sheen: 0.5, sheenColor: new THREE.Color('#9cc4ff'),
-        sheenRoughness: 0.3, emissive: new THREE.Color('#7fa6ff'), emissiveIntensity: 0.12, iridescence: 0.35,
+        map: tex('moonbase'), color: '#8f9bb0', transparent: true, opacity: 0.93,
+        roughness: 0.18, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 0.35,
+        emissive: new THREE.Color('#ffffff'), emissiveMap: sheen, emissiveIntensity: 2,
+        sheen: 0.4, sheenColor: new THREE.Color('#9cc4ff'), iridescence: 0.2,
       });
       break;
+    }
     case 'star': {
       const star = asterismTexture();
       disposables.push(star);
@@ -703,7 +734,10 @@ export function gemObject(spec, { envCube = null, style = 'holo' } = {}) {
         outer.map.rotation = Math.sin(t * 0.25) * 0.35;
         outer.emissiveIntensity = 0.55 + 0.35 * Math.max(0, Math.sin(t * 1.3));
       }
-      if (spec.look === 'moon' && !mystery) outer.emissiveIntensity = 0.08 + (Math.sin(t * 1.4) + 1) * 0.08;
+      if (spec.look === 'moon' && !mystery && outer.emissiveMap) {
+        outer.emissiveMap.offset.set(Math.sin(t * 0.45) * 0.18, Math.cos(t * 0.33) * 0.1);
+        outer.emissiveIntensity = 1.5 + 0.8 * (Math.sin(t * 0.9) + 1) / 2;
+      }
       sparkles.children.forEach((sp) => {
         const ph = (t * sp.userData.speed + sp.userData.phase) % 1;
         const f = Math.pow(Math.max(0, Math.sin(ph * Math.PI)), 14);

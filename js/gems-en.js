@@ -105,7 +105,7 @@ export const GEM_NAMES_EN = {
 export const SAYINGS_EN = {
   'Malachit': "First stone, first aura. Lowkey a flex.",
   'Larimar': "Caribbean vibes, pocket-sized. That's wild.",
-  'Mondstein': "Glows at night. So do you, no cap.",
+  'Mondstein': "Taken from a temple. Found by you.",
   'Chalzedon': "Chill aura activated. Respect, bro.",
   'Lapislazuli': "Blue with gold flecks. It's giving royal drip.",
   'Dendritenachat': "A whole forest in a stone. Main character energy.",
