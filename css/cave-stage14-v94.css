@@ -220,156 +220,110 @@
   .screen.hom--cave.screen--welcome .hom-torch--r{right:7%;}
 }
 
-/* --------------- STUFE 14 CARD REVEAL: DESTRUCTIBLE ROCK WALL ---------------
-   Temporary overlay only. Never changes .famecard / .flip / .cardback.
-   No Minecraft artwork or assets: uses Fame's existing custom stone/pick sprites.
+/* --------------- STUFE 14 CARD REVEAL: DESTRUCTIBLE ROCK WALL (V98) ---------------
+   Overlay über der verdeckten Card. Die Wand bricht von der Mitte nach außen auf und gibt die
+   Card frei, die in diesem Moment schon aufleuchtet – kein harter Schnitt.
+   Nur Fames eigene Stein- und Spitzhacken-Grafiken; keine fremden Grafiken oder Sounds.
 */
-.cave-break{
-  position:absolute;inset:0;z-index:90;
-  isolation:isolate;overflow:hidden;pointer-events:none;
-  background:
-    radial-gradient(ellipse 60% 48% at 50% 42%,rgba(156,87,235,.26),transparent 70%),
-    linear-gradient(180deg,#090713,#181121 50%,#080710 100%);
-}
-.cave-break__opening{
-  position:absolute;inset:0;z-index:0;
-  background:
-    url("../assets/hom/crystals-top.png") center top/100% 22% no-repeat,
-    url("../assets/hom/crystals-bottom.png") center bottom/100% 21% no-repeat,
-    radial-gradient(ellipse at 50% 44%,rgba(188,91,255,.83),rgba(71,33,112,.58) 30%,#08060d 69%),
-    url("../assets/hom/stone.png") center/128px 96px repeat;
-  opacity:.98;
-}
-.cave-break__light{
-  position:absolute;left:50%;top:44%;width:65vmin;height:65vmin;
-  max-width:360px;max-height:360px;
-  z-index:1;transform:translate(-50%,-50%) scale(.5);
-  border-radius:50%;pointer-events:none;opacity:0;
-  background:radial-gradient(circle,rgba(253,231,255,.96),rgba(192,106,255,.64) 24%,rgba(154,61,229,.27) 50%,transparent 76%);
-  filter:blur(15px);
-  transition:opacity .36s,transform .8s cubic-bezier(.1,.8,.2,1);
-}
-.cave-break__gem{
-  position:absolute;left:50%;top:42%;width:108px;height:100px;
-  z-index:1;transform:translate(-50%,-50%) scale(.52);
-  opacity:0;
-  background:url("../assets/hom/gem.png") center/contain no-repeat;
-  image-rendering:pixelated;
-  filter:drop-shadow(0 0 20px #c884ff);
-  transition:transform .8s,opacity .45s;
-}
+.cave-break{ position:absolute;inset:0;z-index:90;isolation:isolate;overflow:hidden;pointer-events:none; }
 .cave-break__wall{
   position:absolute;inset:-4% -5%;z-index:4;
-  display:grid;grid-template-columns:repeat(8,minmax(0,1fr));
-  grid-template-rows:repeat(10,minmax(0,1fr));
-  perspective:950px;transform-style:preserve-3d;
-  box-shadow:inset 0 0 130px rgba(0,0,0,.75);
-}
-.cave-break__block{
-  display:block;min-width:0;min-height:0;
-  position:relative;
-  border:1px solid rgba(5,4,9,.73);
-  background:
-    linear-gradient(155deg,rgba(220,195,247,.16),transparent 30%,rgba(0,0,0,.51) 79%),
-    url("../assets/hom/stone.png") center/96px 72px repeat;
-  image-rendering:pixelated;
-  box-shadow:
-    inset 3px 3px 0 rgba(199,166,226,.14),
-    inset -6px -7px 0 rgba(0,0,0,.41),
-    0 0 0 1px rgba(12,9,19,.3);
-  transition:
-    transform .9s cubic-bezier(.18,.69,.25,1) var(--delay,0ms),
-    opacity .68s ease var(--delay,0ms);
-}
-.cave-break__block:nth-child(5n){
-  filter:brightness(.76) sepia(.12) hue-rotate(213deg);
-}
-.cave-break__block:nth-child(7n){
-  filter:brightness(1.12);
+  display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(10,minmax(0,1fr));
+  perspective:900px;
+  background:#07060c;
+  transition:background-color .3s ease;
 }
 .cave-break__wall::after{
-  content:"";
-  position:absolute;inset:0;pointer-events:none;
-  background:
-    radial-gradient(ellipse 73% 56% at 50% 42%,transparent 30%,rgba(0,0,0,.72) 100%),
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 73% 56% at 50% 42%,transparent 30%,rgba(0,0,0,.72) 100%),
     linear-gradient(90deg,rgba(0,0,0,.52),transparent 23%,transparent 78%,rgba(0,0,0,.56));
-  transition:opacity .38s;
+  transition:opacity .3s;
 }
-/* White-violet fracture lines cut into Fame's own block surface. */
+.cave-break__block{
+  display:block;min-width:0;min-height:0;position:relative;
+  border:1px solid rgba(5,4,9,.73);
+  background:linear-gradient(155deg,rgba(220,195,247,.16),transparent 30%,rgba(0,0,0,.51) 79%),
+    url("../assets/hom/stone.png") center/96px 72px repeat;
+  image-rendering:pixelated;
+  box-shadow:inset 3px 3px 0 rgba(199,166,226,.14),inset -6px -7px 0 rgba(0,0,0,.41);
+  will-change:transform,opacity;
+}
+.cave-break__block:nth-child(5n){filter:brightness(.76) sepia(.12) hue-rotate(213deg);}
+.cave-break__block:nth-child(7n){filter:brightness(1.12);}
+/* Licht hinter der Wand: dringt mit jedem Schlag stärker durch die Risse */
+.cave-break__glow{
+  position:absolute;left:50%;top:44%;z-index:5;width:80vmin;height:80vmin;max-width:440px;max-height:440px;
+  transform:translate(-50%,-50%) scale(.3);border-radius:50%;opacity:0;mix-blend-mode:screen;
+  background:radial-gradient(circle,rgba(253,231,255,.95),rgba(192,106,255,.6) 26%,rgba(154,61,229,.22) 52%,transparent 74%);
+  filter:blur(14px);transition:opacity .25s ease,transform .5s cubic-bezier(.1,.8,.2,1);
+}
+.cave-break--impact-1 .cave-break__glow{opacity:.18;transform:translate(-50%,-50%) scale(.35);}
+.cave-break--impact-2 .cave-break__glow{opacity:.35;transform:translate(-50%,-50%) scale(.5);}
+.cave-break--impact-3 .cave-break__glow{opacity:.6;transform:translate(-50%,-50%) scale(.7);}
 .cave-break__fracture{
-  position:absolute;z-index:6;inset:7% 3%;
-  width:94%;height:86%;fill:none;
-  overflow:visible;pointer-events:none;
-  stroke:#eed2ff;stroke-width:2.2;stroke-linecap:square;stroke-linejoin:miter;
-  filter:drop-shadow(0 0 5px #c66fff) drop-shadow(1px 3px 0 #180c23);
-  opacity:0;transition:opacity .12s ease;
+  position:absolute;z-index:6;inset:7% 3%;width:94%;height:86%;fill:none;overflow:visible;pointer-events:none;
+  stroke:#f3dcff;stroke-width:2.4;stroke-linecap:square;stroke-linejoin:miter;
+  filter:drop-shadow(0 0 6px #c66fff) drop-shadow(1px 3px 0 #180c23);opacity:0;transition:opacity .12s ease;
 }
 .cave-break__fracture path{stroke-dasharray:950;stroke-dashoffset:950;}
-.cave-break--impact-1 .cave-break__fracture{opacity:.72;}
-.cave-break--impact-1 .cave-break__fracture path:first-child{
-  animation:cave-fracture .25s steps(8,end) forwards;
-}
+.cave-break--impact-1 .cave-break__fracture{opacity:.8;}
+.cave-break--impact-1 .cave-break__fracture path:first-child{animation:cave-fracture .22s steps(8,end) forwards;}
 .cave-break--impact-2 .cave-break__fracture{opacity:1;}
-.cave-break--impact-2 .cave-break__fracture path:nth-child(2){
-  animation:cave-fracture .26s steps(7,end) forwards;
-}
-.cave-break--impact-3 .cave-break__fracture path:nth-child(3){
-  animation:cave-fracture .24s steps(6,end) forwards;
-}
+.cave-break--impact-2 .cave-break__fracture path:nth-child(2){animation:cave-fracture .22s steps(7,end) forwards;}
+.cave-break--impact-3 .cave-break__fracture path:nth-child(3){animation:cave-fracture .2s steps(6,end) forwards;}
+.cave-break--impact-3 .cave-break__fracture{stroke-width:3.2;}
 @keyframes cave-fracture{to{stroke-dashoffset:0;}}
-/* The exact existing original 16x13 Fame pickaxe sprite, enlarged without blur. */
+/* Schütteln bei jedem Schlag */
+.cave-break--shake .cave-break__wall,.cave-break--shake .cave-break__fracture{animation:cave-shake .28s steps(5,end);}
+@keyframes cave-shake{20%{translate:-5px 3px;}40%{translate:4px -3px;}60%{translate:-3px -2px;}80%{translate:2px 2px;}}
+/* Staub */
+.cave-break__dust{position:absolute;left:50%;top:46%;z-index:8;width:0;height:0;}
+.cave-break__dust i{position:absolute;left:0;top:0;background:#8f7aa8;box-shadow:inset -1px -1px 0 rgba(0,0,0,.4);animation:cave-dust 1.1s cubic-bezier(.3,.1,.7,1) forwards;}
+.cave-break__dust i:nth-child(3n){background:#c9a6ff;}
+.cave-break__dust i:nth-child(4n){background:#4d4258;}
+@keyframes cave-dust{
+  0%{transform:translate(0,0);opacity:1;}
+  30%{transform:translate(var(--x),var(--y));}
+  100%{transform:translate(calc(var(--x) * 1.4),var(--fall)) rotate(180deg);opacity:0;}
+}
+/* Spitzhacke (Fames eigene 16x13-Grafik) */
 .cave-break__pick{
-  position:absolute;
-  left:calc(50% + 16px);top:calc(44% + 34px);
-  width:166px;height:145px;
-  z-index:12;
-  transform-origin:83% 85%;
-  background:url("../assets/hom/pick.png") center/contain no-repeat;
-  image-rendering:pixelated;
-  filter:drop-shadow(5px 11px 1px rgba(0,0,0,.91)) drop-shadow(0 0 14px rgba(196,122,255,.26));
-  opacity:1;
-  transform:rotate(40deg);
+  position:absolute;left:calc(50% + 16px);top:calc(44% + 34px);width:166px;height:145px;z-index:12;
+  transform-origin:83% 85%;background:url("../assets/hom/pick.png") center/contain no-repeat;image-rendering:pixelated;
+  filter:drop-shadow(5px 11px 1px rgba(0,0,0,.91)) drop-shadow(0 0 14px rgba(196,122,255,.26));transform:rotate(40deg);
 }
-.cave-break--swing .cave-break__pick{
-  animation:cave-pick-swing .52s cubic-bezier(.34,.01,.22,1) 3;
-}
+.cave-break--swing .cave-break__pick{animation:cave-pick-swing .53s cubic-bezier(.34,.01,.22,1) 3;}
 @keyframes cave-pick-swing{
   0%{transform:translate(9px,4px) rotate(41deg);}
-  40%{transform:translate(-42px,-34px) rotate(-43deg);}
-  64%{transform:translate(-54px,-41px) rotate(-61deg);}
+  45%{transform:translate(-44px,-36px) rotate(-46deg);}
+  62%{transform:translate(-54px,-41px) rotate(-62deg);}
   100%{transform:translate(9px,4px) rotate(41deg);}
 }
-/* Debris fragments are the very same blocks, flying outward in 3D. */
-.cave-break--shatter .cave-break__block{
-  opacity:0;
-  transform:
-    translate3d(calc(var(--dx,0) * 1px),calc(var(--dy,0) * 1px),calc(var(--dz,0) * 1px))
-    rotate(var(--rot,35deg)) scale(.53);
+/* Aufbrechen: Blöcke fliegen von der Mitte aus zum Betrachter, dann fallen sie */
+.cave-break--shatter .cave-break__wall{background-color:transparent;transition:none;}
+.cave-break--shatter .cave-break__wall::after{opacity:0;transition:none;}
+/* Rückseite der Card im Höhlen-Look (statt Grün) */
+.screen--card.hom--cave .cardback{border-color:#b48cff;box-shadow:9px 11px 0 #4a2a86,0 0 40px rgba(180,140,255,.4);}
+.screen--card.hom--cave .cardback-q{color:#cfb2ff;text-shadow:0 0 30px #b48cff;}
+.cave-break--shatter .cave-break__block{animation:cave-fly 1.25s cubic-bezier(.2,.6,.4,1) var(--delay,0ms) forwards;}
+@keyframes cave-fly{
+  0%{transform:none;opacity:1;}
+  12%{transform:translate3d(calc(var(--dx) * .15),calc(var(--dy) * .15),20px) rotate(calc(var(--rot) * .1));}
+  45%{transform:translate3d(var(--dx),var(--dy),var(--dz)) rotate(calc(var(--rot) * .6)) scale(1.05);opacity:1;}
+  100%{transform:translate3d(calc(var(--dx) * 1.3),var(--fall),calc(var(--dz) * 1.2)) rotate(var(--rot)) scale(.9);opacity:0;}
 }
-.cave-break--shatter .cave-break__wall::after{opacity:0;}
-.cave-break--shatter .cave-break__fracture{opacity:0;}
-.cave-break--shatter .cave-break__pick{
-  animation:none;opacity:0;
-  transition:opacity .2s;
-}
-.cave-break--shatter .cave-break__light{
-  transform:translate(-50%,-50%) scale(1.3);
-  opacity:.95;
-}
-.cave-break--shatter .cave-break__gem{
-  transform:translate(-50%,-50%) scale(1);
-  opacity:.95;
-}
-.cave-break--finish{
-  opacity:0;transition:opacity .3s ease;
-}
+.cave-break--shatter .cave-break__fracture{opacity:0;transition:opacity .15s;}
+.cave-break--shatter .cave-break__pick{animation:none;opacity:0;transition:opacity .15s;}
+.cave-break--shatter .cave-break__glow{opacity:0;transform:translate(-50%,-50%) scale(1.8);transition:opacity .9s ease .2s,transform .9s cubic-bezier(.1,.8,.2,1);}
+.cave-break__flash{position:absolute;inset:0;z-index:7;pointer-events:none;opacity:0;background:radial-gradient(ellipse at 50% 44%,rgba(240,220,255,.85),rgba(170,110,255,.35) 40%,transparent 75%);}
+.cave-break--shatter .cave-break__flash{animation:cave-flash .7s ease-out forwards;}
+@keyframes cave-flash{15%{opacity:1;}100%{opacity:0;}}
 @media(prefers-reduced-motion:reduce){
-  .cave-break__pick,.cave-break__block,.cave-break__light,.cave-break__gem{
+  .cave-break__pick,.cave-break__block,.cave-break__glow,.cave-break__dust i{
     animation:none!important;transition:none!important;
   }
   .cave-break--impact-1 .cave-break__fracture path{
     stroke-dashoffset:0!important;animation:none!important;
   }
-  .cave-break--finish{transition:none!important;}
   .screen.hom--cave:not(.screen--card) :is(.vault-rays,.hom-torch){animation:none!important;}
 }

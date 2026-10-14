@@ -573,12 +573,11 @@ function themeRevealSound(theme) {
     return 9.5;
   }
   if (theme === 'cave') {
-    [0, 0.35, 0.7].forEach((t, i) => pickHit(t, 0.05 + i * 0.02));
-    noise({ at: 0.95, dur: 0.35, vol: 0.06, from: 1200, to: 300, q: 1, peak: 0.1 }); // Block bricht
-    [0, 4, 7, 12, 16, 19, 24].forEach((n, i) => tone(D(n), { at: 1.15 + i * 0.07, dur: 0.12, vol: 0.03, type: 'square', rev: 0.2 }));
-    for (let i = 0; i < 9; i++) xpPing(1.3 + i * 0.09 + Math.random() * 0.04, 1300 + i * 110);
-    [D(19), D(24)].forEach((f, i) => tone(f, { at: 2.1 + i * 0.16, dur: 0.6, vol: 0.03, type: 'triangle', rev: 0.5 }));
-    return 2.9;
+    // Die Hackenschläge und das Zerbrechen kommen von der Wand (caveSound); hier der Fund
+    [0, 4, 7, 12, 16, 19, 24].forEach((n, i) => tone(D(n), { at: 0.1 + i * 0.07, dur: 0.12, vol: 0.03, type: 'square', rev: 0.2 }));
+    for (let i = 0; i < 9; i++) xpPing(0.25 + i * 0.09 + Math.random() * 0.04, 1300 + i * 110);
+    [D(19), D(24)].forEach((f, i) => tone(f, { at: 1.05 + i * 0.16, dur: 0.6, vol: 0.03, type: 'triangle', rev: 0.5 }));
+    return 1.9;
   }
   if (theme === 'neon') {
     buzzer(0); buzzer(0.7, 0.3);
@@ -671,5 +670,31 @@ export function storySound(kind) {
   else if (kind === 'glow') {
     [0, 7, 12, 15, 19].forEach((n, i) => tone(D(n + 12), { at: i * 0.06, dur: 1.6, vol: 0.02, type: 'triangle', rev: 0.8 }));
     tone(D(31), { at: 0.1, dur: 1.2, vol: 0.012, rev: 0.9 });
+  }
+}
+
+// Geräusche zur Steinwand auf Stufe 14 (cave-reveal.js) – alles synthetisch, keine Samples
+export function caveSound(kind, n = 0) {
+  if (kind === 'swing') {
+    noise({ dur: 0.22, vol: 0.035, from: 500, to: 2200, q: 0.9, peak: 0.7 });
+  } else if (kind === 'hit') {
+    const v = 0.06 + n * 0.025;
+    tone(150 - n * 15, { dur: 0.09, vol: v, type: 'square', slideTo: 70, attack: 0.002 });
+    noise({ dur: 0.08, vol: v * 0.9, from: 2600, to: 900, q: 3.5, peak: 0.06 });
+    tone(55, { dur: 0.25, vol: 0.12 + n * 0.03, slideTo: 38, attack: 0.002 });
+    // Knistern der Risse
+    for (let k = 0; k < 4 + n * 3; k++) noise({ at: 0.03 + Math.random() * 0.18, dur: 0.02, vol: 0.02 + n * 0.006, from: 3500, to: 1800, q: 6, peak: 0.1 });
+    tone(1600 + n * 300, { at: 0.02, dur: 0.18, vol: 0.008 + n * 0.004, type: 'triangle', rev: 0.5 });
+  } else if (kind === 'break') {
+    tone(48, { dur: 0.9, vol: 0.2, slideTo: 30, attack: 0.004 });
+    noise({ dur: 0.8, vol: 0.09, from: 900, to: 180, q: 0.6, peak: 0.08, rev: 0.3 });
+    // prasselnde Brocken
+    for (let k = 0; k < 26; k++) {
+      const at = 0.05 + Math.random() * 1.1;
+      tone(90 + Math.random() * 160, { at, dur: 0.06, vol: 0.03 + Math.random() * 0.03, type: 'square', slideTo: 60, attack: 0.002 });
+      noise({ at, dur: 0.03, vol: 0.025, from: 2000, to: 800, q: 3, peak: 0.1 });
+    }
+    // Kristallklang, wenn das Licht durchbricht
+    [0, 7, 12, 16, 19].forEach((m, i) => tone(D(m + 12), { at: 0.12 + i * 0.05, dur: 1.4, vol: 0.018, type: 'triangle', rev: 0.8 }));
   }
 }

@@ -1599,10 +1599,15 @@ function card() {
           phase = 'mining';
           stopMusic();
           mineCleanup = mineStage14Wall(el, {
-            onImpact: (hit) => { if (hit <= 3) buzz(8 + hit * 2); else plink(2); },
+            onImpact: (hit) => buzz(hit <= 3 ? 12 + hit * 6 : [40, 30, 80]),
             onComplete: () => {
               mineFinished = true;
               mineCleanup = () => {};
+              // Hinter der zerbrechenden Wand steht die Card schon im lila Höhlen-Look (kein Farbsprung)
+              el.classList.remove('lux--gold');
+              el.classList.add('lux', 'lux--holo', 'hom', 'hom--cave');
+              el.style.setProperty('--rar', '#b48cff');
+              fx.setColor('#b48cff');
               phase = 'hidden';
               open();
             },
@@ -1611,7 +1616,7 @@ function card() {
         }
         phase = 'charging';
         el.classList.add('is-charging');
-        fx.setColor(clsColor);
+        fx.setColor(tier.stage === 14 && mineFinished ? '#b48cff' : clsColor);
         fx.setDensity(2 + tier.level);
         stopMusic();
         // Die Wandbruch-Animation ersetzt bei Stage 14 den langen Spannungsaufbau.

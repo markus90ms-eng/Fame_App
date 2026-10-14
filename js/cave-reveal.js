@@ -1,7 +1,15 @@
 // Fame Stufe 14 — eigene Voxel-/Kristallwand vor dem ORIGINALEN Card-Reveal.
-// Benutzt ausschließlich die bereits vorhandenen Fame-Assets: stone.png,
-// crystals-top/bottom.png, pick.png und gem.png. Keine externen Materialien.
-// Das Modul berührt weder den Card-Renderer noch die gespeicherten Card-Daten.
+// Benutzt ausschließlich die bereits vorhandenen Fame-Assets: stone.png und pick.png.
+// Keine fremden Grafiken, Sounds oder Schriften. Das Modul berührt weder den Card-Renderer
+// noch die gespeicherten Card-Daten.
+//
+// Ablauf (ohne harten Schnitt): drei Hackenschläge mit Rissen, Staub und Licht, das durch die Risse
+// dringt; dann bricht die Wand von der Mitte nach außen auf. Schon in diesem Moment startet das
+// Aufdecken der Card (onComplete) – die Brocken fliegen noch über die aufleuchtende Card hinweg.
+
+import { caveSound } from './fx.js';
+
+const COLS = 8, ROWS = 10;
 
 export function mineStage14Wall(screen, { onImpact = () => {}, onComplete = () => {} } = {}) {
   const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -9,77 +17,80 @@ export function mineStage14Wall(screen, { onImpact = () => {}, onComplete = () =
   layer.className = 'cave-break';
   layer.setAttribute('aria-hidden', 'true');
 
-  // Individuelle Original-Steinblöcke — konsistente Koordinaten, kein Zufall.
-  // 8 x 10 Blöcke geben der Wand ein scharfes, dreidimensionales Voxelraster.
-  const blocks = Array.from({ length: 80 }, (_, index) => {
-    const column = index % 8;
-    const row = Math.floor(index / 8);
-    const x = column - 3.5;
-    const y = row - 4.5;
-    const r = (index * 37 + 11) % 31;
-    const delay = (index * 23) % 210;
-    return '<i class="cave-break__block" style="'
-      + '--dx:' + Math.round(x * (75 + r)) + ';'
-      + '--dy:' + Math.round(y * (72 + (r % 13))) + ';'
-      + '--dz:' + (48 + ((index * 17) % 130)) + ';'
-      + '--rot:' + (x > 0 ? 1 : -1) * (26 + r) + 'deg;'
-      + '--delay:' + delay + 'ms"></i>';
+  // Steinblöcke; die Wand bricht von der Aufschlagstelle (Mitte) nach außen auf.
+  const cx = (COLS - 1) / 2, cy = 4.2;
+  const blocks = Array.from({ length: COLS * ROWS }, (_, i) => {
+    const col = i % COLS, row = Math.floor(i / COLS);
+    const x = col - cx, y = row - cy;
+    const dist = Math.hypot(x, y * 0.8);
+    const r = (i * 37 + 11) % 31;
+    return `<i class="cave-break__block" style="--dx:${Math.round(x * (55 + r))}px;--dy:${Math.round(y * 34 - 40 - (r % 9) * 4)}px;--fall:${Math.round(260 + (r % 13) * 22)}px;--dz:${120 + ((i * 17) % 160)}px;--rot:${(x >= 0 ? 1 : -1) * (40 + r * 3)}deg;--delay:${Math.round(dist * 55)}ms"></i>`;
   }).join('');
 
-  layer.innerHTML = '<div class="cave-break__opening"></div>'
-    + '<div class="cave-break__light"></div>'
-    + '<div class="cave-break__gem"></div>'
-    + '<div class="cave-break__wall">' + blocks + '</div>'
-    + '<svg class="cave-break__fracture" viewBox="0 0 400 740" preserveAspectRatio="none" aria-hidden="true">'
-    + '<path d="M205 315l-27 38 36 32-32 43 28 27-35 52 24 26"/>'
-    + '<path d="M205 315l43-34 22 44 55-11 30 29m-141 42 54 12 26 43 42 8"/>'
-    + '<path d="M182 428l-47-7-31 32-41-12m147 14 42 65-16 43 37 36m-74-92-38 49-27 18"/>'
-    + '</svg>'
-    + '<i class="cave-break__pick"></i>';
-
+  layer.innerHTML = `<div class="cave-break__wall">${blocks}</div>
+    <div class="cave-break__glow"></div>
+    <svg class="cave-break__fracture" viewBox="0 0 400 740" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M205 315l-27 38 36 32-32 43 28 27-35 52 24 26"/>
+      <path d="M205 315l43-34 22 44 55-11 30 29m-141 42 54 12 26 43 42 8"/>
+      <path d="M182 428l-47-7-31 32-41-12m147 14 42 65-16 43 37 36m-74-92-38 49-27 18"/>
+    </svg>
+    <div class="cave-break__dust"></div>
+    <i class="cave-break__pick"></i>
+    <div class="cave-break__flash"></div>`;
   screen.appendChild(layer);
 
   const timers = [];
   let cancelled = false;
-  const after = (time, callback) => {
-    const id = window.setTimeout(() => { if (!cancelled) callback(); }, time);
-    timers.push(id);
-  };
-
+  const after = (ms, fn) => timers.push(setTimeout(() => { if (!cancelled) fn(); }, ms));
   const dispose = () => {
     if (cancelled) return;
     cancelled = true;
-    timers.forEach((id) => clearTimeout(id));
+    timers.forEach(clearTimeout);
     layer.remove();
   };
-  const complete = () => {
-    if (cancelled) return;
-    dispose();
-    onComplete();
+
+  // Staub: kleine Pixelbrocken rieseln an der Aufschlagstelle herab
+  const dust = (n, spread) => {
+    const host = layer.querySelector('.cave-break__dust');
+    for (let k = 0; k < n; k++) {
+      const d = document.createElement('i');
+      const s = 3 + Math.round(Math.random() * 4);
+      d.style.cssText = `--x:${Math.round((Math.random() - 0.5) * spread)}px;--y:${Math.round(-20 - Math.random() * 40)}px;--fall:${Math.round(90 + Math.random() * 140)}px;width:${s}px;height:${s}px;animation-delay:${Math.round(Math.random() * 90)}ms`;
+      host.appendChild(d);
+      setTimeout(() => d.remove(), 1400);
+    }
   };
 
-  // Kürzere, nicht blinkende Animation bei reduziertem Bewegungswunsch.
+  const breakWall = () => {
+    layer.classList.add('cave-break--shatter');
+    caveSound('break');
+    onImpact(4);
+    dust(40, 260);
+    // Card-Reveal startet sofort, während die Brocken noch fliegen
+    onComplete();
+    after(1900, () => { cancelled = true; timers.forEach(clearTimeout); layer.remove(); });
+  };
+
   if (reduced) {
-    layer.classList.add('cave-break--impact-1', 'cave-break--impact-2', 'cave-break--impact-3');
-    after(100, () => layer.classList.add('cave-break--shatter'));
-    after(460, complete);
+    layer.classList.add('cave-break--impact-3');
+    after(150, breakWall);
     return dispose;
   }
 
-  // Drei Spitzhackenschläge im Rhythmus der Swing-Animation:
-  // sichtbare Risse, violettes Licht, dann kollabieren die Original-Steinblöcke.
-  after(60, () => layer.classList.add('cave-break--swing'));
-  [405, 925, 1445].forEach((time, index) => {
-    after(time, () => {
-      layer.classList.add('cave-break--impact-' + (index + 1));
-      onImpact(index + 1);
+  const HITS = [430, 960, 1490];
+  after(40, () => layer.classList.add('cave-break--swing'));
+  HITS.forEach((t, i) => {
+    after(t - 260, () => caveSound('swing'));
+    after(t, () => {
+      layer.classList.add(`cave-break--impact-${i + 1}`);
+      layer.classList.remove('cave-break--shake');
+      void layer.offsetWidth; // Schütteln neu starten
+      layer.classList.add('cave-break--shake');
+      caveSound('hit', i);
+      onImpact(i + 1);
+      dust(10 + i * 8, 90 + i * 50);
     });
   });
-  after(1735, () => {
-    layer.classList.add('cave-break--shatter');
-    onImpact(4);
-  });
-  after(2470, () => layer.classList.add('cave-break--finish'));
-  after(2770, complete);
+  after(1820, breakWall);
   return dispose;
 }
