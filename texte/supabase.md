@@ -18,8 +18,8 @@ Ohne diese Tabelle klappt das Login, aber Accounts und Cards bleiben nur auf dem
 
 **Authentication → URL Configuration**
 
-- **Site URL:** `https://markus90ms-eng.github.io/Fame_App/`
-- **Redirect URLs** → *Add URL*: `https://markus90ms-eng.github.io/Fame_App/`
+- **Site URL:** `https://fame-app.de/`
+- **Redirect URLs** → *Add URL*: `https://fame-app.de/`
 
 Dahin führen die Links aus den Mails und die Rückkehr von Apple/Google.
 

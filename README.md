@@ -15,7 +15,7 @@ python3 -m http.server 8080
 
 Über GitHub Pages (Einstellungen → Pages → Branch `main`, Ordner `/`) ist die App direkt unter der Pages-Adresse des Repos erreichbar.
 
-**Aufs iPhone holen:** https://markus90ms-eng.github.io/Fame_App/ in **Safari** öffnen → Teilen-Knopf → **„Zum Home-Bildschirm“** → Hinzufügen. Fame startet dann mit eigenem Icon im Vollbild. Android: in Chrome → Menü → „App installieren“.
+**Aufs iPhone holen:** https://fame-app.de/ in **Safari** öffnen → Teilen-Knopf → **„Zum Home-Bildschirm“** → Hinzufügen. Fame startet dann mit eigenem Icon im Vollbild. Android: in Chrome → Menü → „App installieren“.
 
 **Updates:** Die App fragt beim Öffnen und bei jeder Rückkehr nach einer neuen Version und lädt sich dann einmal neu. Unten auf der Startseite steht die Version (`APP_VERSION` in `js/app.js`, muss zum Cache-Namen in `sw.js` passen).
 

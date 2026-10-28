@@ -17,7 +17,7 @@ Beide Plattformen schicken nach der Anmeldung zurück zu einer festen, eingetrag
 In der Vorschau auf claude.ai klappt die Anmeldung deshalb nicht – getestet wird über GitHub Pages:
 
 1. GitHub → Repo **Fame_App** → **Settings → Pages** → Source: Branch `main`, Ordner `/` → Save.
-2. Nach 1–2 Minuten ist die App erreichbar unter: **`https://markus90ms-eng.github.io/Fame_App/`**
+2. Nach 1–2 Minuten ist die App erreichbar unter: **`https://fame-app.de/`**
    Das ist die **Redirect URI** für die nächsten Schritte (genau so, mit `/` am Ende).
 
 (Bei einem privaten Repo braucht GitHub Pages ein bezahltes Konto. Alternativ später eine eigene Domain.)
@@ -29,8 +29,8 @@ In der Vorschau auf claude.ai klappt die Anmeldung deshalb nicht – getestet wi
 1. Öffne **developers.snap.com** → Snap Kit / **Developer Portal** und melde dich mit deinem Snapchat-Konto an.
 2. **Neue App anlegen** (Name z. B. „Fame“).
 3. **Login Kit** aktivieren und diese Berechtigungen (Scopes) anhaken: **Display Name**, **Bitmoji Avatar**, **External ID**.
-4. Bei **Redirect URIs** eintragen: `https://markus90ms-eng.github.io/Fame_App/`
-   Falls nach erlaubten Web-Domains / Origins gefragt wird: `https://markus90ms-eng.github.io`
+4. Bei **Redirect URIs** eintragen: `https://fame-app.de/`
+   Falls nach erlaubten Web-Domains / Origins gefragt wird: `https://fame-app.de`
 5. Unter **Demo Users** (bzw. Test-Nutzer) deinen eigenen Snapchat-Benutzernamen eintragen.
    Solange die App nicht von Snap freigegeben ist, können sich nur diese Nutzer anmelden.
 6. Kopiere die **Staging OAuth2 Client ID** (später für alle: die Production Client ID).
@@ -47,7 +47,7 @@ Snapchat läuft – wie TikTok und Instagram – per Weiterleitung über die Edg
 1. Öffne **developers.tiktok.com**, melde dich an und leg ein Entwicklerkonto an (Einzelperson reicht zum Testen).
 2. **App erstellen** (Name „Fame“, Plattform **Web**, Website-Adresse wie oben).
 3. Produkt **Login Kit** hinzufügen.
-   - **Redirect URI (Web):** `https://markus90ms-eng.github.io/Fame_App/`
+   - **Redirect URI (Web):** `https://fame-app.de/`
    - **Scopes:** `user.info.basic` und `user.info.profile` (für den @Benutzernamen)
 4. **Sandbox** anlegen und unter **Target users** deinen eigenen TikTok-Account hinzufügen.
    So kannst du sofort testen, ohne dass TikTok die App schon geprüft hat.
@@ -68,7 +68,7 @@ lassen sich nicht verbinden – wer eins hat, tippt seinen Namen wie bisher von 
 1. Öffne **developers.facebook.com** und melde dich an (Facebook-Konto nötig) → **Meine Apps → App erstellen**.
 2. Anwendungsfall **„Nachrichten und Inhalte auf Instagram verwalten“** bzw. Produkt **Instagram** wählen.
 3. Unter **Instagram → API-Einrichtung mit Instagram-Login**:
-   - **Business-Login einrichten** → bei **Gültige OAuth-Redirect-URIs** eintragen: `https://markus90ms-eng.github.io/Fame_App/`
+   - **Business-Login einrichten** → bei **Gültige OAuth-Redirect-URIs** eintragen: `https://fame-app.de/`
    - Berechtigung **instagram_business_basic** reicht (nur Profil lesen).
 4. Unter **App-Rollen → Rollen** deinen Instagram-Account als **Instagram-Tester** hinzufügen und die Einladung in
    Instagram annehmen (Einstellungen → Website-Berechtigungen / Apps und Websites → Tester-Einladungen).
@@ -106,7 +106,7 @@ Die Adresse der Funktion steht schon in der App:
 ## 5. Was ich dann mache
 
 Ich trage Snapchat Client ID, TikTok Client key und Instagram-App-ID in `js/config.js` ein und pushe.
-Danach auf dem Handy `https://markus90ms-eng.github.io/Fame_App/` öffnen → Login →
+Danach auf dem Handy `https://fame-app.de/` öffnen → Login →
 bei Instagram/TikTok/Snapchat auf **„Mit … verbinden“** tippen.
 
 ## Später für alle Nutzer
@@ -114,4 +114,4 @@ bei Instagram/TikTok/Snapchat auf **„Mit … verbinden“** tippen.
 - **Snapchat:** App bei Snap zur Prüfung einreichen → danach die Production Client ID verwenden.
 - **TikTok:** App zur Prüfung einreichen (Datenschutzerklärung, Nutzungsbedingungen und Demo-Video nötig).
 - **Instagram:** App bei Meta zur Prüfung einreichen (App Review für instagram_business_basic, Unternehmensverifizierung) und auf „Live“ schalten.
-- Alle drei verlangen eine Datenschutzerklärung: `https://markus90ms-eng.github.io/Fame_App/datenschutz.html`
+- Alle drei verlangen eine Datenschutzerklärung: `https://fame-app.de/datenschutz.html`

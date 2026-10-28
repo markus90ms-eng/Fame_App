@@ -7,7 +7,7 @@
 // Secrets (siehe texte/verbinden.md):
 //   TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET
 //   INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET
-//   ALLOWED_ORIGIN (optional, Standard: https://markus90ms-eng.github.io)
+//   ALLOWED_ORIGIN (optional, mehrere mit Komma; Standard: https://fame-app.de, https://www.fame-app.de, https://markus90ms-eng.github.io)
 
 type Env = (name: string) => string;
 type Input = { code: string; redirect_uri: string; client_id?: string; code_verifier?: string };
@@ -89,9 +89,15 @@ const PROVIDERS: Record<string, (code: string, redirectUri: string, input: Input
   },
 };
 
+const ORIGINS = (env('ALLOWED_ORIGIN') || 'https://fame-app.de,https://www.fame-app.de,https://markus90ms-eng.github.io')
+  .split(',').map((o) => o.trim()).filter(Boolean);
+
 Deno.serve(async (req) => {
+  // Antwort nur an die eigene App: die anfragende Adresse zurückgeben, wenn sie erlaubt ist
+  const origin = req.headers.get('origin') || '';
   const cors = {
-    'Access-Control-Allow-Origin': env('ALLOWED_ORIGIN') || 'https://markus90ms-eng.github.io',
+    'Access-Control-Allow-Origin': ORIGINS.includes(origin) ? origin : ORIGINS[0],
+    'Vary': 'Origin',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   };
