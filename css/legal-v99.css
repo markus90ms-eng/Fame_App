@@ -1,0 +1,40 @@
+/* V99: Rechtliches – Fußzeile der Startseite, Seite „Rechtliches“, Online-Widerruf, Kaufschritt */
+
+/* Fußzeile Startseite: „Vertrag widerrufen“ hervorgehoben, darunter die Links */
+.legal-foot { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 6px auto max(14px, env(safe-area-inset-bottom)); padding: 0 var(--gutter); text-align: center; }
+.legal-links { font-size: 11px; color: #8b8a85; }
+.legal-links a { color: inherit; text-decoration-color: currentColor; text-underline-offset: 2px; }
+.legal-withdraw { display: inline-block; padding: 7px 14px; border: 2px solid #141414; background: #3dfa74; color: #141414 !important; font: 800 12px/1.2 "Source Code Pro", monospace; text-decoration: none !important; box-shadow: 3px 3px 0 #141414; }
+.legal-withdraw:focus-visible { outline: 3px solid #ff3ea5; outline-offset: 2px; }
+.legal-withdraw--big { display: block; margin: 4px 0 22px; padding: 14px 16px; font-size: 15px; text-align: center; }
+.screen--welcome .legal-foot { margin-top: 2px; }
+.screen--welcome .welcome-logout { margin-bottom: 10px !important; }
+.lux .legal-links, .hom .legal-links { color: var(--h-sub, #8a7b5c) !important; }
+
+/* Seite „Rechtliches“ */
+.legal-list { display: grid; gap: 10px; }
+.legal-row { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 12px; padding: 14px 16px; border: 1.5px solid rgba(255, 255, 255, 0.16); border-radius: 14px; background: rgba(255, 255, 255, 0.04); color: #fff; text-decoration: none; }
+.legal-row b { font-size: 15px; }
+.legal-row small { grid-column: 1; font-size: 12px; color: #9a9893; margin-top: 2px; }
+.legal-row span { grid-column: 2; grid-row: 1 / span 2; color: #3dfa74; font-weight: 800; }
+.legal-row:focus-visible { outline: 3px solid #3dfa74; outline-offset: 2px; }
+
+/* Online-Widerruf */
+.screen--withdraw .terms-text { margin-bottom: 18px; }
+.screen--withdraw .terms-text a { color: #fff; text-decoration-color: #3dfa74; text-underline-offset: 3px; }
+.withdraw-form .field { color: #d8d6d0; }
+.withdraw-form textarea { padding: 10px 14px; border: 2px solid #141414; border-radius: 0; background: #fff; font: 15px/1.4 inherit; text-transform: none; letter-spacing: 0; resize: vertical; outline: none; }
+.withdraw-form textarea:focus { box-shadow: 4px 4px 0 #3dfa74; }
+.withdraw-form .form-error { color: #141414; }
+.withdraw-form .form-error:empty { display: none; }
+.withdraw-form .btn { width: 100%; margin-top: 14px; }
+.withdraw-done { position: relative; padding: 18px 18px 14px; border: 1.5px solid #3dfa74; border-radius: 16px; background: color-mix(in srgb, #3dfa74 9%, #0e0e10); }
+.withdraw-done .check-badge { background: #3dfa74; }
+.withdraw-done h2 { margin: 0 0 8px; padding-right: 44px; font-size: 17px; font-weight: 800; color: #fff; }
+.withdraw-done .terms-text { margin: 12px 0 0; }
+
+/* Kaufschritt: zwei Häkchen und Gesamtpreis über dem Knopf */
+.screen--donate .check { align-items: flex-start; max-width: 340px; font-size: 12px; line-height: 1.4; text-align: left; }
+.screen--donate .check .check-box { flex: none; margin-top: 1px; }
+.buy-total { margin: 2px 0 0; font-size: 13px; color: rgba(255, 255, 255, 0.8); text-align: center; }
+.buy-total b { color: #fff; font-family: "Source Code Pro", monospace; }

@@ -84,7 +84,9 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '98';
+export const APP_VERSION = '99';
+// Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
+const LEGAL_VERSION = '2026-10';
 
 // ---- Router -----------------------------------------------------------------
 
@@ -106,6 +108,7 @@ const routes = {
   card: card,
   check: () => checkPage(''),
   terms: terms,
+  widerruf: withdrawPage,
   ranking: () => rankingPage(state.user?.ranking?.region || state.user?.region ? 'region' : 'country'),
   'ranking/region': () => rankingPage('region'),
   'ranking/country': () => rankingPage('country'),
@@ -363,6 +366,12 @@ function bindLang(el) {
   el.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => { buzz(8); setLang(b.dataset.lang); }));
 }
 
+// Rechtliches unten auf der Startseite. „Vertrag widerrufen“ ist hervorgehoben (§ 356a BGB).
+const legalFoot = () => `<nav class="legal-foot" aria-label="${t('Rechtliches')}">
+  <a class="legal-withdraw" href="#/widerruf">${t('Vertrag widerrufen')}</a>
+  <span class="legal-links">${legalLink('impressum.html', t('Impressum'))} · ${legalLink('agb.html', t('AGB'))} · ${legalLink(PRIVACY_URL(), t('Datenschutz'))} · <a href="#/terms">${t('Rechtliches')}</a></span>
+</nav>`;
+
 // Eingeloggt und schon eine Card: dann gibt es überall den schnellen Weg zur eigenen Card
 const hasCard = () => !!state.user && !!state.account.cards?.length;
 
@@ -411,6 +420,7 @@ function splash() {
         ${resetLink()}
         <span class="app-version">Version ${APP_VERSION}</span>
         <button class="link welcome-logout" type="button" data-logout>${t('Abmelden')}</button>
+        ${legalFoot()}
       </section>`,
       mount(el) {
         bindReset(el);
@@ -442,6 +452,7 @@ function splash() {
       <div class="splash-login">${button('Login', 'data-go="login"')}</div>
       ${resetLink()}
       <span class="app-version">Version ${APP_VERSION}</span>
+      ${legalFoot()}
     </section>`,
     mount(el) { bindReset(el); bindLang(el); },
   };
@@ -840,8 +851,10 @@ async function busy(btn, fn) {
 const markAlive = () => { try { sessionStorage.setItem('fame.alive', '1'); } catch { /* privat */ } };
 
 // Bedingungen + Datenschutz (Registrieren, „Fast geschafft“)
+const PRIVACY_URL = () => (isEn ? 'privacy.html' : 'datenschutz.html');
+const legalLink = (href, label) => `<a href="${href}" target="_blank" rel="noopener">${label}</a>`;
 const TERMS_LABEL = () => t('Ich akzeptiere die {terms} und habe die {privacy} gelesen.', {
-  terms: `<a href="#/terms">${t('Bedingungen')}</a>`,
+  terms: legalLink('agb.html', t('AGB')),
   privacy: `<a href="${isEn ? 'privacy.html' : 'datenschutz.html'}" target="_blank" rel="noopener">${t('Datenschutzerklärung')}</a>`,
 });
 
@@ -1162,13 +1175,84 @@ async function logout() {
 
 // Bedingungen: Platzhalter, der Text folgt
 function terms() {
+  const row = (href, title, sub) => `<a class="legal-row" href="${href}" target="_blank" rel="noopener"><b>${title}</b><small>${sub}</small><span aria-hidden="true">→</span></a>`;
   return {
     html: `<section class="screen screen--dark screen--terms" style="--rar:#3dfa74">
       ${backButton('back--dark')}
-      <h1 class="terms-title">${t('Bedingungen')}</h1>
-      <p class="terms-text">${t('Hier stehen bald die Teilnahmebedingungen von {app}.', { app: LOGO_TEXT })}</p>
-      <p class="terms-text"><a href="${isEn ? 'privacy.html' : 'datenschutz.html'}" target="_blank" rel="noopener">${t('Datenschutzerklärung')}</a></p>
+      <h1 class="terms-title">${t('Rechtliches')}</h1>
+      <a class="legal-withdraw legal-withdraw--big" href="#/widerruf">${t('Vertrag widerrufen')}</a>
+      <nav class="legal-list" aria-label="${t('Rechtliches')}">
+        ${row('agb.html', t('AGB'), t('Was du kaufst, Preise, Konto, Ranking'))}
+        ${row('widerruf.html', t('Widerrufsbelehrung'), t('Dein Widerrufsrecht und wann es erlischt'))}
+        ${row(PRIVACY_URL(), t('Datenschutzerklärung'), t('Welche Daten wir speichern'))}
+        ${row('impressum.html', t('Impressum'), t('Wer hinter {app} steht', { app: LOGO_TEXT }))}
+      </nav>
     </section>`,
+  };
+}
+
+// Online-Widerruf (§ 356a BGB): ohne Login erreichbar. Name, Vertrag und E-Mail angeben,
+// dann „Widerruf bestätigen“. Die Erklärung landet in der Tabelle "withdrawals" (server/supabase.sql).
+function withdrawPage() {
+  const cards = state.user ? [...(state.account.cards || [])].reverse() : [];
+  const when = (at) => new Date(at).toLocaleDateString(isEn ? 'en-US' : 'de-DE');
+  const contract = cards.length
+    ? `<label class="field"><span>${t('Welcher Kauf?')}</span><select name="contract" required>
+        ${cards.map((c) => `<option value="${esc(c.serial)}">${esc(c.serial)} · ${when(c.at)}</option>`).join('')}
+      </select></label>`
+    : `<label class="field"><span>${t('Seriennummer der Card oder Bestellnummer')}</span><input name="contract" required maxlength="80" autocomplete="off" placeholder="FM-XXXX-XXXX-X"></label>`;
+  return {
+    html: `<section class="screen screen--dark screen--terms screen--withdraw" style="--rar:#3dfa74">
+      ${backButton('back--dark')}
+      <h1 class="terms-title">${t('Vertrag widerrufen')}</h1>
+      <p class="terms-text">${t('Hier kannst du einen Kauf bei {app} widerrufen. Hast du beim Kauf zugestimmt, dass deine Card sofort ausgestellt wird, ist dein Widerrufsrecht bereits erloschen – Details in der {link}.', { app: LOGO_TEXT, link: legalLink('widerruf.html', t('Widerrufsbelehrung')) })}</p>
+      <form class="withdraw-form" data-form novalidate>
+        <label class="field"><span>${t('Dein Name')}</span><input name="name" required maxlength="120" autocomplete="name" value="${esc(state.session?.meta?.full_name || '')}"></label>
+        ${contract}
+        <label class="field"><span>${t('E-Mail für die Bestätigung')}</span><input name="email" type="email" required maxlength="200" autocomplete="email" value="${esc(state.session?.email || '')}"></label>
+        <label class="field"><span>${t('Nachricht (freiwillig)')}</span><textarea name="note" rows="3" maxlength="1000"></textarea></label>
+        <p class="form-error" data-error role="alert"></p>
+        ${button(t('Widerruf bestätigen'), 'type="submit" data-submit')}
+      </form>
+      <div class="withdraw-done" data-done hidden></div>
+    </section>`,
+    mount(el) {
+      const form = el.querySelector('[data-form]');
+      const err = el.querySelector('[data-error]');
+      const btn = el.querySelector('[data-submit]');
+      btn.setAttribute('type', 'submit');
+      // Direkt aufgerufen, bevor die Anmeldung geladen ist: E-Mail nachträglich eintragen
+      if (!form.email.value && auth.hasStoredSession()) {
+        auth.getSession().then((r) => { if (!form.email.value && r.session?.user?.email) form.email.value = r.session.user.email; });
+      }
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const d = Object.fromEntries(new FormData(form));
+        Object.keys(d).forEach((k) => { d[k] = String(d[k]).trim(); });
+        if (!d.name || !d.contract || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) { err.textContent = t('Bitte gib Name, Kauf und eine gültige E-Mail-Adresse an.'); return; }
+        err.textContent = '';
+        btn.disabled = true;
+        const r = await auth.sendWithdrawal({ name: d.name, contract: d.contract, email: d.email, note: d.note || null, user_id: state.session?.id || null });
+        btn.disabled = false;
+        if (r.error) { err.innerHTML = t('Das hat nicht geklappt. Bitte versuch es nochmal oder widerrufe per E-Mail (Adresse in der {link}).', { link: legalLink('widerruf.html', t('Widerrufsbelehrung')) }); return; }
+        const at = new Date();
+        const stamp = at.toLocaleString(isEn ? 'en-US' : 'de-DE', { dateStyle: 'long', timeStyle: 'medium' });
+        form.hidden = true;
+        const done = el.querySelector('[data-done]');
+        done.hidden = false;
+        done.innerHTML = `<div class="check-badge">✓</div>
+          <h2>${t('Widerruf eingegangen')}</h2>
+          <dl class="check-facts">
+            <div><dt>${t('Eingang')}</dt><dd>${esc(stamp)}</dd></div>
+            <div><dt>${t('Name')}</dt><dd>${esc(d.name)}</dd></div>
+            <div><dt>${t('Kauf')}</dt><dd>${esc(d.contract)}</dd></div>
+            <div><dt>${t('E-Mail')}</dt><dd>${esc(d.email)}</dd></div>
+          </dl>
+          <p class="terms-text">${t('Erklärung: Ich widerrufe den oben genannten Vertrag.')}${d.note ? `<br>${esc(d.note)}` : ''}</p>
+          <p class="terms-text">${t('Eine Eingangsbestätigung mit diesen Angaben schicken wir dir per E-Mail.')}</p>`;
+        buzz(12);
+      });
+    },
   };
 }
 
@@ -1235,10 +1319,16 @@ function donate() {
         <label class="check">
           <input id="donate-accept" type="checkbox" data-accept ${state.accepted ? 'checked' : ''}>
           <span class="check-box" aria-hidden="true"></span>
-          <span>${t('Ich akzeptiere die {terms}', { terms: `<a href="#/terms">${t('Bedingungen')}</a>` })}</span>
+          <span>${t('Ich akzeptiere die {terms}, habe die {withdraw} gelesen und bin mindestens 18 Jahre alt.', { terms: legalLink('agb.html', t('AGB')), withdraw: legalLink('widerruf.html', t('Widerrufsbelehrung')) })}</span>
         </label>
+        <label class="check">
+          <input id="donate-waiver" type="checkbox" data-waiver>
+          <span class="check-box" aria-hidden="true"></span>
+          <span>${t('Ich verlange ausdrücklich, dass {app} meine Card sofort ausstellt. Mir ist bekannt, dass ich damit mein Widerrufsrecht verliere und kein Geld zurückbekomme.', { app: LOGO_TEXT })}</span>
+        </label>
+        <p class="buy-total">${t('1 digitale Fame-Card')} · ${t('Gesamtpreis')} <b data-total></b></p>
         <div class="screen-foot">
-          ${button('I´m awesome', 'data-awesome')}
+          ${button(t('Jetzt kaufen'), 'data-awesome')}
         </div>
       </div>
     </section>`,
@@ -1257,6 +1347,7 @@ function donate() {
       const knob = $('[data-knob]');
       const btn = $('[data-awesome]');
       const accept = $('[data-accept]');
+      const waiver = $('[data-waiver]');
       const flash = $('[data-flash]');
       const nudge = $('[data-nudge]');
       let cls = start.cls;
@@ -1291,6 +1382,7 @@ function donate() {
         arc.setAttribute('aria-valuetext', `${money(amount)}, ${t('danach')} ${tier.name}`);
         if (document.activeElement !== input) input.value = fmt(amount);
         input.parentElement.classList.toggle('is-long', amount >= 1_000_000);
+        $('[data-total]').textContent = money(amount);
         const afterEl = $('[data-after]');
         if (afterEl) afterEl.textContent = money(after);
 
@@ -1381,11 +1473,12 @@ function donate() {
 
       nudge.addEventListener('click', () => { if (nudgeTarget > 0) update(nudgeTarget, { sound: true }); });
 
-      const syncBtn = () => { btn.disabled = !accept.checked; };
+      const syncBtn = () => { btn.disabled = !(accept.checked && waiver.checked); };
       accept.addEventListener('change', () => { state.accepted = accept.checked; syncBtn(); buzz(8); });
+      waiver.addEventListener('change', () => { syncBtn(); buzz(8); });
 
       btn.addEventListener('click', async () => {
-        if (!accept.checked) return;
+        if (!accept.checked || !waiver.checked) return;
         if (!state.user) {
           state.after = 'donate';
           toast(t('Log dich ein, damit der Betrag deinem Fame-Wert gutgeschrieben wird.'));
@@ -1401,6 +1494,8 @@ function donate() {
         acc.cards.push({
           tier: tier.id, stage: tier.stage, total: acc.total, at, revealed: false,
           serial: makeSerial(`${state.session?.id || state.user.name}|${state.user.insta}|${acc.total}|${at}`),
+          // Nachweis: Zustimmung zu AGB und zum sofortigen Ausstellen (Erlöschen des Widerrufsrechts)
+          consent: { agb: at, waiver: at, version: LEGAL_VERSION },
         });
         saveAccount();
         go('card');

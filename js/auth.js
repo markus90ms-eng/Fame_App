@@ -174,5 +174,15 @@ export const saveProfile = (id, data) => wrap(async () => {
   return error ? { error: error.message || 'db' } : { ok: true };
 });
 
+// ---- Online-Widerruf ----------------------------------------------------------------------------
+
+// Widerrufserklärung speichern (Tabelle "withdrawals", siehe server/supabase.sql). Geht auch ohne Login.
+export const sendWithdrawal = (row) => wrap(async () => {
+  if (!authReady()) return { error: 'config' };
+  const c = await sb();
+  const { error } = await c.from('withdrawals').insert(row);
+  return error ? { error: error.message || 'db' } : { ok: true };
+});
+
 // Kurzinfo zur Anmeldung: { id, email, provider: 'email' | 'apple' | 'google' }
 export const sessionInfo = (s) => (s ? { id: s.user.id, email: s.user.email || '', provider: s.user.app_metadata?.provider || 'email', meta: s.user.user_metadata || {} } : null);
