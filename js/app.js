@@ -1324,7 +1324,7 @@ function donate() {
         <label class="check">
           <input id="donate-waiver" type="checkbox" data-waiver>
           <span class="check-box" aria-hidden="true"></span>
-          <span>${t('Ich verlange ausdrücklich, dass {app} meine Card sofort ausstellt. Mir ist bekannt, dass ich damit mein Widerrufsrecht verliere und kein Geld zurückbekomme.', { app: LOGO_TEXT })}</span>
+          <span>${t('Ich verlange ausdrücklich, dass {app} meine Card sofort ausstellt. Mir ist bewusst, dass ich damit mein Widerrufsrecht verliere und kein Geld zurückbekomme.', { app: LOGO_TEXT })}</span>
         </label>
         <p class="buy-total">${t('1 digitale Fame-Card')} · ${t('Gesamtpreis')} <b data-total></b></p>
         <div class="screen-foot">

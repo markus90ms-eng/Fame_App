@@ -339,7 +339,7 @@ export const EN = {
   "Gesamtpreis": "Total",
   "Hier kannst du einen Kauf bei {app} widerrufen. Hast du beim Kauf zugestimmt, dass deine Card sofort ausgestellt wird, ist dein Widerrufsrecht bereits erloschen – Details in der {link}.": "Withdraw from a {app} purchase here. If you agreed to have your card issued immediately when you bought it, your right of withdrawal has already expired – details in the {link}.",
   "Ich akzeptiere die {terms}, habe die {withdraw} gelesen und bin mindestens 18 Jahre alt.": "I accept the {terms}, have read the {withdraw} and am at least 18 years old.",
-  "Ich verlange ausdrücklich, dass {app} meine Card sofort ausstellt. Mir ist bekannt, dass ich damit mein Widerrufsrecht verliere und kein Geld zurückbekomme.": "I expressly request that {app} issues my card immediately. I understand that I lose my right of withdrawal and won’t get my money back.",
+  "Ich verlange ausdrücklich, dass {app} meine Card sofort ausstellt. Mir ist bewusst, dass ich damit mein Widerrufsrecht verliere und kein Geld zurückbekomme.": "I expressly request that {app} issues my card immediately. I understand that I lose my right of withdrawal and won’t get my money back.",
   "Impressum": "Legal notice",
   "Jetzt kaufen": "Buy now",
   "Kauf": "Purchase",
