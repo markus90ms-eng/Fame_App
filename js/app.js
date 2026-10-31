@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '99';
+export const APP_VERSION = '100';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -164,7 +164,7 @@ function homDecor(el, hom, stage) {
   const add = (host, html) => host?.insertAdjacentHTML('beforeend', html);
   if (hom === 'cave') {
     // Extra Höhlen-Tiefe aus selbst gezeichneten CSS-Facetten und vorhandenen Fame-Texturen.
-    // Die Original-Fackeln, Spitzhacke, XP-Anzeige und Inventarleiste bleiben erhalten.
+    // Fortschrittsbalken, Fund-Meldung und Leiste im Kristallglas-Look (V100, keine Spiel-Optik).
     add(vault, `<div class="hom-cave-space" aria-hidden="true">
       <i class="hom-cave-arch"></i><i class="hom-cave-vein"></i><i class="hom-cave-ledger"></i>
       <i class="hom-cave-crystal hom-cave-crystal--l1"></i>
@@ -172,10 +172,10 @@ function homDecor(el, hom, stage) {
       <i class="hom-cave-crystal hom-cave-crystal--r1"></i>
       <i class="hom-cave-crystal hom-cave-crystal--r2"></i>
     </div>`);
-    add(el, `<div class="hom-achv" aria-hidden="true"><i></i><span><b>${t('Erfolg erzielt!')}</b>${t('Amethyst gefunden')}</span></div>
-      <div class="hom-hotbar" aria-hidden="true"><span class="i-pick"></span><span class="sel i-gem"></span><span class="i-torch"></span>${'<span></span>'.repeat(6)}</div>`);
+    add(el, `<div class="hom-achv" aria-hidden="true"><i></i><span><b>${t('Neuer Fund!')}</b>Amethyst · ${t('Stufe {n}', { n: stage })}</span></div>
+      <div class="hom-hotbar" aria-hidden="true"><span class="i-pick"></span><span class="sel i-gem"></span><span class="i-torch"></span>${'<span></span>'.repeat(2)}</div>`);
     add(vault, `<i class="hom-torch hom-torch--l" aria-hidden="true"></i><i class="hom-torch hom-torch--r" aria-hidden="true"></i>
-      <i class="hom-pick" aria-hidden="true"></i><div class="hom-xp" aria-hidden="true"><i></i><b>${stage}</b></div>`);
+      <i class="hom-pick" aria-hidden="true"></i><div class="hom-xp" aria-hidden="true"><i></i><b>${t('Stufe {n}', { n: stage })}</b></div>`);
   } else if (hom === 'moon') {
     add(el, '<div class="hom-fog" aria-hidden="true"></div><div class="hom-fog hom-fog--2" aria-hidden="true"></div>');
     add(vault, `<div class="hom-news" aria-hidden="true"><u>THE MORNING STAR · 1848</u><b>${t('Der Mondstein gestohlen!')}</b><i>${t('Heiliger Stein aus Tempel geraubt – die Spur führt nach England …')}</i></div>

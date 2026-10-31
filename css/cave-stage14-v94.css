@@ -327,3 +327,15 @@
   }
   .screen.hom--cave:not(.screen--card) :is(.vault-rays,.hom-torch){animation:none!important;}
 }
+
+/* --------------- STUFE 14 OHNE SPIEL-OPTIK (V100) ---------------
+   Fund-Meldung, Leiste und Fortschrittsbalken als lila Kristallglas in der App-Schrift. */
+.screen.hom--cave .hom-achv{ border-radius:16px!important; border:1.5px solid rgba(200,160,255,.75)!important; background:linear-gradient(150deg,rgba(80,40,130,.82),rgba(30,16,52,.86))!important; -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); box-shadow:0 0 18px rgba(180,140,255,.45),0 8px 20px rgba(0,0,0,.5)!important; font:600 12px/1.35 "Source Code Pro",monospace!important; color:#efe6ff!important; padding:9px 14px!important; }
+.screen.hom--cave .hom-achv b{ color:#e6d2ff!important; font:800 13px "Source Code Pro",monospace!important; letter-spacing:.04em; }
+.screen.hom--cave .hom-achv i{ background:url("../assets/hom/gem.png") center/contain no-repeat!important; image-rendering:auto!important; filter:drop-shadow(0 0 6px #c89bff); }
+.screen.hom--cave .hom-hotbar{ border-radius:18px!important; border:1.5px solid rgba(200,160,255,.6)!important; background:rgba(28,14,48,.72)!important; box-shadow:0 0 16px rgba(160,110,255,.35)!important; padding:5px!important; gap:4px; -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); }
+.screen.hom--cave .hom-hotbar span{ border-radius:12px!important; border:1px solid rgba(210,180,255,.35)!important; background-color:rgba(255,255,255,.06)!important; width:36px!important; height:36px!important; }
+.screen.hom--cave .hom-hotbar .sel{ border:1.5px solid #d6b8ff!important; box-shadow:0 0 12px rgba(200,150,255,.8)!important; background-color:rgba(190,140,255,.22)!important; }
+.screen.hom--cave .hom-xp{ height:10px!important; border-radius:999px!important; border:1px solid rgba(200,160,255,.55)!important; background:rgba(20,10,36,.8)!important; box-shadow:0 0 12px rgba(170,120,255,.4)!important; }
+.screen.hom--cave .hom-xp i{ border-radius:999px; background:linear-gradient(90deg,#7b3fe0,#b98cff 70%,#f0e2ff)!important; box-shadow:0 0 10px #b48cff; }
+.screen.hom--cave .hom-xp b{ font:800 11px "Source Code Pro",monospace!important; color:#e6d2ff!important; text-shadow:0 1px 4px #000!important; top:-19px!important; white-space:nowrap; }

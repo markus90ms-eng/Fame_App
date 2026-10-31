@@ -320,8 +320,7 @@ export const EN = {
   "Masowien": "Masovia",
   "Kleinpolen": "Lesser Poland",
   "Schlesien": "Silesia",
-  'Erfolg erzielt!': 'Achievement unlocked!',
-  'Amethyst gefunden': 'Amethyst found',
+  'Neuer Fund!': 'New find!',
   'Der Mondstein gestohlen!': 'The Moonstone stolen!',
   'Heiliger Stein aus Tempel geraubt – die Spur führt nach England …': 'Sacred stone taken from a temple – the trail leads to England …',
   // V99: Rechtliches
