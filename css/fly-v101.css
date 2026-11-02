@@ -38,7 +38,7 @@
 .hub-tile.is-soon:active { transform: none; }
 .hub-tile.is-soon > :not(.soon-band) { opacity: 0.45; }
 .soon-band {
-  position: absolute; left: -12%; width: 124%; top: 50%; transform: translateY(-50%) rotate(-14deg);
+  position: absolute; left: -12%; width: 124%; top: 64%; transform: translateY(-50%) rotate(-12deg);
   background: #ffd23f; color: #141414; text-align: center; font-style: normal; z-index: 3; pointer-events: none;
   border-block: 4px solid transparent;
   border-image: repeating-linear-gradient(135deg, #141414 0 5px, #ffd23f 5px 10px) 4;
