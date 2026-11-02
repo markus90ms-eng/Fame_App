@@ -63,34 +63,50 @@
     });
   }
 
-  // Diamanten fliegen beim Scrollen durch die Seite (Parallax: nah = schnell, weit = langsam).
-  // Nur transform wird bewegt, die Ebene liegt fest über dem Inhalt und blockiert keine Klicks.
+  // ---- Glas-Diamanten fliegen und kippen beim Scrollen -------------------------------------
+  // Jeder Stein ist echtes Glas: ein ausgeschnittener Diamant mit Backdrop-Blur (man sieht den
+  // Inhalt dahinter verzerrt), weißen Glanzkanten und einem weichen Schatten. Bewegt wird nur transform.
   const layer = document.createElement('div');
   layer.className = 'fly';
   layer.setAttribute('aria-hidden', 'true');
-  const colors = ['#3dfa74', '#3b6bff', '#ec4899', '#ffd23f', '#38c8f8', '#a855f7', '#ff8a1f', '#5fe3c0', '#ef3a3a', '#e9e4ff'];
   const small = window.innerWidth < 720;
-  // x in % der Breite, Größe in px, speed = Flug pro gescrolltem Pixel, rot = Drehung pro Pixel
+  // x in % der Breite, Größe in px, speed = Flug pro gescrolltem Pixel, tilt = Kippfrequenz
   const gems = [
-    { x: 4,  size: 54, speed: 0.55, rot: 0.05,  blur: 0 },
-    { x: 90, size: 70, speed: 0.8,  rot: -0.06, blur: 0 },
-    { x: 14, size: 28, speed: 0.3,  rot: -0.03, blur: 1.5 },
-    { x: 80, size: 34, speed: 0.35, rot: 0.04,  blur: 1.5 },
-    { x: 48, size: 22, speed: 0.22, rot: 0.02,  blur: 2.5 },
-    { x: 95, size: 120, speed: 1.15, rot: 0.07, blur: 4 },
-    { x: 1,  size: 100, speed: 1.05, rot: -0.05, blur: 4 },
-    { x: 66, size: 26, speed: 0.28, rot: -0.04, blur: 2 },
-    { x: 30, size: 40, speed: 0.45, rot: 0.05,  blur: 1 },
+    { x: 4,  size: 64,  speed: 0.55, tilt: 0.0042, ph: 0.0 },
+    { x: 90, size: 84,  speed: 0.8,  tilt: 0.0035, ph: 1.7 },
+    { x: 14, size: 34,  speed: 0.3,  tilt: 0.006,  ph: 3.1 },
+    { x: 80, size: 40,  speed: 0.36, tilt: 0.005,  ph: 4.4 },
+    { x: 48, size: 26,  speed: 0.22, tilt: 0.007,  ph: 2.2 },
+    { x: 95, size: 140, speed: 1.15, tilt: 0.0026, ph: 5.1 },
+    { x: 1,  size: 120, speed: 1.05, tilt: 0.003,  ph: 0.9 },
+    { x: 66, size: 30,  speed: 0.28, tilt: 0.0065, ph: 3.8 },
+    { x: 30, size: 46,  speed: 0.45, tilt: 0.0048, ph: 2.9 },
   ].filter((g) => !small || g.x <= 16 || g.x >= 78); // am Handy nur am Rand, damit kein Text verdeckt wird
   const items = gems.map((g, i) => {
     const el = document.createElement('span');
-    el.className = 'fly-gem';
-    el.style.cssText = `left:${g.x}%;width:${g.size}px;height:${g.size * 0.9}px;color:${colors[i % colors.length]};` + (g.blur ? `filter:blur(${g.blur}px);` : '');
-    el.innerHTML = '<svg viewBox="0 0 100 90" aria-hidden="true"><use href="#gem"/></svg>';
+    el.className = 'fly-item';
+    el.style.cssText = `left:${g.x}%;width:${g.size}px;height:${(g.size * 0.9).toFixed(1)}px;`;
+    el.innerHTML = '<i class="fly-shadow"></i><i class="fly-glass"></i>'
+      + '<svg class="fly-facets" viewBox="0 0 100 90" aria-hidden="true">'
+      + '<path d="M26 6L2 32h96L74 6z" fill="rgba(255,255,255,.22)"/>'
+      + '<path d="M20 32L50 86 38 32z" fill="rgba(255,255,255,.16)"/>'
+      + '<path d="M62 32L50 86 80 32z" fill="rgba(40,60,90,.10)"/>'
+      + '<path d="M26 6h48l24 26L50 86 2 32z" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="1.6" stroke-linejoin="round"/>'
+      + '<path d="M20 32l6-26M80 32L74 6M2 32h96M20 32l30 54 30-54M38 32l12-26 12 26" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1" stroke-linejoin="round"/>'
+      + '<path d="M26 6h48l24 26L50 86 2 32z" fill="none" stroke="rgba(50,70,110,.35)" stroke-width=".6" stroke-linejoin="round"/>'
+      + '<path d="M30 12l8 14M70 12l-8 14" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round"/>'
+      + '</svg>';
     layer.appendChild(el);
     return { el, ...g, base: (i * 0.37 + 0.1) % 1 };
   });
   document.body.appendChild(layer);
+
+  // ---- 3D beim Scrollen: Bereiche kippen aus der Tiefe nach vorn ----------------------------------
+  const depth = Array.from(document.querySelectorAll('.steps, .ladder, .split, .podium, .statement .wrap, .final-in'));
+  depth.forEach((el) => el.classList.add('d3'));
+  const heroVisual = document.querySelector('.hero-visual');
+  const amp = small ? 0.55 : 1;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   let ticking = false;
   const place = () => {
@@ -98,14 +114,27 @@
     const y = window.scrollY, vh = window.innerHeight;
     for (const g of items) {
       const range = vh + g.size * 2;
-      // Startposition je Diamant, dann nach oben fliegen und unten wieder auftauchen
       const pos = (((g.base * range - y * g.speed) % range) + range) % range;
-      g.el.style.transform = `translate3d(0, ${(pos - g.size).toFixed(1)}px, 0) rotate(${(y * g.rot).toFixed(1)}deg)`;
+      // Kippen in 3D: nie ganz kantig, damit der Stein sichtbar bleibt
+      const ry = Math.sin(y * g.tilt + g.ph) * 58;
+      const rx = Math.cos(y * g.tilt * 0.8 + g.ph) * 24;
+      const rz = Math.sin(y * g.tilt * 0.5 + g.ph) * 14;
+      g.el.style.transform = `translate3d(0, ${(pos - g.size).toFixed(1)}px, 0) rotateX(${rx.toFixed(1)}deg) rotateY(${ry.toFixed(1)}deg) rotateZ(${rz.toFixed(1)}deg)`;
+    }
+    for (const el of depth) {
+      const r = el.getBoundingClientRect();
+      const t = clamp((r.top + r.height / 2 - vh / 2) / (vh * 0.65), -1, 1);
+      const rx = t * 16 * amp;
+      const z = -Math.abs(t) * 110 * amp;
+      el.style.transform = `perspective(1100px) rotateX(${rx.toFixed(2)}deg) translateZ(${z.toFixed(1)}px)`;
+    }
+    if (heroVisual) {
+      const s = clamp(y, 0, vh);
+      heroVisual.style.transform = `perspective(900px) translate3d(0, ${(s * 0.22).toFixed(1)}px, ${(-s * 0.25).toFixed(1)}px) rotateX(${(s * 0.02).toFixed(2)}deg) rotateY(${(-s * 0.012).toFixed(2)}deg)`;
     }
   };
   const request = () => { if (!ticking) { ticking = true; requestAnimationFrame(place); } };
   window.addEventListener('scroll', request, { passive: true });
   window.addEventListener('resize', request);
   place();
-  animate(layer, { opacity: [0, 1] }, { duration: 0.8, delay: 0.6 });
 })();
