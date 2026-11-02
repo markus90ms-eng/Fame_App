@@ -264,17 +264,17 @@ h3 { font-size: 20px; letter-spacing: -.01em; margin-bottom: 8px; }
 .ladder .gold b { color: #251705; }
 .ladder .gold span { color: #5b3d10; }
 
-/* Diamant-Holo: flüssiges Facettenglas in Gold gefasst (Klasse Diamant-Holo in der App) */
+/* Diamant-Holo: edles Facettenglas, tief in Gold gefasst (dunkler und satter als Gold, kein Weiß) */
 .ladder .holo {
-  color: #221708; border: 2px solid transparent; border-radius: 15px;
+  color: #1f1304; border: 1.5px solid transparent; border-radius: 15px;
   background:
-    radial-gradient(ellipse 73% 95% at 13% 0%, rgba(255, 255, 255, .93), rgba(255, 251, 239, .33) 43%, transparent 76%) padding-box,
-    linear-gradient(145deg, rgba(255, 248, 224, .94) 0%, rgba(247, 216, 153, .85) 24%, rgba(216, 163, 74, .87) 45%, rgba(255, 245, 221, .95) 68%, rgba(199, 141, 50, .88) 100%) padding-box,
-    linear-gradient(120deg, #fffcf0 0%, #ae7126 13%, #ffedbd 28%, #fffef9 42%, #ba802a 60%, #fff2cb 79%, #a66a20 100%) border-box;
-  box-shadow: inset 0 2px 2px rgba(255, 255, 255, .96), inset 0 -3px 7px rgba(117, 68, 16, .22), inset 2px 0 3px rgba(255, 248, 218, .68), inset -2px 0 3px rgba(128, 73, 17, .26), 0 0 0 1px rgba(255, 211, 119, .67), 0 0 20px rgba(255, 205, 113, .34), 0 12px 26px rgba(0, 0, 0, .3);
+    radial-gradient(ellipse 73% 95% at 13% 0%, rgba(255, 244, 214, .5), rgba(255, 236, 190, .12) 45%, transparent 76%) padding-box,
+    linear-gradient(145deg, #d9ad58 0%, #b98530 26%, #8f5f1b 48%, #c99641 70%, #7b4f14 100%) padding-box,
+    linear-gradient(120deg, #fff3cf, #b9822c 14%, #ffe4a0 30%, #fff8e4 42%, #a9711f 62%, #ffe9b0 80%, #8f5a17) border-box;
+  box-shadow: inset 0 1px 1px rgba(255, 244, 214, .7), inset 0 -3px 8px rgba(70, 38, 6, .35), 0 0 0 1px rgba(120, 76, 18, .7), 0 0 18px rgba(214, 160, 60, .3), 0 12px 26px rgba(0, 0, 0, .35);
 }
-.ladder .holo b { color: #251906; text-shadow: 0 1px 0 rgba(255, 255, 255, .35); }
-.ladder .holo span { color: #5b3d10; }
+.ladder .holo b { color: #1f1304; text-shadow: 0 1px 0 rgba(255, 233, 176, .35); }
+.ladder .holo span { color: #3b2508; }
 /* Optische Kuppel mit wanderndem Glanz */
 .ladder .holo::before, .ladder .gold::before {
   content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; border-radius: inherit;
@@ -285,9 +285,10 @@ h3 { font-size: 20px; letter-spacing: -.01em; margin-bottom: 8px; }
   background-size: 100% 100%, 265% 100%, 100% 100%; background-position: 0 0, 50% 0, 0 0; opacity: .82;
 }
 .ladder .gold::before { opacity: .55; }
+.ladder .holo::before { opacity: .4; }
 /* Diamant-Ecken (nur Holo) */
 .ladder .holo::after {
-  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; border-radius: inherit; opacity: .9;
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; border-radius: inherit; opacity: .6;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, .85), transparent 66%) top left / 28px 24px no-repeat,
     linear-gradient(225deg, rgba(255, 247, 216, .74), transparent 68%) top right / 28px 24px no-repeat,
