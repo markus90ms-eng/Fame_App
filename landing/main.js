@@ -88,13 +88,22 @@
     el.style.cssText = `left:${g.x}%;width:${g.size}px;height:${(g.size * 0.9).toFixed(1)}px;`;
     el.innerHTML = '<i class="fly-shadow"></i><i class="fly-glass"></i>'
       + '<svg class="fly-facets" viewBox="0 0 100 90" aria-hidden="true">'
-      + '<path d="M26 6L2 32h96L74 6z" fill="rgba(255,255,255,.22)"/>'
-      + '<path d="M20 32L50 86 38 32z" fill="rgba(255,255,255,.16)"/>'
-      + '<path d="M62 32L50 86 80 32z" fill="rgba(40,60,90,.10)"/>'
-      + '<path d="M26 6h48l24 26L50 86 2 32z" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="1.6" stroke-linejoin="round"/>'
-      + '<path d="M20 32l6-26M80 32L74 6M2 32h96M20 32l30 54 30-54M38 32l12-26 12 26" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1" stroke-linejoin="round"/>'
-      + '<path d="M26 6h48l24 26L50 86 2 32z" fill="none" stroke="rgba(50,70,110,.35)" stroke-width=".6" stroke-linejoin="round"/>'
-      + '<path d="M30 12l8 14M70 12l-8 14" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round"/>'
+      // Facetten: helle und dunkle Flächen im Wechsel, so liest sich Glas auch auf Weiß
+      + '<path d="M26 6L2 32h18z" fill="rgba(30,50,95,.2)"/>'
+      + '<path d="M26 6L20 32h18L50 6z" fill="rgba(255,255,255,.5)"/>'
+      + '<path d="M50 6L38 32h24z" fill="rgba(255,255,255,.85)"/>'
+      + '<path d="M50 6l12 26h18L74 6z" fill="rgba(30,50,95,.24)"/>'
+      + '<path d="M74 6l24 26H80z" fill="rgba(255,255,255,.45)"/>'
+      + '<path d="M2 32h18l30 54z" fill="rgba(30,50,95,.3)"/>'
+      + '<path d="M20 32h18l12 54z" fill="rgba(255,255,255,.6)"/>'
+      + '<path d="M38 32h24L50 86z" fill="rgba(255,255,255,.28)"/>'
+      + '<path d="M62 32h18L50 86z" fill="rgba(30,50,95,.34)"/>'
+      + '<path d="M80 32h18L50 86z" fill="rgba(255,255,255,.5)"/>'
+      // Kanten: innen weiß, außen eine dunkle Kontur
+      + '<path d="M20 32l6-26M80 32L74 6M2 32h96M20 32l30 54 30-54M38 32l12-26 12 26M38 32l12 54 12-54" fill="none" stroke="rgba(255,255,255,.95)" stroke-width=".9" stroke-linejoin="round"/>'
+      + '<path d="M26 6h48l24 26L50 86 2 32z" fill="none" stroke="rgba(20,35,70,.75)" stroke-width="1.5" stroke-linejoin="round"/>'
+      + '<path d="M27.5 8.5h45L94 31.5" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="1.2" stroke-linecap="round"/>'
+      + '<path d="M32 13l6 12M12 29l6-9" stroke="rgba(255,255,255,1)" stroke-width="2.2" stroke-linecap="round"/>'
       + '</svg>';
     layer.appendChild(el);
     return { el, ...g, base: (i * 0.37 + 0.1) % 1 };

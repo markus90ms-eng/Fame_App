@@ -233,13 +233,13 @@ h3 { font-size: 20px; letter-spacing: -.01em; margin-bottom: 8px; }
 .fly-item { position: absolute; top: 0; will-change: transform; transform-style: preserve-3d; }
 .fly-item > * { position: absolute; inset: 0; display: block; }
 .fly-shadow, .fly-glass { clip-path: polygon(26% 6.7%, 74% 6.7%, 98% 35.5%, 50% 95.5%, 2% 35.5%); }
-.fly-shadow { background: rgba(20, 30, 55, .2); filter: blur(12px); transform: translate(3px, 12px) scale(.9); }
+.fly-shadow { background: rgba(20, 30, 55, .32); filter: blur(10px); transform: translate(4px, 13px) scale(.92); }
 .fly-glass {
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, .5), rgba(255, 255, 255, .06) 38%, rgba(255, 255, 255, .28) 66%, rgba(255, 255, 255, .1)),
-    linear-gradient(180deg, rgba(190, 215, 255, .14), rgba(255, 255, 255, 0));
-  -webkit-backdrop-filter: blur(3px) saturate(1.5) contrast(1.08) brightness(1.1);
-  backdrop-filter: blur(3px) saturate(1.5) contrast(1.08) brightness(1.1);
+    linear-gradient(135deg, rgba(255, 255, 255, .55), rgba(120, 145, 190, .16) 40%, rgba(255, 255, 255, .3) 62%, rgba(60, 85, 135, .22)),
+    linear-gradient(180deg, rgba(190, 215, 255, .18), rgba(255, 255, 255, 0));
+  -webkit-backdrop-filter: blur(2px) saturate(1.4) contrast(1.15) brightness(1.04);
+  backdrop-filter: blur(2px) saturate(1.4) contrast(1.15) brightness(1.04);
 }
 .fly-facets { width: 100%; height: 100%; }
 
@@ -288,3 +288,23 @@ h3 { font-size: 20px; letter-spacing: -.01em; margin-bottom: 8px; }
 @keyframes holo-flow { to { background-position: 200% 0; } }
 @keyframes holo-border { to { background-position: 0 0, 0 0, 200% 0; } }
 @keyframes glass-sweep { 0%, 15% { background-position: 110% 0; } 65%, 100% { background-position: -40% 0; } }
+
+/* Absperrband über dem Ranking-Bereich */
+#ranking { position: relative; overflow: hidden; padding-bottom: 140px; }
+.tape {
+  position: absolute; left: -10%; width: 120%; z-index: 3; pointer-events: none;
+  background: #ffd23f; color: #141414; overflow: hidden; white-space: nowrap;
+  border-block: 12px solid transparent;
+  border-image: repeating-linear-gradient(135deg, #141414 0 14px, #ffd23f 14px 28px) 12;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .55);
+}
+.tape--a { top: 62%; transform: rotate(-6deg); }
+.tape--b { top: 74%; transform: rotate(5deg); }
+.tape-track { display: inline-flex; padding: 6px 0; }
+.tape-track span { font-weight: 800; font-size: clamp(18px, 4.6vw, 30px); letter-spacing: .14em; text-transform: uppercase; padding-right: .9em; }
+@media (prefers-reduced-motion: no-preference) {
+  .tape--a .tape-track { animation: tape-run 28s linear infinite; }
+  .tape--b .tape-track { animation: tape-run 34s linear infinite reverse; }
+}
+@keyframes tape-run { to { transform: translateX(-50%); } }
+@media (min-width: 720px) { #ranking { padding-bottom: 180px; } .tape--a { top: 64%; } .tape--b { top: 76%; } }
