@@ -21,6 +21,7 @@ export const EN = {
   "Einzahlen": "Add Fame",
   "Leg nach, steig auf": "Stack up, level up",
   "Betrag wählen": "Pick an amount",
+  "Coming soon": "Coming soon",
   "Wer hat den meisten Fame?": "Who has the most Fame?",
   "Code prüfen": "Check code",
   "Ist eine Card echt?": "Is a card real?",
