@@ -33,8 +33,16 @@
   ::view-transition-group(screen) { border-radius: 34px; }
 }
 
-/* Ranking: Coming soon */
-.hub-tile.is-soon { opacity: 0.55; box-shadow: 4px 4px 0 #c9c8c3; cursor: default; position: relative; }
+/* Ranking: Coming soon als Absperrband quer über der Kachel */
+.hub-tile.is-soon { overflow: hidden; box-shadow: 4px 4px 0 #c9c8c3; cursor: default; position: relative; }
 .hub-tile.is-soon:active { transform: none; }
-.soon-badge { position: absolute; top: -9px; right: -6px; transform: rotate(5deg); font-style: normal; font-size: 8.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; background: var(--green); color: #0b0b0c; border: 1.5px solid var(--dark); padding: 1px 6px; }
+.hub-tile.is-soon > :not(.soon-band) { opacity: 0.45; }
+.soon-band {
+  position: absolute; left: -12%; width: 124%; top: 64%; transform: translateY(-50%) rotate(-12deg);
+  background: #ffd23f; color: #141414; text-align: center; font-style: normal; z-index: 3; pointer-events: none;
+  border-block: 4px solid transparent;
+  border-image: repeating-linear-gradient(135deg, #141414 0 5px, #ffd23f 5px 10px) 4;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+.soon-band span { display: block; padding: 2px 0; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; }
 .foot-links .is-soon { opacity: 0.55; cursor: default; text-decoration: none; }
