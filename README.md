@@ -159,3 +159,7 @@ Fame_App/
 ```
 
 Stufen, Pin-Schwelle (`PIN_FROM`) und Währung lassen sich zentral in `js/data.js` anpassen.
+
+## Landingpage
+
+Statische Landingpage unter `landing/` (erreichbar als `/landing/`, z. B. https://fame-app.de/landing/). Reines HTML/CSS/JS ohne Build; Animationen mit [Motion](https://motion.dev) (`landing/vendor/motion.js`, MIT-Lizenz), nur `transform` und `opacity`, mit Federn und `prefers-reduced-motion`. Die App und der Service Worker bleiben unberührt.
