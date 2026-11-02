@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '102';
+export const APP_VERSION = '103';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -416,7 +416,7 @@ function splash() {
     const main = !own ? button(t('Erste Card holen'), 'data-go="donate"') : button(open ? t('Meine Card') : t('Card aufdecken'), 'data-go="card"');
     // Höchste Klasse: kleine Funkel-Sterne auf den Glas-Kacheln
     const sparkles = (n) => (cls === 9 ? Array.from({ length: n }, (_, i) => `<i class="sparkle" style="--d:${(i * 1.3).toFixed(1)}s" aria-hidden="true"></i>`).join('') : '');
-    const soon = (icon, title, sub) => `<div class="hub-tile is-soon" role="link" aria-disabled="true"><span class="hub-ico">${icon}</span><b>${title}</b><small>${sub}</small><em class="soon-badge">${t('Coming soon')}</em></div>`;
+    const soon = (icon, title, sub) => `<div class="hub-tile is-soon" role="link" aria-disabled="true"><span class="hub-ico">${icon}</span><b>${title}</b><small>${sub}</small><em class="soon-band" aria-hidden="true"><span>${t('Coming soon')}</span></em></div>`;
     const tile = (go, icon, title, sub) => `<a class="hub-tile" href="#/${go}"><span class="hub-ico">${icon}</span><b>${title}</b><small>${sub}</small>${sparkles(1)}</a>`;
     return {
       html: `<section class="screen screen--splash screen--welcome cls-${cls}" style="--rar:${CLASSES[cls].color}">
