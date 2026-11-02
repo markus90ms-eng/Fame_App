@@ -301,7 +301,7 @@ h3 { font-size: 20px; letter-spacing: -.01em; margin-bottom: 8px; }
 @keyframes btn-sheen { 0%, 20% { background-position: 0 0, 100% 0, 0 0; } 70%, 100% { background-position: 0 0, 0% 0, 0 0; } }
 
 /* Absperrband über dem Ranking-Bereich */
-#ranking { position: relative; overflow: hidden; padding-bottom: 140px; }
+#ranking { position: relative; overflow: hidden; padding-bottom: 130px; }
 .tape {
   position: absolute; left: -10%; width: 120%; z-index: 3; pointer-events: none;
   background: #ffd23f; color: #141414; overflow: hidden; white-space: nowrap;
@@ -309,13 +309,11 @@ h3 { font-size: 20px; letter-spacing: -.01em; margin-bottom: 8px; }
   border-image: repeating-linear-gradient(135deg, #141414 0 14px, #ffd23f 14px 28px) 12;
   box-shadow: 0 10px 28px rgba(0, 0, 0, .55);
 }
-.tape--a { top: 62%; transform: rotate(-6deg); }
-.tape--b { top: 74%; transform: rotate(5deg); }
+.tape--a { top: 68%; transform: rotate(-6deg); }
 .tape-track { display: inline-flex; padding: 6px 0; }
 .tape-track span { font-weight: 800; font-size: clamp(18px, 4.6vw, 30px); letter-spacing: .14em; text-transform: uppercase; padding-right: .9em; }
 @media (prefers-reduced-motion: no-preference) {
   .tape--a .tape-track { animation: tape-run 28s linear infinite; }
-  .tape--b .tape-track { animation: tape-run 34s linear infinite reverse; }
 }
 @keyframes tape-run { to { transform: translateX(-50%); } }
-@media (min-width: 720px) { #ranking { padding-bottom: 180px; } .tape--a { top: 64%; } .tape--b { top: 76%; } }
+@media (min-width: 720px) { #ranking { padding-bottom: 180px; } .tape--a { top: 70%; } }
