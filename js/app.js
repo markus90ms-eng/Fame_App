@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '101';
+export const APP_VERSION = '102';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -242,6 +242,9 @@ function luxTilt() {
   }
 }
 
+// Ranking erst freischalten, wenn genug Leute dabei sind (dann auf true setzen). Bis dahin: „Coming soon“.
+const RANKING_LIVE = false;
+
 // Richtung des letzten Seitenwechsels: vorwärts = in die Tiefe fliegen, zurück = herauszoomen.
 let navDir = 'fwd';
 let rendered = false;
@@ -262,7 +265,8 @@ function render() {
 }
 
 function renderScreen(flying) {
-  const path = location.hash.replace(/^#\/?/, '');
+  let path = location.hash.replace(/^#\/?/, '');
+  if (!RANKING_LIVE && /^ranking(\/|$)/.test(path)) { history.replaceState(null, '', '#/'); path = ''; }
   const screen = routes[path] || (path.startsWith('check/') ? () => checkPage(decodeURIComponent(path.slice(6))) : splash);
   cleanup?.();
   cleanup = null;
@@ -412,6 +416,7 @@ function splash() {
     const main = !own ? button(t('Erste Card holen'), 'data-go="donate"') : button(open ? t('Meine Card') : t('Card aufdecken'), 'data-go="card"');
     // Höchste Klasse: kleine Funkel-Sterne auf den Glas-Kacheln
     const sparkles = (n) => (cls === 9 ? Array.from({ length: n }, (_, i) => `<i class="sparkle" style="--d:${(i * 1.3).toFixed(1)}s" aria-hidden="true"></i>`).join('') : '');
+    const soon = (icon, title, sub) => `<div class="hub-tile is-soon" role="link" aria-disabled="true"><span class="hub-ico">${icon}</span><b>${title}</b><small>${sub}</small><em class="soon-badge">${t('Coming soon')}</em></div>`;
     const tile = (go, icon, title, sub) => `<a class="hub-tile" href="#/${go}"><span class="hub-ico">${icon}</span><b>${title}</b><small>${sub}</small>${sparkles(1)}</a>`;
     return {
       html: `<section class="screen screen--splash screen--welcome cls-${cls}" style="--rar:${CLASSES[cls].color}">
@@ -432,7 +437,7 @@ function splash() {
         <div class="splash-login">${main}</div>
         <nav class="hub" aria-label="${t('Übersicht')}">
           ${tile('donate', icons.bill, own ? t('Fame steigern') : t('Einzahlen'), own ? t('Leg nach, steig auf') : t('Betrag wählen'))}
-          ${tile('ranking', icons.goldTrophy, 'Ranking', t('Wer hat den meisten Fame?'))}
+          ${RANKING_LIVE ? tile('ranking', icons.goldTrophy, 'Ranking', t('Wer hat den meisten Fame?')) : soon(icons.goldTrophy, 'Ranking', t('Wer hat den meisten Fame?'))}
           ${tile('check', SEAL, t('Code prüfen'), t('Ist eine Card echt?'))}
         </nav>
         <a class="connect-cta" href="#/accounts">
@@ -1617,7 +1622,7 @@ function card() {
         </div>
         <div class="foot-links">
           <a class="link" href="#/donate">${t('Fame steigern')}</a>
-          <a class="link" href="#/ranking">Ranking</a>
+          ${RANKING_LIVE ? '<a class="link" href="#/ranking">Ranking</a>' : `<span class="link is-soon">Ranking · ${t('Coming soon')}</span>`}
         </div>
       </div>
       <div class="sheet" data-sheet hidden>
