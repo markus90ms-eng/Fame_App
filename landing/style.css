@@ -227,3 +227,8 @@ h3 { font-size: 20px; letter-spacing: -.01em; margin-bottom: 8px; }
   .card--main { animation: float 6s ease-in-out infinite; }
   .card--back { animation: float 7s ease-in-out -2s infinite; }
 }
+
+/* Fliegende Diamanten beim Scrollen */
+.fly { position: fixed; inset: 0; z-index: 40; pointer-events: none; overflow: hidden; opacity: 0; }
+.fly-gem { position: absolute; top: 0; will-change: transform; filter-origin: center; }
+.fly-gem svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 6px 14px rgba(20, 20, 20, .28)); }
