@@ -249,48 +249,59 @@ h3 { font-size: 20px; letter-spacing: -.01em; margin-bottom: 8px; }
 .soon { display: inline-block; margin-left: 10px; padding: 2px 10px; border-radius: 99px; background: var(--green); color: var(--ink); letter-spacing: .08em; vertical-align: middle; }
 .podium { opacity: .55; }
 
-/* Gold und Diamant-Holo wie in der App: dunkles Kristallglas mit poliertem Rand */
-.ladder .gold, .ladder .holo {
-  position: relative; isolation: isolate; overflow: hidden;
-  border: 2px solid transparent; border-radius: 16px; color: #fff7e8;
-  background:
-    radial-gradient(ellipse 135% 80% at 12% -5%, rgba(255, 255, 255, .26), rgba(255, 252, 240, .045) 47%, transparent 78%) padding-box,
-    linear-gradient(155deg, rgba(91, 72, 56, .95) 0%, rgba(37, 32, 29, .97) 26%, rgba(10, 13, 17, .98) 54%, rgba(50, 39, 25, .96) 100%) padding-box,
-    linear-gradient(123deg, #fffef7 0%, #dba646 13%, #a86e22 25%, #fff0bd 40%, #f6f7ff 52%, #ad772c 70%, #ffe9b1 89%, #fffdf5 100%) border-box;
-  box-shadow: inset 0 2px 1px rgba(255, 255, 255, .6), inset 0 -3px 6px rgba(114, 76, 31, .29), 0 0 0 1px rgba(255, 211, 122, .35), 0 0 16px rgba(247, 179, 71, .25), 0 10px 24px rgba(0, 0, 0, .3);
-}
+/* Gold und Diamant-Holo wie die Buttons der App */
+.ladder .gold, .ladder .holo { position: relative; isolation: isolate; overflow: hidden; }
 .ladder .gold i, .ladder .holo i { display: none; }
-.ladder .gold b, .ladder .holo b { font-size: 15px; background-clip: text; -webkit-background-clip: text; color: transparent; }
-.ladder .gold b { background-image: linear-gradient(115deg, #fff6db 0%, #e7b958 17%, #a5721f 38%, #fff2bb 53%, #d19b35 72%, #ffe5a2 88%, #b37c27 100%); background-size: 215% 100%; }
-.ladder .gold span, .ladder .holo span { color: #d8c9a8; }
-/* Glasglanz, der über die Kachel wandert */
-.ladder .gold::after, .ladder .holo::after {
-  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
-  background: linear-gradient(111deg, transparent 33%, rgba(255, 255, 255, .28) 47%, rgba(249, 232, 197, .1) 51%, transparent 61%) 0 0 / 320% 100% no-repeat;
+.ladder .gold b, .ladder .holo b, .ladder .gold span, .ladder .holo span { position: relative; z-index: 1; }
+.ladder .gold b, .ladder .holo b { font-weight: 800; letter-spacing: .065em; }
+
+/* Gold: polierte Metall-Fläche (Klasse Gold in der App) */
+.ladder .gold {
+  color: #251705; border: 1px solid rgba(255, 238, 185, .95); border-radius: 8px;
+  background: linear-gradient(166deg, #fff0c0 0%, #edcc84 29%, #cb973d 59%, #f1d48d 86%, #fff1cd 100%);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, .61), inset 0 -3px 0 rgba(118, 72, 15, .23), 0 0 0 1px rgba(144, 88, 24, .78), 0 7px 22px rgba(205, 128, 38, .3), 0 12px 32px rgba(0, 0, 0, .25);
 }
-/* Diamant-Holo: Regenbogen-Pastell im Rand und in der Schrift */
+.ladder .gold b { color: #251705; }
+.ladder .gold span { color: #5b3d10; }
+
+/* Diamant-Holo: flüssiges Facettenglas in Gold gefasst (Klasse Diamant-Holo in der App) */
 .ladder .holo {
+  color: #221708; border: 2px solid transparent; border-radius: 15px;
   background:
-    radial-gradient(ellipse 135% 80% at 12% -5%, rgba(255, 255, 255, .3), rgba(255, 252, 240, .05) 47%, transparent 78%) padding-box,
-    linear-gradient(155deg, rgba(70, 62, 90, .95) 0%, rgba(30, 28, 42, .97) 30%, rgba(10, 13, 22, .98) 56%, rgba(58, 42, 70, .96) 100%) padding-box,
-    linear-gradient(123deg, #ffd6f0, #c5ecff 22%, #fff8de 40%, #cfffe4 58%, #d9c8ff 78%, #ffe0a2) border-box;
-  background-size: auto, auto, 200% 100%;
-  box-shadow: inset 0 2px 1px rgba(255, 255, 255, .7), 0 0 0 1px rgba(220, 235, 255, .45), 0 0 22px rgba(198, 182, 255, .45), 0 10px 24px rgba(0, 0, 0, .3);
+    radial-gradient(ellipse 73% 95% at 13% 0%, rgba(255, 255, 255, .93), rgba(255, 251, 239, .33) 43%, transparent 76%) padding-box,
+    linear-gradient(145deg, rgba(255, 248, 224, .94) 0%, rgba(247, 216, 153, .85) 24%, rgba(216, 163, 74, .87) 45%, rgba(255, 245, 221, .95) 68%, rgba(199, 141, 50, .88) 100%) padding-box,
+    linear-gradient(120deg, #fffcf0 0%, #ae7126 13%, #ffedbd 28%, #fffef9 42%, #ba802a 60%, #fff2cb 79%, #a66a20 100%) border-box;
+  box-shadow: inset 0 2px 2px rgba(255, 255, 255, .96), inset 0 -3px 7px rgba(117, 68, 16, .22), inset 2px 0 3px rgba(255, 248, 218, .68), inset -2px 0 3px rgba(128, 73, 17, .26), 0 0 0 1px rgba(255, 211, 119, .67), 0 0 20px rgba(255, 205, 113, .34), 0 12px 26px rgba(0, 0, 0, .3);
 }
-.ladder .holo b { background-image: linear-gradient(107deg, #fff1c1, #c5ecff 24%, #fff8de 48%, #f9dfef 75%, #ffe0a2 100%); background-size: 200% 100%; }
+.ladder .holo b { color: #251906; text-shadow: 0 1px 0 rgba(255, 255, 255, .35); }
+.ladder .holo span { color: #5b3d10; }
+/* Optische Kuppel mit wanderndem Glanz */
+.ladder .holo::before, .ladder .gold::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; border-radius: inherit;
+  background:
+    radial-gradient(ellipse 89% 94% at 21% 1%, rgba(255, 255, 255, .84), rgba(255, 255, 255, .29) 37%, transparent 68%),
+    linear-gradient(113deg, transparent 27%, rgba(255, 255, 255, .09) 34%, rgba(255, 255, 255, .55) 48%, rgba(255, 246, 218, .12) 56%, transparent 64%),
+    linear-gradient(180deg, rgba(255, 255, 255, .32), transparent 47%, rgba(111, 67, 12, .1));
+  background-size: 100% 100%, 265% 100%, 100% 100%; background-position: 0 0, 50% 0, 0 0; opacity: .82;
+}
+.ladder .gold::before { opacity: .55; }
+/* Diamant-Ecken (nur Holo) */
+.ladder .holo::after {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; border-radius: inherit; opacity: .9;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .85), transparent 66%) top left / 28px 24px no-repeat,
+    linear-gradient(225deg, rgba(255, 247, 216, .74), transparent 68%) top right / 28px 24px no-repeat,
+    linear-gradient(45deg, rgba(255, 229, 178, .48), transparent 72%) bottom left / 27px 21px no-repeat,
+    linear-gradient(315deg, rgba(255, 255, 255, .47), transparent 70%) bottom right / 27px 21px no-repeat,
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, .86), transparent) top 1px center / 74% 1px no-repeat;
+}
 @media (prefers-reduced-motion: no-preference) {
-  .ladder .gold b { animation: gold-sheen 8.8s linear infinite; }
-  .ladder .holo b { animation: holo-flow 6s linear infinite; }
-  .ladder .holo { animation: holo-border 8s linear infinite; }
-  .ladder .gold::after, .ladder .holo::after { animation: glass-sweep 5s ease-in-out infinite; }
+  .ladder .holo::before, .ladder .gold::before { animation: btn-sheen 5.5s ease-in-out infinite; }
 }
-@keyframes gold-sheen { to { background-position: 215% 0; } }
-@keyframes holo-flow { to { background-position: 200% 0; } }
-@keyframes holo-border { to { background-position: 0 0, 0 0, 200% 0; } }
-@keyframes glass-sweep { 0%, 15% { background-position: 110% 0; } 65%, 100% { background-position: -40% 0; } }
+@keyframes btn-sheen { 0%, 20% { background-position: 0 0, 100% 0, 0 0; } 70%, 100% { background-position: 0 0, 0% 0, 0 0; } }
 
 /* Absperrband über dem Ranking-Bereich */
-#ranking { position: relative; overflow: hidden; padding-bottom: 140px; }
+#ranking { position: relative; overflow: hidden; padding-bottom: 130px; }
 .tape {
   position: absolute; left: -10%; width: 120%; z-index: 3; pointer-events: none;
   background: #ffd23f; color: #141414; overflow: hidden; white-space: nowrap;
@@ -298,13 +309,11 @@ h3 { font-size: 20px; letter-spacing: -.01em; margin-bottom: 8px; }
   border-image: repeating-linear-gradient(135deg, #141414 0 14px, #ffd23f 14px 28px) 12;
   box-shadow: 0 10px 28px rgba(0, 0, 0, .55);
 }
-.tape--a { top: 62%; transform: rotate(-6deg); }
-.tape--b { top: 74%; transform: rotate(5deg); }
+.tape--a { top: 68%; transform: rotate(-6deg); }
 .tape-track { display: inline-flex; padding: 6px 0; }
 .tape-track span { font-weight: 800; font-size: clamp(18px, 4.6vw, 30px); letter-spacing: .14em; text-transform: uppercase; padding-right: .9em; }
 @media (prefers-reduced-motion: no-preference) {
   .tape--a .tape-track { animation: tape-run 28s linear infinite; }
-  .tape--b .tape-track { animation: tape-run 34s linear infinite reverse; }
 }
 @keyframes tape-run { to { transform: translateX(-50%); } }
-@media (min-width: 720px) { #ranking { padding-bottom: 180px; } .tape--a { top: 64%; } .tape--b { top: 76%; } }
+@media (min-width: 720px) { #ranking { padding-bottom: 180px; } .tape--a { top: 70%; } }
