@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '100';
+export const APP_VERSION = '101';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -242,7 +242,26 @@ function luxTilt() {
   }
 }
 
+// Richtung des letzten Seitenwechsels: vorwärts = in die Tiefe fliegen, zurück = herauszoomen.
+let navDir = 'fwd';
+let rendered = false;
+
 function render() {
+  const dir = navDir;
+  navDir = 'fwd';
+  const canFly = rendered
+    && typeof document.startViewTransition === 'function'
+    && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  rendered = true;
+  if (!canFly) { renderScreen(false); return; }
+  // Seitenwechsel als Flug: alte Seite zoomt weg, neue kommt aus der Tiefe (CSS: ::view-transition-*)
+  const root = document.documentElement;
+  root.dataset.nav = dir;
+  const vt = document.startViewTransition(() => renderScreen(true));
+  vt.finished.finally(() => { delete root.dataset.nav; });
+}
+
+function renderScreen(flying) {
   const path = location.hash.replace(/^#\/?/, '');
   const screen = routes[path] || (path.startsWith('check/') ? () => checkPage(decodeURIComponent(path.slice(6))) : splash);
   cleanup?.();
@@ -251,8 +270,10 @@ function render() {
   app.innerHTML = html;
   const el = app.firstElementChild;
   luxify(el, path);
-  el.classList.add('is-entering');
-  requestAnimationFrame(() => el.classList.remove('is-entering'));
+  if (!flying) {
+    el.classList.add('is-entering');
+    requestAnimationFrame(() => el.classList.remove('is-entering'));
+  }
   app.scrollTop = 0;
   cleanup = mount?.(el) || null;
 }
@@ -261,8 +282,10 @@ app.addEventListener('click', (e) => {
   const t = e.target.closest('[data-go],[data-back]');
   if (!t) return;
   if (t.hasAttribute('data-back')) {
+    navDir = 'back';
     if (history.length > 1) history.back(); else go('');
   } else {
+    navDir = 'fwd';
     go(t.getAttribute('data-go'));
   }
 });
