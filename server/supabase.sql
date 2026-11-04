@@ -64,10 +64,11 @@ create table if not exists public.purchase_evidence (
   adult_confirmed boolean not null check (adult_confirmed),
   waiver_accepted boolean not null check (waiver_accepted),
   client_at timestamptz,
-  user_agent text check (user_agent is null or char_length(user_agent) <= 300),
-  -- später mit Stripe: Ausweisprüfung nur im Ausnahmefall (Rückbuchung, Radar-Warnung, sehr hoher Betrag)
-  id_check text check (id_check is null or id_check in ('required', 'pending', 'verified', 'failed'))
+  user_agent text check (user_agent is null or char_length(user_agent) <= 300)
 );
+
+-- Keine Ausweisprüfung: frühere Spalte id_check entfernen, falls sie schon angelegt wurde
+alter table public.purchase_evidence drop column if exists id_check;
 
 alter table public.purchase_evidence enable row level security;
 
@@ -76,7 +77,7 @@ drop policy if exists "Kauf-Nachweis lesen" on public.purchase_evidence;
 
 create policy "Kauf-Nachweis anlegen" on public.purchase_evidence
   for insert to authenticated
-  with check (user_id = (select auth.uid()) and id_check is null);
+  with check (user_id = (select auth.uid()));
 
 create policy "Kauf-Nachweis lesen" on public.purchase_evidence
   for select to authenticated using (user_id = (select auth.uid()));
