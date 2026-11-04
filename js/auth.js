@@ -174,6 +174,22 @@ export const saveProfile = (id, data) => wrap(async () => {
   return error ? { error: error.message || 'db' } : { ok: true };
 });
 
+// ---- Kauf-Nachweis ------------------------------------------------------------------------------
+
+// Zustimmungen zum Kauf speichern (Tabelle "purchase_evidence", siehe server/supabase.sql).
+// Die Datenbank nimmt den Eintrag nur an, wenn alle Pflicht-Häkchen gesetzt sind und der Kauf
+// zum angemeldeten Konto gehört. Zeitpunkt (created_at) setzt der Server.
+export const recordPurchase = (row) => wrap(async () => {
+  if (!authReady()) return { error: 'config' };
+  const c = await sb();
+  const { data: { session } } = await c.auth.getSession();
+  if (!session) return { error: 'login' };
+  const { data, error } = await c.from('purchase_evidence')
+    .insert({ ...row, user_id: session.user.id, user_agent: navigator.userAgent.slice(0, 300) })
+    .select('created_at').single();
+  return error ? { error: error.message || 'db' } : { ok: true, at: data.created_at };
+});
+
 // ---- Online-Widerruf ----------------------------------------------------------------------------
 
 // Widerrufserklärung speichern (Tabelle "withdrawals", siehe server/supabase.sql). Geht auch ohne Login.

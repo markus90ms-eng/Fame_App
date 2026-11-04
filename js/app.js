@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '103';
+export const APP_VERSION = '104';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -1347,7 +1347,12 @@ function donate() {
         <label class="check">
           <input id="donate-accept" type="checkbox" data-accept ${state.accepted ? 'checked' : ''}>
           <span class="check-box" aria-hidden="true"></span>
-          <span>${t('Ich akzeptiere die {terms}, habe die {withdraw} gelesen und bin mindestens 18 Jahre alt.', { terms: legalLink('agb.html', t('AGB')), withdraw: legalLink('widerruf.html', t('Widerrufsbelehrung')) })}</span>
+          <span>${t('Ich akzeptiere die {terms} und habe die {withdraw} gelesen.', { terms: legalLink('agb.html', t('AGB')), withdraw: legalLink('widerruf.html', t('Widerrufsbelehrung')) })}</span>
+        </label>
+        <label class="check">
+          <input id="donate-adult" type="checkbox" data-adult>
+          <span class="check-box" aria-hidden="true"></span>
+          <span>${t('Ich bin mindestens 18 Jahre alt.')}</span>
         </label>
         <label class="check">
           <input id="donate-waiver" type="checkbox" data-waiver>
@@ -1376,6 +1381,7 @@ function donate() {
       const btn = $('[data-awesome]');
       const accept = $('[data-accept]');
       const waiver = $('[data-waiver]');
+      const adult = $('[data-adult]');
       const flash = $('[data-flash]');
       const nudge = $('[data-nudge]');
       let cls = start.cls;
@@ -1501,12 +1507,15 @@ function donate() {
 
       nudge.addEventListener('click', () => { if (nudgeTarget > 0) update(nudgeTarget, { sound: true }); });
 
-      const syncBtn = () => { btn.disabled = !(accept.checked && waiver.checked); };
+      // Alle drei Pflicht-Häkchen: AGB, Alter (ab 18), sofortige Ausstellung mit Verzicht aufs Widerrufsrecht
+      const ready = () => accept.checked && adult.checked && waiver.checked;
+      const syncBtn = () => { btn.disabled = !ready(); };
       accept.addEventListener('change', () => { state.accepted = accept.checked; syncBtn(); buzz(8); });
+      adult.addEventListener('change', () => { syncBtn(); buzz(8); });
       waiver.addEventListener('change', () => { syncBtn(); buzz(8); });
 
       btn.addEventListener('click', async () => {
-        if (!accept.checked || !waiver.checked) return;
+        if (!ready() || btn.classList.contains('is-busy')) return;
         if (!state.user) {
           state.after = 'donate';
           toast(t('Log dich ein, damit der Betrag deinem Fame-Wert gutgeschrieben wird.'));
@@ -1516,14 +1525,29 @@ function donate() {
         try { await window.DeviceOrientationEvent?.requestPermission?.(); } catch { /* abgelehnt */ }
         // Prototyp: die Zahlung wird simuliert und direkt dem Konto gutgeschrieben.
         const at = Date.now();
-        acc.total += amount;
+        const total = acc.total + amount;
+        const serial = makeSerial(`${state.session?.id || state.user.name}|${state.user.insta}|${total}|${at}`);
+        // Kauf-Nachweis zuerst auf dem Server speichern. Der Server lehnt den Kauf ab, wenn ein
+        // Pflicht-Häkchen fehlt – dann wird auch keine Card ausgestellt.
+        btn.classList.add('is-busy');
+        const proof = await auth.recordPurchase({
+          serial, amount, legal_version: LEGAL_VERSION, client_at: new Date(at).toISOString(),
+          agb_accepted: accept.checked, adult_confirmed: adult.checked, waiver_accepted: waiver.checked,
+        });
+        btn.classList.remove('is-busy');
+        if (proof.error) {
+          toast(proof.error === 'login'
+            ? t('Bitte melde dich neu an und versuch es nochmal.')
+            : t('Der Kauf konnte nicht gespeichert werden. Bitte versuch es gleich nochmal.'));
+          return;
+        }
+        acc.total = total;
         acc.deposits.push({ amount, at });
         const tier = tierFor(acc.total);
         acc.cards.push({
-          tier: tier.id, stage: tier.stage, total: acc.total, at, revealed: false,
-          serial: makeSerial(`${state.session?.id || state.user.name}|${state.user.insta}|${acc.total}|${at}`),
-          // Nachweis: Zustimmung zu AGB und zum sofortigen Ausstellen (Erlöschen des Widerrufsrechts)
-          consent: { agb: at, waiver: at, version: LEGAL_VERSION },
+          tier: tier.id, stage: tier.stage, total: acc.total, at, revealed: false, serial,
+          // Nachweis: AGB, Alter und sofortige Ausstellung (Erlöschen des Widerrufsrechts); Zeitpunkt laut Server
+          consent: { agb: at, adult: at, waiver: at, version: LEGAL_VERSION, server: proof.at },
         });
         saveAccount();
         go('card');
