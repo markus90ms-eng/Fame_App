@@ -1,0 +1,11 @@
+/* V106: Startseite – oben drei kleine Kacheln (Ranking, Code prüfen, Accounts), darunter groß „Fame steigern“ */
+.hub-acc { display: flex; gap: 3px; }
+.hub-acc span { width: 22px; height: 22px; display: grid; place-items: center; border: 1.5px solid var(--ink); background: #f3f3f0; opacity: 0.55; }
+.hub-acc span.is-on { background: var(--rar); opacity: 1; }
+.hub-acc .ico { width: 13px; height: 13px; }
+.cta-fame { padding: 16px; }
+.cta-bill { flex: 0 0 auto; display: grid; place-items: center; width: 52px; height: 46px; }
+.cta-bill .hub-svg { width: 48px; height: 48px; }
+.cta-fame .cc-txt b { font-size: 17px; }
+.lux .hub-acc span, .hom .hub-acc span { border-color: rgba(255, 255, 255, 0.45); background: rgba(255, 255, 255, 0.08); }
+.lux .hub-acc span.is-on, .hom .hub-acc span.is-on { background: var(--h-acc, #d4af5a); }

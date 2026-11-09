@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '105';
+export const APP_VERSION = '106';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -448,13 +448,13 @@ function splash() {
         <p class="welcome-sub">${own ? `${t('Dein Fame-Wert')} <b>${money(acc.total)}</b> · ${t('Klasse')} <b>${CLASSES[cls].name}</b>` : t('Noch kein Fame-Wert')}</p>
         <div class="splash-login">${main}</div>
         <nav class="hub" aria-label="${t('Übersicht')}">
-          ${tile('donate', icons.bill, own ? t('Fame steigern') : t('Einzahlen'), own ? t('Leg nach, steig auf') : t('Betrag wählen'))}
           ${RANKING_LIVE ? tile('ranking', icons.goldTrophy, 'Ranking', t('Wer hat den meisten Fame?')) : soon(icons.goldTrophy, 'Ranking', t('Wer hat den meisten Fame?'))}
           ${tile('check', SEAL, t('Code prüfen'), t('Ist eine Card echt?'))}
+          <a class="hub-tile hub-tile--acc" href="#/accounts"><span class="hub-ico"><span class="hub-acc" aria-hidden="true">${PLATFORMS.map((p) => `<span class="${isLinked(state.user, p.id) ? 'is-on' : ''}">${platformIcon(p.id)}</span>`).join('')}</span></span><b>${t('Accounts')}</b><small>${t('{n} von {m} verbunden', { n: linkedIds(state.user).length, m: PLATFORMS.length })}</small>${sparkles(1)}</a>
         </nav>
-        <a class="connect-cta" href="#/accounts">
-          <span class="cc-ics" aria-hidden="true">${PLATFORMS.map((p) => `<span class="${isLinked(state.user, p.id) ? 'is-on' : ''}">${platformIcon(p.id)}</span>`).join('')}</span>
-          <span class="cc-txt"><b>${t('Accounts verbinden')}</b><small>${t('Verbinde die Accounts, die auf deiner Card stehen sollen.')}</small><span class="cc-pill">${t('{n} von {m} verbunden', { n: linkedIds(state.user).length, m: PLATFORMS.length })}</span></span>
+        <a class="connect-cta cta-fame" href="#/donate">
+          <span class="cta-bill" aria-hidden="true">${icons.bill}</span>
+          <span class="cc-txt"><b>${own ? t('Fame steigern') : t('Einzahlen')}</b><small>${own ? t('Leg nach und steig zur nächsten Stufe auf.') : t('Wähl deinen Betrag und hol dir deine Card.')}</small></span>
           <span class="cc-go" aria-hidden="true">→</span>${sparkles(2)}
         </a>
         ${profileButton()}

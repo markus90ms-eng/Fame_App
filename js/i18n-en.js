@@ -370,4 +370,8 @@ export const EN = {
   "Oder neues Konto anlegen": "Or create a new account",
   "Einen Kauf online widerrufen": "Withdraw from a purchase online",
   "Alle Texte auf einen Blick": "All documents at a glance",
+  // V106: Startseite
+  "Accounts": "Accounts",
+  "Leg nach und steig zur nächsten Stufe auf.": "Add more and climb to the next level.",
+  "Wähl deinen Betrag und hol dir deine Card.": "Pick your amount and get your card.",
 };
