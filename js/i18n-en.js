@@ -358,4 +358,16 @@ export const EN = {
   "Widerruf bestätigen": "Confirm withdrawal",
   "Widerruf eingegangen": "Withdrawal received",
   "Widerrufsbelehrung": "Withdrawal policy",
+  // V105: Profil
+  "Profil": "Profile",
+  "Sprache": "Language",
+  "Wechseln zu {x}": "Switch to {x}",
+  "Dein Profil": "Your profile",
+  "Melde dich an, um deine Cards zu sehen.": "Sign in to see your cards.",
+  "Konto": "Account",
+  "Für Instagram und TikTok": "For Instagram and TikTok",
+  "Anmelden": "Sign in",
+  "Oder neues Konto anlegen": "Or create a new account",
+  "Einen Kauf online widerrufen": "Withdraw from a purchase online",
+  "Alle Texte auf einen Blick": "All documents at a glance",
 };

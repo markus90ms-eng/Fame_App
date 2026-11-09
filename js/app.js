@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '104';
+export const APP_VERSION = '105';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -108,6 +108,7 @@ const routes = {
   card: card,
   check: () => checkPage(''),
   terms: terms,
+  profil: profilePage,
   widerruf: withdrawPage,
   ranking: () => rankingPage(state.user?.ranking?.region || state.user?.region ? 'region' : 'country'),
   'ranking/region': () => rankingPage('region'),
@@ -393,11 +394,22 @@ function bindLang(el) {
   el.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => { buzz(8); setLang(b.dataset.lang); }));
 }
 
-// Rechtliches unten auf der Startseite. „Vertrag widerrufen“ ist hervorgehoben (§ 356a BGB).
-const legalFoot = () => `<nav class="legal-foot" aria-label="${t('Rechtliches')}">
-  <a class="legal-withdraw" href="#/widerruf">${t('Vertrag widerrufen')}</a>
-  <span class="legal-links">${legalLink('impressum.html', t('Impressum'))} · ${legalLink('agb.html', t('AGB'))} · ${legalLink(PRIVACY_URL(), t('Datenschutz'))} · <a href="#/terms">${t('Rechtliches')}</a></span>
-</nav>`;
+// Runder Profil-Knopf oben rechts: Profil, Abmelden und Rechtliches liegen auf der Profil-Seite
+const profileButton = () => `<a class="pf-btn" href="#/profil" aria-label="${t('Profil')}">${PF_IC.person}</a>`;
+const pfIcon = (d) => `<svg class="pf-ic" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+const PF_IC = {
+  person: pfIcon('<circle cx="12" cy="8.5" r="4"/><path d="M4.5 20c1.2-4 4.2-6 7.5-6s6.3 2 7.5 6"/>'),
+  link: pfIcon('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'),
+  frame: pfIcon('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="10" r="2.6"/><path d="M7.5 17.5c1-2 2.6-3 4.5-3s3.5 1 4.5 3"/>'),
+  globe: pfIcon('<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.5 2.6 2.5 14.4 0 17M12 3.5c-2.5 2.6-2.5 14.4 0 17"/>'),
+  login: pfIcon('<path d="M10 4H5.5v16H10"/><path d="M14 8l4 4-4 4M18 12H9"/>'),
+  undo: pfIcon('<path d="M9 5 4 10l5 5"/><path d="M4 10h10a5.5 5.5 0 0 1 0 11h-2"/>'),
+  info: pfIcon('<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8v.2"/>'),
+  doc: pfIcon('<path d="M7 3.5h7l4 4v13H7z"/><path d="M14 3.5v4h4M9.5 12h6M9.5 15.5h6"/>'),
+  lock: pfIcon('<rect x="6" y="11" width="12" height="9" rx="1.5"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/>'),
+  scale: pfIcon('<path d="M12 4v16M7 20h10M5 8h14M5 8l-2.5 6h5zM19 8l-2.5 6h5z"/>'),
+  out: pfIcon('<path d="M14 4h4.5v16H14"/><path d="M10 8l-4 4 4 4M6 12h9"/>'),
+};
 
 // Eingeloggt und schon eine Card: dann gibt es überall den schnellen Weg zur eigenen Card
 const hasCard = () => !!state.user && !!state.account.cards?.length;
@@ -445,13 +457,9 @@ function splash() {
           <span class="cc-txt"><b>${t('Accounts verbinden')}</b><small>${t('Verbinde die Accounts, die auf deiner Card stehen sollen.')}</small><span class="cc-pill">${t('{n} von {m} verbunden', { n: linkedIds(state.user).length, m: PLATFORMS.length })}</span></span>
           <span class="cc-go" aria-hidden="true">→</span>${sparkles(2)}
         </a>
-        ${resetLink()}
-        <span class="app-version">Version ${APP_VERSION}</span>
-        <button class="link welcome-logout" type="button" data-logout>${t('Abmelden')}</button>
-        ${legalFoot()}
+        ${profileButton()}
       </section>`,
       mount(el) {
-        bindReset(el);
         const dia = createDiamond(el.querySelector('[data-diamond]'), {
           gem: open ? top : null, mystery: !open, rim: CLASSES[cls].color, glow: 0.4 + cls * 0.06, interactive: true,
         });
@@ -459,7 +467,6 @@ function splash() {
         const stopGemTilt = homeGemTilt(el, dia);
         const hom = HOMAGE[shownStage()];
         const t = setTimeout(() => { dia.pulse(); if (own) (hom ? themeJingle(hom) : classDrop(cls)); }, 900);
-        el.querySelector('[data-logout]').addEventListener('click', logout);
         return () => { clearTimeout(t); stopGemTilt(); dia.dispose(); fx.dispose(); };
       },
     };
@@ -478,11 +485,9 @@ function splash() {
       ${checkTeaser()}
       <div class="splash-space splash-space--mid"></div>
       <div class="splash-login">${button('Login', 'data-go="login"')}</div>
-      ${resetLink()}
-      <span class="app-version">Version ${APP_VERSION}</span>
-      ${legalFoot()}
+      ${profileButton()}
     </section>`,
-    mount(el) { bindReset(el); bindLang(el); },
+    mount(el) { bindLang(el); },
   };
 }
 
@@ -1216,6 +1221,57 @@ function terms() {
         ${row('impressum.html', t('Impressum'), t('Wer hinter {app} steht', { app: LOGO_TEXT }))}
       </nav>
     </section>`,
+  };
+}
+
+// Profil: Konto, Rechtliches und Abmelden – alles, was die Startseite nicht überladen soll.
+// Auch ohne Login erreichbar, damit Impressum und „Vertrag widerrufen“ für alle zu finden sind.
+function profilePage() {
+  const u = state.user;
+  const acc = state.account;
+  const own = !!u && hasCard();
+  const last = own ? acc.cards[acc.cards.length - 1] : null;
+  const name = u ? displayName(u) : '';
+  const initials = (name || state.session?.email || '?').replace(/^@/, '').slice(0, 2).toUpperCase();
+  const cls = classFor(acc.total || 0);
+  const row = (href, icon, title, sub = '', extra = '') => `<a class="prof-row${extra}" href="${href}"${href.endsWith('.html') ? ' target="_blank" rel="noopener"' : ''}>
+    <span class="prof-ic">${icon}</span><span class="prof-txt"><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</span><span class="prof-go" aria-hidden="true">→</span></a>`;
+  const other = LANGS.find((l) => l.id !== lang);
+  const langRow = `<button class="prof-row" type="button" data-lang="${other.id}"><span class="prof-ic">${PF_IC.globe}</span><span class="prof-txt"><b>${t('Sprache')}</b><small>${LANGS.find((l) => l.id === lang).name} · ${t('Wechseln zu {x}', { x: other.name })}</small></span><span class="prof-go" aria-hidden="true">→</span></button>`;
+  return {
+    html: `<section class="screen screen--profile">
+      ${backButton()}
+      <header class="prof-head">
+        <div class="prof-av">${u ? esc(initials) : PF_IC.person}</div>
+        ${u ? `<h1 class="prof-name">${esc(name || t('Dein Profil'))}</h1>
+          <p class="prof-sub">${t('Dein Fame-Wert')} <b>${money(acc.total || 0)}</b> · ${t('Klasse')} <b>${CLASSES[cls].name}</b></p>
+          ${state.session?.email ? `<p class="prof-sub">${esc(state.session.email)}</p>` : ''}`
+        : `<h1 class="prof-name">${t('Profil')}</h1><p class="prof-sub">${t('Melde dich an, um deine Cards zu sehen.')}</p>`}
+      </header>
+      <h2 class="prof-sec">${t('Konto')}</h2>
+      <nav class="prof-list">
+        ${u ? row('#/accounts', PF_IC.link, t('Accounts verbinden'), t('{n} von {m} verbunden', { n: linkedIds(u).length, m: PLATFORMS.length }))
+          + (own && last.revealed !== false ? `<button class="prof-row" type="button" data-avatar-open><span class="prof-ic">${PF_IC.frame}</span><span class="prof-txt"><b>${t('Profilbild mit Rahmen')}</b><small>${t('Für Instagram und TikTok')}</small></span><span class="prof-go" aria-hidden="true">→</span></button>` : '')
+          : row('#/login', PF_IC.login, t('Anmelden'), t('Oder neues Konto anlegen'))}
+        ${langRow}
+      </nav>
+      <h2 class="prof-sec">${t('Rechtliches')}</h2>
+      <nav class="prof-list">
+        ${row('#/widerruf', PF_IC.undo, t('Vertrag widerrufen'), t('Einen Kauf online widerrufen'), ' prof-row--hl')}
+        ${row('impressum.html', PF_IC.info, t('Impressum'))}
+        ${row('agb.html', PF_IC.doc, t('AGB'))}
+        ${row(PRIVACY_URL(), PF_IC.lock, t('Datenschutz'))}
+        ${row('#/terms', PF_IC.scale, t('Rechtliches'), t('Alle Texte auf einen Blick'))}
+      </nav>
+      ${u ? `<button class="prof-out" type="button" data-logout>${PF_IC.out}<span>${t('Abmelden')}</span></button>` : ''}
+      <footer class="prof-foot"><span>Version ${APP_VERSION}</span>${resetLink()}</footer>
+    </section>`,
+    mount(el) {
+      bindReset(el);
+      bindLang(el);
+      el.querySelector('[data-logout]')?.addEventListener('click', logout);
+      el.querySelector('[data-avatar-open]')?.addEventListener('click', () => { state.openAvatar = true; go('card'); });
+    },
   };
 }
 
@@ -2108,6 +2164,8 @@ function card() {
         if (!avReady) showAvatar(null);
       };
       el.querySelector('[data-avatar]').addEventListener('click', openAvatar);
+      // Aus dem Profil „Profilbild mit Rahmen“ gewählt: Fenster direkt öffnen (nur auf der sichtbaren Seite)
+      if (state.openAvatar) setTimeout(() => { if (!el.isConnected || !state.openAvatar) return; state.openAvatar = false; openAvatar(); }, 600);
       nudgeBtn.addEventListener('click', openAvatar);
       el.querySelector('[data-close-av]').addEventListener('click', () => {
         avSheet.classList.remove('is-open');
