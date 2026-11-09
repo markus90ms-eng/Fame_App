@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '109';
+export const APP_VERSION = '110';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -1594,8 +1594,11 @@ function donate() {
         });
         btn.classList.remove('is-busy');
         if (proof.error) {
-          toast(proof.error === 'login'
-            ? t('Bitte melde dich neu an und versuch es nochmal.')
+          const why = String(proof.error);
+          console.warn('Kauf-Nachweis fehlgeschlagen:', why);
+          toast(why === 'login' ? t('Bitte melde dich neu an und versuch es nochmal.')
+            : /schema cache|does not exist|PGRST205|42P01/i.test(why) ? t('Kauf gerade nicht möglich: Der Server ist noch nicht fertig eingerichtet.')
+            : /fetch|network|load failed/i.test(why) ? t('Keine Verbindung zum Server. Bitte versuch es gleich nochmal.')
             : t('Der Kauf konnte nicht gespeichert werden. Bitte versuch es gleich nochmal.'));
           return;
         }

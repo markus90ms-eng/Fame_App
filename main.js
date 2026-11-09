@@ -147,3 +147,8 @@
   window.addEventListener('resize', request);
   place();
 })();
+
+// Songs: immer nur ein Video gleichzeitig abspielen
+document.querySelectorAll('.songs video').forEach((v, _, all) => {
+  v.addEventListener('play', () => all.forEach((o) => { if (o !== v) o.pause(); }));
+});
