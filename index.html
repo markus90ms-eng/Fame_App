@@ -2,6 +2,21 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
+<script>
+/* Neue Besucher im Browser sehen zuerst die Landingpage (landing/). Die App startet direkt, wenn sie installiert ist,
+   schon benutzt wurde (Daten "fame.*" auf dem Gerät), ein Ziel im Link steht (#/… oder ?…, z. B. nach dem Login) oder
+   der Tab sie schon geöffnet hat. Die Landingpage verlinkt mit "../#/" in die App. */
+(function () {
+  try {
+    if (location.hash || location.search) return;
+    if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) return;
+    if (sessionStorage.getItem('fame.alive')) return;
+    for (var i = 0; i < localStorage.length; i++) { if (localStorage.key(i).indexOf('fame.') === 0) return; }
+    location.replace('landing/');
+  } catch (e) { /* Speicher gesperrt: App normal starten */ }
+})();
+</script>
+
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f8f8f6">
 <meta name="description" content="Fame – then the others. Zeig deinen echten Wert.">
