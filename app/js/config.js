@@ -32,4 +32,6 @@ export const SUPABASE = {
 // Rücksprung-Adresse nach der Anmeldung: die App selbst, ohne #-Teil.
 // Genau diese Adresse muss bei Snapchat und TikTok als Redirect URI eingetragen sein.
 // (ohne „index.html“, falls die App so geöffnet wurde – sonst passt die Adresse nicht zur eingetragenen)
-export const REDIRECT_URI = `${location.origin}${location.pathname.replace(/index\.html$/, '')}`;
+// Die App liegt unter /app/, Logins kehren aber zur Hauptadresse zurück (dort sind sie bei Supabase und den Plattformen eingetragen);
+// die Landingpage reicht sie samt Anmelde-Daten an /app/ weiter.
+export const REDIRECT_URI = `${location.origin}${location.pathname.replace(/(?:app\/)?(?:index\.html)?$/, '')}`;

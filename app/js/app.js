@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '108';
+export const APP_VERSION = '109';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -262,7 +262,9 @@ function render() {
   const root = document.documentElement;
   root.dataset.nav = dir;
   const vt = document.startViewTransition(() => renderScreen(true));
-  vt.finished.finally(() => { delete root.dataset.nav; });
+  // Wird ein Übergang durch einen schnellen nächsten Seitenwechsel abgelöst, lehnen die Versprechen ab: das ist normal
+  vt.ready.catch(() => {});
+  vt.finished.catch(() => {}).finally(() => { delete root.dataset.nav; });
 }
 
 function renderScreen(flying) {
