@@ -11,6 +11,19 @@
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
 
+  // Videos: erst beim Tippen laden und mit Ton abspielen; nur eins gleichzeitig, beim Wegscrollen Pause
+  const clips = Array.from(document.querySelectorAll('.clip'));
+  clips.forEach((clip) => {
+    const v = clip.querySelector('video'), btn = clip.querySelector('.clip-play');
+    btn.addEventListener('click', () => {
+      clips.forEach((o) => { const ov = o.querySelector('video'); if (o !== clip && !ov.paused) ov.pause(); });
+      v.controls = true;
+      v.play().then(() => clip.classList.add('is-playing')).catch(() => { v.controls = true; });
+    });
+    v.addEventListener('ended', () => clip.classList.remove('is-playing'));
+    new IntersectionObserver((entries) => { if (!entries[0].isIntersecting && !v.paused) v.pause(); }, { threshold: 0.2 }).observe(clip);
+  });
+
   // Ohne Motion-Bibliothek oder bei reduzierter Bewegung bleibt alles sofort sichtbar
   if (reduce || !M) { root.classList.remove('js'); return; }
 

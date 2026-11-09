@@ -314,3 +314,17 @@ h3 { font-size: 20px; letter-spacing: -.01em; margin-bottom: 8px; }
 .tape-track { display: inline-flex; padding: 6px 0; margin-left: -4%; }
 .tape-track span { font-weight: 800; font-size: clamp(18px, 4.6vw, 30px); letter-spacing: .14em; text-transform: uppercase; padding-right: .9em; }
 @media (min-width: 720px) { #ranking { padding-bottom: 180px; } .tape--a { top: 70%; } }
+
+/* Videobereich */
+.reel { display: flex; flex-wrap: wrap; gap: 28px; justify-content: center; margin-top: 44px; }
+.clip { margin: 0; width: min(100%, 300px); display: grid; gap: 14px; }
+.clip-frame { position: relative; aspect-ratio: 9 / 16; border-radius: 28px; overflow: hidden; background: #0b0b0c; box-shadow: 0 0 0 8px var(--ink), 0 30px 60px rgba(20, 20, 20, .3); }
+.clip video { width: 100%; height: 100%; object-fit: cover; display: block; background: #0b0b0c; }
+.clip-play { position: absolute; inset: 0; width: 100%; border: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .05), rgba(0, 0, 0, .45)); cursor: pointer; display: grid; place-items: center; transition: opacity .25s; }
+.clip-play svg { width: 72px; height: 72px; padding: 22px 18px 22px 26px; border-radius: 50%; background: var(--green); fill: var(--ink); box-shadow: 0 0 0 6px rgba(61, 250, 116, .3), 0 10px 30px rgba(0, 0, 0, .4); transition: transform .25s var(--ease); }
+.clip-play:hover svg { transform: scale(1.08); }
+.clip.is-playing .clip-play { opacity: 0; pointer-events: none; }
+.clip figcaption { font-weight: 700; font-size: 14px; text-align: center; }
+.clip figcaption span { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+#videos .wrap { text-align: center; }
+#videos .sub { margin-inline: auto; }
