@@ -133,24 +133,25 @@
   </section>
 
   <!-- VIDEOS -->
-  <section class="section" id="videos">
+  <section class="section section--compact" id="videos">
     <div class="wrap">
       <p class="eyebrow" data-reveal>Fame in Bewegung</p>
       <h2 data-reveal>Erst Fame, dann die <mark class="hl">anderen</mark></h2>
-      <p class="sub" data-reveal>Der Song zur App. Tippen zum Abspielen, mit Ton.</p>
-      <div class="reel">
-        <figure class="clip" data-reveal>
-          <div class="clip-frame">
-            <video id="clip-1" playsinline preload="none" poster="media/erst-fame-dann-die-anderen.jpg" aria-label="Songvideo: Erst Fame, dann die anderen">
-              <source src="media/erst-fame-dann-die-anderen.mp4" type="video/mp4">
-            </video>
-            <button class="clip-play" type="button" aria-label="Video abspielen" data-play="clip-1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></button>
-          </div>
-          <figcaption>Erst Fame, dann die anderen <span>Songvideo · 3:53</span></figcaption>
-        </figure>
+      <div class="reel" data-reveal>
+        <button class="thumb" type="button" data-video="media/erst-fame-dann-die-anderen.mp4" data-poster="media/erst-fame-dann-die-anderen.jpg" data-title="Erst Fame, dann die anderen" aria-haspopup="dialog">
+          <span class="thumb-img"><img src="media/erst-fame-dann-die-anderen.jpg" alt="" loading="lazy" width="720" height="1280"><i class="thumb-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></i></span>
+          <span class="thumb-cap"><b>Erst Fame, dann die anderen</b><small>Songvideo · 3:53 · mit Ton</small></span>
+        </button>
       </div>
     </div>
   </section>
+
+  <dialog class="vd" id="video-dialog" aria-label="Video">
+    <div class="vd-phone">
+      <video id="video-player" playsinline controls preload="none"></video>
+    </div>
+    <button class="vd-close" type="button" aria-label="Video schließen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </dialog>
 
   <!-- STUFEN -->
   <section class="section section--tint" id="stufen">

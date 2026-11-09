@@ -11,18 +11,31 @@
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
 
-  // Videos: erst beim Tippen laden und mit Ton abspielen; nur eins gleichzeitig, beim Wegscrollen Pause
-  const clips = Array.from(document.querySelectorAll('.clip'));
-  clips.forEach((clip) => {
-    const v = clip.querySelector('video'), btn = clip.querySelector('.clip-play');
-    btn.addEventListener('click', () => {
-      clips.forEach((o) => { const ov = o.querySelector('video'); if (o !== clip && !ov.paused) ov.pause(); });
-      v.controls = true;
-      v.play().then(() => clip.classList.add('is-playing')).catch(() => { v.controls = true; });
+  // Videos: kleine Vorschau, beim Tippen öffnet sich ein Fenster mit dem Handy und das Video startet mit Ton
+  const dlg = document.getElementById('video-dialog');
+  const player = document.getElementById('video-player');
+  const phone = dlg && dlg.querySelector('.vd-phone');
+  let opener = null;
+  const closeVideo = () => { if (dlg.open) dlg.close(); };
+  document.querySelectorAll('.thumb').forEach((t) => {
+    t.addEventListener('click', () => {
+      opener = t;
+      player.poster = t.dataset.poster || '';
+      player.src = t.dataset.video;
+      dlg.setAttribute('aria-label', t.dataset.title || 'Video');
+      dlg.showModal();
+      if (M && !reduce) M.animate(phone, { opacity: [0, 1], transform: ['translateY(60px) scale(0.82)', 'translateY(0px) scale(1)'] }, { type: 'spring', stiffness: 170, damping: 20 });
+      player.play().catch(() => { /* Steuerung bleibt sichtbar */ });
     });
-    v.addEventListener('ended', () => clip.classList.remove('is-playing'));
-    new IntersectionObserver((entries) => { if (!entries[0].isIntersecting && !v.paused) v.pause(); }, { threshold: 0.2 }).observe(clip);
   });
+  if (dlg) {
+    dlg.querySelector('.vd-close').addEventListener('click', closeVideo);
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) closeVideo(); });
+    dlg.addEventListener('close', () => {
+      player.pause(); player.removeAttribute('src'); player.load();
+      if (opener) opener.focus();
+    });
+  }
 
   // Ohne Motion-Bibliothek oder bei reduzierter Bewegung bleibt alles sofort sichtbar
   if (reduce || !M) { root.classList.remove('js'); return; }
