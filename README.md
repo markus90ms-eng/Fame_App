@@ -160,6 +160,10 @@ Fame_App/
 
 Stufen, Pin-Schwelle (`PIN_FROM`) und Währung lassen sich zentral in `js/data.js` anpassen.
 
-## Landingpage
+## Landingpage und App-Adresse
 
-Statische Landingpage unter `landing/` (erreichbar als `/landing/`, z. B. https://fame-app.de/landing/). Reines HTML/CSS/JS ohne Build; Animationen mit [Motion](https://motion.dev) (`landing/vendor/motion.js`, MIT-Lizenz), nur `transform` und `opacity`, mit Federn und `prefers-reduced-motion`. Die App und der Service Worker bleiben unberührt.
+- **https://fame-app.de/**: Landingpage (`index.html`, `style.css`, `main.js`, `vendor/motion.js`). Reines HTML/CSS/JS ohne Build, Animationen mit [Motion](https://motion.dev) (nur `transform`/`opacity`, Federn, `prefers-reduced-motion`).
+- **https://fame-app.de/app/**: die App (alles unter `app/`: `index.html`, `js/`, `css/`, `vendor/`, `assets/`, `sw.js`, `manifest.webmanifest`, Rechtstexte).
+- Login-Rückkehr, E-Mail-Links, OAuth-Rückkehr und alte App-Links (`/#/…`, `/?code=…`) landen auf der Hauptadresse und werden von der Landingpage samt Daten nach `/app/` weitergereicht. Deshalb bleiben die bei Supabase und den Plattformen eingetragenen Adressen (`https://fame-app.de/`) gültig (`REDIRECT_URI` in `app/js/config.js`).
+- Die installierte App (Standalone) wird ebenfalls nach `/app/` geleitet. Der Service Worker im Root (`sw.js`) ist nur ein Stub, der den alten Worker abmeldet.
+- Alte Adressen `/impressum.html`, `/agb.html`, `/widerruf.html`, `/datenschutz.html`, `/privacy.html` und `/landing/` leiten weiter.
