@@ -9,3 +9,5 @@
 .cta-fame .cc-txt b { font-size: 17px; }
 .lux .hub-acc span, .hom .hub-acc span { border-color: rgba(255, 255, 255, 0.45); background: rgba(255, 255, 255, 0.08); }
 .lux .hub-acc span.is-on, .hom .hub-acc span.is-on { background: var(--h-acc, #d4af5a); }
+/* „Coming soon“-Band in allen Themen sichtbar (Diamant-Holo setzte es sonst auf position: relative) */
+.screen .hub-tile.is-soon > .soon-band { position: absolute !important; z-index: 6 !important; opacity: 1 !important; }
