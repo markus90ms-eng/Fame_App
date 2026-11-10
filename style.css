@@ -324,3 +324,9 @@ h3 { font-size: 20px; letter-spacing: -.01em; margin-bottom: 8px; }
 
 #songs .wrap { text-align: center; }
 #songs .sub { margin-inline: auto; }
+
+/* Handy: Diamanten fliegen hinter dem Inhalt, damit sie keinen Text überdecken */
+@media (max-width: 719px) {
+  .fly { z-index: 0; }
+  main, .footer { position: relative; z-index: 1; }
+}
