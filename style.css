@@ -324,3 +324,15 @@ h3 { font-size: 20px; letter-spacing: -.01em; margin-bottom: 8px; }
 
 #songs .wrap { text-align: center; }
 #songs .sub { margin-inline: auto; }
+
+/* Fenster: der Slogan steht fest im Bildschirm, die Abschnitte davor und danach fahren darüber */
+.window { position: relative; z-index: 45; height: 85vh; height: 85svh; clip-path: inset(0); }
+.window-pane {
+  position: fixed; inset: 0; display: grid; place-items: center; padding: 24px;
+  background: radial-gradient(60% 50% at 50% 50%, rgba(61, 250, 116, .22), transparent 70%), #000;
+}
+.window-text {
+  font-family: var(--mono); font-weight: 800; text-transform: uppercase; text-align: center;
+  font-size: clamp(34px, 8.5vw, 104px); line-height: 1.05; letter-spacing: -.02em; color: #f2f2f2;
+  text-shadow: -3px 0 rgba(255, 60, 110, .75), 3px 0 rgba(61, 250, 116, .85);
+}
