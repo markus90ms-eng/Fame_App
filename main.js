@@ -7,7 +7,15 @@
 
   // Navigation bekommt eine Linie, sobald gescrollt wird
   const nav = document.getElementById('nav');
-  const onScroll = () => nav.classList.toggle('is-scrolled', window.scrollY > 8);
+  // Beim Runterscrollen fährt der Balken nach oben weg und verdeckt keinen Text; beim Hochscrollen kommt er zurück
+  let lastY = window.scrollY;
+  const onScroll = () => {
+    const y = window.scrollY;
+    nav.classList.toggle('is-scrolled', y > 8);
+    if (y > 80 && y > lastY + 4) nav.classList.add('is-hidden');
+    else if (y < lastY - 4 || y <= 80) nav.classList.remove('is-hidden');
+    lastY = y;
+  };
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
 
