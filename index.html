@@ -53,9 +53,9 @@
     </a>
     <nav class="nav-links" aria-label="Hauptnavigation">
       <a href="#so-gehts">So geht’s</a>
-      <a href="#videos">Videos</a>
       <a href="#stufen">Stufen</a>
       <a href="#echtheit">Echtheit</a>
+      <a href="#songs">Song</a>
     </nav>
     <a class="btn btn--small" href="app/">App öffnen</a>
   </div>
@@ -132,27 +132,6 @@
     </div>
   </section>
 
-  <!-- VIDEOS -->
-  <section class="section section--compact" id="videos">
-    <div class="wrap">
-      <p class="eyebrow" data-reveal>Fame in Bewegung</p>
-      <h2 data-reveal>Erst Fame, dann die <mark class="hl">anderen</mark></h2>
-      <div class="reel" data-reveal>
-        <button class="thumb" type="button" data-video="media/erst-fame-dann-die-anderen.mp4" data-poster="media/erst-fame-dann-die-anderen.jpg" data-title="Erst Fame, dann die anderen" aria-haspopup="dialog">
-          <span class="thumb-img"><img src="media/erst-fame-dann-die-anderen.jpg" alt="" loading="lazy" width="720" height="1280"><i class="thumb-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></svg></i></span>
-          <span class="thumb-cap"><b>Erst Fame, dann die anderen</b><small>Songvideo · 3:53 · mit Ton</small></span>
-        </button>
-      </div>
-    </div>
-  </section>
-
-  <dialog class="vd" id="video-dialog" aria-label="Video">
-    <div class="vd-phone">
-      <video id="video-player" playsinline controls preload="none"></video>
-    </div>
-    <button class="vd-close" type="button" aria-label="Video schließen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-  </dialog>
-
   <!-- STUFEN -->
   <section class="section section--tint" id="stufen">
     <div class="wrap">
@@ -200,6 +179,21 @@
           </div>
         </div>
         <p class="verify-hint">Beispielansicht</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SONGS -->
+  <section class="section section--tint" id="songs">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>Der Song</p>
+      <h2 data-reveal>Fam€ <mark class="hl">zum Hören.</mark></h2>
+      <p class="sub" data-reveal>Ton an und los.</p>
+      <div class="songs" data-reveal>
+        <figure class="song song--main">
+          <video controls playsinline preload="none" poster="assets/video/erst-fame-dann-die-anderen.jpg" src="assets/video/erst-fame-dann-die-anderen.mp4"></video>
+          <figcaption><strong>Erst Fame, dann die anderen</strong><span>3:53</span></figcaption>
+        </figure>
       </div>
     </div>
   </section>

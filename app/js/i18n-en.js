@@ -342,6 +342,8 @@ export const EN = {
   "Ich bin mindestens 18 Jahre alt.": "I am at least 18 years old.",
   "Bitte melde dich neu an und versuch es nochmal.": "Please sign in again and try once more.",
   "Der Kauf konnte nicht gespeichert werden. Bitte versuch es gleich nochmal.": "The purchase couldn’t be saved. Please try again in a moment.",
+  "Kauf gerade nicht möglich: Der Server ist noch nicht fertig eingerichtet.": "Purchases aren’t possible right now: the server isn’t fully set up yet.",
+  "Keine Verbindung zum Server. Bitte versuch es gleich nochmal.": "No connection to the server. Please try again in a moment.",
   "Ich verlange ausdrücklich, dass {app} meine Card sofort ausstellt. Mir ist bewusst, dass ich damit mein Widerrufsrecht verliere und kein Geld zurückbekomme.": "I expressly request that {app} issues my card immediately. I understand that I lose my right of withdrawal and won’t get my money back.",
   "Impressum": "Legal notice",
   "Jetzt kaufen": "Buy now",

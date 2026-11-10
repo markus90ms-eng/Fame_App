@@ -11,32 +11,6 @@
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
 
-  // Videos: kleine Vorschau, beim Tippen öffnet sich ein Fenster mit dem Handy und das Video startet mit Ton
-  const dlg = document.getElementById('video-dialog');
-  const player = document.getElementById('video-player');
-  const phone = dlg && dlg.querySelector('.vd-phone');
-  let opener = null;
-  const closeVideo = () => { if (dlg.open) dlg.close(); };
-  document.querySelectorAll('.thumb').forEach((t) => {
-    t.addEventListener('click', () => {
-      opener = t;
-      player.poster = t.dataset.poster || '';
-      player.src = t.dataset.video;
-      dlg.setAttribute('aria-label', t.dataset.title || 'Video');
-      dlg.showModal();
-      if (M && !reduce) M.animate(phone, { opacity: [0, 1], transform: ['translateY(60px) scale(0.82)', 'translateY(0px) scale(1)'] }, { type: 'spring', stiffness: 170, damping: 20 });
-      player.play().catch(() => { /* Steuerung bleibt sichtbar */ });
-    });
-  });
-  if (dlg) {
-    dlg.querySelector('.vd-close').addEventListener('click', closeVideo);
-    dlg.addEventListener('click', (e) => { if (e.target === dlg) closeVideo(); });
-    dlg.addEventListener('close', () => {
-      player.pause(); player.removeAttribute('src'); player.load();
-      if (opener) opener.focus();
-    });
-  }
-
   // Ohne Motion-Bibliothek oder bei reduzierter Bewegung bleibt alles sofort sichtbar
   if (reduce || !M) { root.classList.remove('js'); return; }
 
@@ -173,3 +147,8 @@
   window.addEventListener('resize', request);
   place();
 })();
+
+// Songs: immer nur ein Video gleichzeitig abspielen
+document.querySelectorAll('.songs video').forEach((v, _, all) => {
+  v.addEventListener('play', () => all.forEach((o) => { if (o !== v) o.pause(); }));
+});
