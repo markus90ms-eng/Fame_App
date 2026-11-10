@@ -326,7 +326,7 @@ h3 { font-size: 20px; letter-spacing: -.01em; margin-bottom: 8px; }
 #songs .sub { margin-inline: auto; }
 
 /* Fenster: der Slogan steht fest im Bildschirm, die Abschnitte davor und danach fahren darüber */
-.window-band { padding: clamp(48px, 9vw, 120px) 0 0; }
+.window-band { padding: 0 0 clamp(48px, 9vw, 120px); }
 .window { position: relative; z-index: 45; width: calc(100% - 2 * clamp(16px, 4.7vw, 96px)); margin-inline: auto; height: clamp(300px, 46vh, 540px); clip-path: inset(0); }
 .window-pane {
   position: fixed; inset: 0; display: grid; place-items: center; padding: 24px;
