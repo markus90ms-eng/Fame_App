@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '112';
+export const APP_VERSION = '113';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -325,7 +325,7 @@ const cleanHandle = (h) => (h || '').trim().replace(/^@+/, '').replace(/\s+/g, '
 // Preisspanne einer Stufe: vom Mindestbetrag bis kurz vor die nächste Stufe
 const priceRange = (g) => { const next = TIERS.find((x) => x.stage === g.stage + 1); return next ? `${money(g.min)} – ${money(next.min - 1)}` : t('ab {x}', { x: money(g.min) }); };
 const shortMoney = (n) => (isEn
-  ? (n >= 1_000_000 ? `$${(n / 1_000_000).toLocaleString('en-US', { maximumFractionDigits: 1 })}M` : n >= 10_000 ? `$${fmt(Math.round(n / 1000))}K` : money(n))
+  ? (n >= 1_000_000 ? `€${(n / 1_000_000).toLocaleString('en-US', { maximumFractionDigits: 1 })}M` : n >= 10_000 ? `€${fmt(Math.round(n / 1000))}K` : money(n))
   : n >= 1_000_000 ? `${(n / 1_000_000).toLocaleString('de-DE', { maximumFractionDigits: 1 })} Mio. €`
     : n >= 10_000 ? `${fmt(Math.round(n / 1000))} Tsd. €` : money(n));
 

@@ -3,7 +3,7 @@
 import { GEM_LIST } from './gems.js';
 import { t, isEn } from './i18n.js';
 
-export const CURRENCY = isEn ? '$' : '€';
+export const CURRENCY = '€'; // auch in der englischen App: Stripe rechnet in Euro ab
 export const MIN_AMOUNT = 1;
 export const MAX_AMOUNT = 1_000_000;
 
@@ -154,7 +154,7 @@ export function tierProgress(amount) {
 
 const nf = new Intl.NumberFormat(isEn ? 'en-US' : 'de-DE', { maximumFractionDigits: 0 });
 export const fmt = (n) => nf.format(n);
-export const money = (n) => (isEn ? `$${fmt(n)}` : `${fmt(n)} ${CURRENCY}`);
+export const money = (n) => (isEn ? `${CURRENCY}${fmt(n)}` : `${fmt(n)} ${CURRENCY}`);
 
 // Slider-Position (0..1) <-> Betrag, logarithmisch und auf "schöne" Schritte gerundet.
 export function amountFromPos(pos) {

@@ -1,4 +1,4 @@
-// Sprachen: Deutsch (Euro) und Englisch/USA (Dollar).
+// Sprachen: Deutsch und Englisch/USA. Preise in beiden Sprachen in Euro (Stripe rechnet in Euro ab).
 // Die Sprache richtet sich nach dem Handy; auf der Start- und Anmeldeseite lässt sie sich umschalten
 // (gespeichert unter fame.lang). Texte stehen im Code auf Deutsch – t('…') holt die englische
 // Fassung aus js/i18n-en.js. Fehlt eine Übersetzung, bleibt der deutsche Text stehen.
@@ -8,7 +8,7 @@ import { EN } from './i18n-en.js';
 const KEY = 'fame.lang';
 export const LANGS = [
   { id: 'de', name: 'Deutsch', flag: '🇩🇪', currency: 'Euro €' },
-  { id: 'en', name: 'English (US)', flag: '🇺🇸', currency: 'Dollar $' },
+  { id: 'en', name: 'English (US)', flag: '🇺🇸', currency: 'Euro €' },
 ];
 
 function detect() {

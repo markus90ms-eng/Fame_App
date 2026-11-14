@@ -145,7 +145,7 @@ export const EN = {
   "Deine Sammlung": "Your collection",
   "danach": "then",
   "Weniger": "Less",
-  "Betrag in Euro": "Amount in dollars",
+  "Betrag in Euro": "Amount in euros",
   "Mehr": "More",
   "Betrag antippen zum Eintippen – oder Regler ziehen": "Tap the amount to type it – or drag the slider",
   "Betrag einstellen": "Set amount",
