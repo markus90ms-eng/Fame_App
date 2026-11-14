@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '111';
+export const APP_VERSION = '112';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -1209,6 +1209,12 @@ function payPage() {
     mount(el) {
       let stop = false;
       const pending = store.get('pending');
+      // Seite ersetzen statt neu anhängen: so führt Zurück nicht wieder hierher oder zu Stripe
+      const toCard = () => {
+        const last = state.account.cards?.at(-1);
+        history.replaceState(null, '', last ? '#/card' : '#/');
+        render();
+      };
       const box = el.querySelector('[data-box]');
       const finish = (title, text) => {
         box.innerHTML = `<h1 class="headline">${title}</h1><p class="sub">${text}</p>
@@ -1223,11 +1229,11 @@ function payPage() {
           if (r.added?.length) {
             store.remove('pending');
             buzz([10, 40, 10]);
-            go('card');
+            toCard();
             return;
           }
           const mine = pending && r.orders?.find((o) => o.id === pending.order);
-          if (mine?.status === 'paid') { store.remove('pending'); go('card'); return; } // schon übernommen
+          if (mine?.status === 'paid' || (!pending && !r.error)) { store.remove('pending'); toCard(); return; } // schon übernommen / nichts offen
           if (mine && (mine.status === 'failed' || mine.status === 'expired')) {
             store.remove('pending');
             finish(t('Zahlung nicht abgeschlossen'), t('Es wurde nichts abgebucht und keine Card ausgestellt. Du kannst es jederzeit nochmal versuchen.'));
@@ -1736,8 +1742,8 @@ function card() {
       <div class="reveal-flash" data-flash aria-hidden="true"></div>
       <div class="reveal-streak" aria-hidden="true"></div>
       <canvas class="fx-canvas" data-fx aria-hidden="true"></canvas>
-      ${backButton('back--dark')}
-      <button class="home-btn" type="button" data-go="" aria-label="${t('Zur Startseite')}">${icons.home}</button>
+      ${hidden ? '' : backButton('back--dark')}
+      ${hidden ? '' : `<button class="home-btn" type="button" data-go="" aria-label="${t('Zur Startseite')}">${icons.home}</button>`}
       <button class="sound-btn${isMuted() ? ' is-muted' : ''}" type="button" data-sound aria-label="${t('Ton an/aus')}" aria-pressed="${!isMuted()}">${icons.sound}</button>
       <div class="card-wrap" data-tiltwrap>
         <div class="flip" data-flip role="button" tabindex="0" aria-label="${hidden ? t('Karte aufdecken') : tier.name}">
@@ -1951,6 +1957,10 @@ function card() {
           c.revealed = true;
           c.stage = tier.stage;
           saveAccount();
+          // Zurück und Home erst nach dem Aufdecken (vorher würde der Ablauf mittendrin abbrechen)
+          if (!el.querySelector('[data-back]')) {
+            el.querySelector('.sound-btn')?.insertAdjacentHTML('beforebegin', `${backButton('back--dark')}<button class="home-btn" type="button" data-go="" aria-label="${t('Zur Startseite')}">${icons.home}</button>`);
+          }
           // Look sofort auf die neue Stufe umstellen: Hommage-Thema erst jetzt (Stein ist aufgedeckt),
           // und nach einer Hommage-Stufe zurück zum normalen Look der Klasse
           luxify(el, 'card');
