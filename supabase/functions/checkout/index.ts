@@ -4,7 +4,8 @@
 //   → Stripe-Checkout-Sitzung erstellen → App leitet zur Stripe-Bezahlseite weiter.
 // Die Card wird hier NICHT ausgestellt. Das macht erst "stripe-webhook", wenn Stripe die Zahlung bestätigt.
 //
-// Zahlarten: Karte (inkl. Apple Pay und Google Pay) und Klarna. Keine SEPA-Lastschrift.
+// Zahlarten: kommen aus den Stripe-Einstellungen (Dashboard → Zahlungsmethoden). Gewollt sind Karte
+// (inkl. Apple Pay und Google Pay) und Klarna; SEPA-Lastschrift ist dort ausgeschaltet.
 //
 // Secrets (Edge Functions → Secrets):
 //   STRIPE_SECRET_KEY   sk_test_… (Testmodus) bzw. später sk_live_…
@@ -85,8 +86,9 @@ Deno.serve(async (req) => {
   // 3. Stripe-Checkout-Sitzung
   const p = new URLSearchParams({
     mode: 'payment',
-    'payment_method_types[0]': 'card', // Karte – Apple Pay und Google Pay laufen darüber
-    'payment_method_types[1]': 'klarna',
+    // Zahlarten legt Stripe selbst fest (Dashboard → Einstellungen → Zahlungsmethoden). Seit API-Version
+    // 2026-10-28 ist payment_method_types hier nicht mehr erlaubt. Dort nur Karten, Apple Pay, Google Pay
+    // und Klarna eingeschaltet lassen – SEPA-Lastschrift aus.
     'line_items[0][quantity]': '1',
     'line_items[0][price_data][currency]': 'eur',
     'line_items[0][price_data][unit_amount]': String(amount * 100),

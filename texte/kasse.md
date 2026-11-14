@@ -64,7 +64,7 @@ Unter **Einstellungen → Zahlungen → Zahlungsmethoden** diese Zahlarten einsc
 - **Google Pay**
 - **Klarna**
 
-Die App fragt nur Karte und Klarna an. Apple Pay und Google Pay erscheinen automatisch auf passenden Geräten. SEPA erscheint nie, auch wenn es eingeschaltet ist.
+**Alle anderen Zahlarten ausschalten, vor allem SEPA-Lastschrift.** Seit der Stripe-API-Version 2026-10-28 bestimmt allein diese Einstellung, was auf der Bezahlseite erscheint. Die App kann die Zahlarten nicht mehr selbst vorgeben. Apple Pay und Google Pay erscheinen automatisch auf passenden Geräten.
 
 ## 6. Testen
 
