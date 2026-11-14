@@ -1,0 +1,11 @@
+/* Kasse: Seite „Zahlung wird bestätigt“ nach der Rückkehr von Stripe */
+.screen--pay { display: grid; place-items: center; min-height: 100%; padding: 32px 24px; text-align: center; }
+.pay-box { max-width: 26em; display: grid; gap: 14px; justify-items: center; }
+.pay-box .screen-foot { margin-top: 12px; }
+.pay-spin {
+  width: 56px; height: 56px; border-radius: 50%; margin-bottom: 8px;
+  border: 4px solid rgba(255, 255, 255, .14); border-top-color: #3dfa74;
+  animation: pay-spin .9s linear infinite;
+}
+@keyframes pay-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .pay-spin { animation-duration: 3s; } }

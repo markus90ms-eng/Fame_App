@@ -24,6 +24,13 @@ export const SOCIAL = {
 // Login und Konten (Supabase). Beide Werte sind öffentlich und dürfen in der App stehen.
 // Geheime Schlüssel (service_role / secret, Datenbank-Passwort) gehören NIE hierher.
 // Einrichtung: texte/supabase.md
+// Stripe (Testmodus). Nur der veröffentlichbare Schlüssel steht hier – der geheime Schlüssel liegt
+// ausschließlich in Supabase (Edge Functions → Secrets: STRIPE_SECRET_KEY). Die Bezahlseite selbst
+// erstellt der Server (Edge Function "checkout").
+export const STRIPE = {
+  publishableKey: 'pk_test_51UZBMXLijl2uuvUqPsvkV0CW1VBpKZjaoua8PNC1KP3QTjFzp1OSkMkQPH6kNYcImVbVx0SRWhF4nZCwjbkQIRhE00t9ZjcWPh',
+};
+
 export const SUPABASE = {
   url: 'https://yfdovwpzbenrpzaxuwpe.supabase.co',
   key: 'sb_publishable_GbkjjZxEvC2E3zUiOerISA_lmIg6Ok5',

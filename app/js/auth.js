@@ -174,20 +174,35 @@ export const saveProfile = (id, data) => wrap(async () => {
   return error ? { error: error.message || 'db' } : { ok: true };
 });
 
-// ---- Kauf-Nachweis ------------------------------------------------------------------------------
+// ---- Kasse (Stripe) ---------------------------------------------------------------------------
 
-// Zustimmungen zum Kauf speichern (Tabelle "purchase_evidence", siehe server/supabase.sql).
-// Die Datenbank nimmt den Eintrag nur an, wenn alle Pflicht-Häkchen gesetzt sind und der Kauf
-// zum angemeldeten Konto gehört. Zeitpunkt (created_at) setzt der Server.
-export const recordPurchase = (row) => wrap(async () => {
+// Bezahlung starten: Die Edge Function "checkout" legt Bestellung und Kauf-Nachweis an und gibt die
+// Adresse der Stripe-Bezahlseite zurück. Die Card stellt erst der Server aus, wenn Stripe die Zahlung
+// bestätigt (Edge Function "stripe-webhook", Tabelle "orders").
+export const startCheckout = (body) => wrap(async () => {
   if (!authReady()) return { error: 'config' };
   const c = await sb();
   const { data: { session } } = await c.auth.getSession();
   if (!session) return { error: 'login' };
-  const { data, error } = await c.from('purchase_evidence')
-    .insert({ ...row, user_id: session.user.id, user_agent: navigator.userAgent.slice(0, 300) })
-    .select('created_at').single();
-  return error ? { error: error.message || 'db' } : { ok: true, at: data.created_at };
+  const { data, error } = await c.functions.invoke('checkout', { body });
+  if (error) {
+    let code = error.message || 'server';
+    try { code = (await error.context?.json())?.error || code; } catch { /* keine JSON-Antwort */ }
+    return { error: code };
+  }
+  return data?.url ? { url: data.url, order: data.order_id } : { error: data?.error || 'server' };
+});
+
+// Bestellungen des angemeldeten Nutzers (nur lesen). Bezahlte tragen Seriennummer und Zeitpunkt.
+export const myOrders = () => wrap(async () => {
+  if (!authReady()) return { error: 'config' };
+  const c = await sb();
+  const { data: { session } } = await c.auth.getSession();
+  if (!session) return { error: 'login' };
+  const { data, error } = await c.from('orders')
+    .select('id,amount,status,serial,paid_at,created_at')
+    .order('created_at', { ascending: true });
+  return error ? { error: error.message || 'db' } : { orders: data || [] };
 });
 
 // ---- Online-Widerruf ----------------------------------------------------------------------------

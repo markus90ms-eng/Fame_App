@@ -83,3 +83,35 @@ create policy "Kauf-Nachweis lesen" on public.purchase_evidence
   for select to authenticated using (user_id = (select auth.uid()));
 
 grant select, insert on public.purchase_evidence to authenticated;
+
+
+-- Kasse (Stripe Checkout): eine Zeile je Bestellung. Angelegt und geändert wird sie nur von den
+-- Edge Functions "checkout" und "stripe-webhook" (Service-Rolle). Die Card ist erst ausgestellt,
+-- wenn Stripe die Zahlung bestätigt hat: dann setzt der Webhook status = 'paid' und vergibt die
+-- Seriennummer. Nutzer dürfen ihre eigenen Bestellungen nur lesen.
+create table if not exists public.orders (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  amount numeric(12, 2) not null check (amount >= 1 and amount <= 999999),
+  currency text not null default 'eur' check (currency = 'eur'),
+  status text not null default 'open' check (status in ('open', 'paid', 'failed', 'expired')),
+  stripe_session text unique,
+  payment_intent text,
+  serial text unique check (serial is null or serial ~ '^FM-[0-9A-Z]{4}-[0-9A-Z]{4}-[0-9A-Z]$'),
+  paid_at timestamptz
+);
+
+create index if not exists orders_user_idx on public.orders (user_id, created_at desc);
+
+alter table public.orders enable row level security;
+
+drop policy if exists "Bestellung lesen" on public.orders;
+create policy "Bestellung lesen" on public.orders
+  for select to authenticated using (user_id = (select auth.uid()));
+
+revoke insert, update, delete on public.orders from anon, authenticated;
+grant select on public.orders to authenticated;
+
+-- Kauf-Nachweis gehört zur Bestellung (wird von der Funktion "checkout" angelegt)
+alter table public.purchase_evidence add column if not exists order_id uuid references public.orders (id) on delete set null;

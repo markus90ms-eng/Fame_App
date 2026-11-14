@@ -2,7 +2,7 @@
 
 import {
   TIERS, GEM_COUNT, RARITIES, CLASSES, classFor, PIN_FROM, COUNTRIES, countryById, tierFor, nextTier, fmt, money,
-  amountFromPos, posFromAmount, standings, groupTotals, makeSerial, lookupSerial, normalizeSerial, sampleSerial,
+  amountFromPos, posFromAmount, standings, groupTotals, lookupSerial, normalizeSerial, sampleSerial,
   MAX_AMOUNT, MIN_AMOUNT, CURRENCY, PLATFORMS, normalizeUser, mainAccount, cardAccounts, HOME_COUNTRY, regionName,
 } from './data.js';
 import { t, isEn, lang, LANGS, setLang } from './i18n.js';
@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '110';
+export const APP_VERSION = '111';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -110,6 +110,8 @@ const routes = {
   terms: terms,
   profil: profilePage,
   widerruf: withdrawPage,
+  'pay/ok': payPage,
+  'pay/cancel': payCancel,
   ranking: () => rankingPage(state.user?.ranking?.region || state.user?.region ? 'region' : 'country'),
   'ranking/region': () => rankingPage('region'),
   'ranking/country': () => rankingPage('country'),
@@ -1159,6 +1161,97 @@ function afterAuth() {
 // go() ändert nichts, wenn man schon auf der Seite ist – dann neu zeichnen
 const goOrRender = (path) => { if (location.hash.replace(/^#\/?/, '') === path) render(); else go(path); };
 
+// ---- Kasse: bezahlte Bestellungen vom Server als Cards übernehmen ---------------------------------
+
+// Jede bezahlte Bestellung (Tabelle "orders", vom Stripe-Webhook bestätigt) wird genau einmal zur Card.
+// Läuft nach dem Zurückkommen von Stripe und bei jedem App-Start, damit keine Card verloren geht.
+let reconciling = null;
+function reconcileOrders() {
+  reconciling ||= (async () => {
+    const r = await auth.myOrders();
+    if (r.error) return { error: r.error, added: [], orders: [] };
+    const acc = state.account;
+    acc.cards ||= [];
+    const have = new Set(acc.cards.map((c) => c.serial));
+    const paid = r.orders.filter((o) => o.status === 'paid' && o.serial && !have.has(o.serial))
+      .sort((a, b) => Date.parse(a.paid_at) - Date.parse(b.paid_at));
+    const added = [];
+    for (const o of paid) {
+      const amount = Number(o.amount);
+      const at = Date.parse(o.paid_at) || Date.now();
+      acc.total += amount;
+      acc.deposits.push({ amount, at, order: o.id });
+      const tier = tierFor(acc.total);
+      const card = {
+        tier: tier.id, stage: tier.stage, total: acc.total, at, revealed: false, serial: o.serial, order: o.id,
+        // Zustimmungen liegen als Kauf-Nachweis auf dem Server (purchase_evidence, zur Bestellung)
+        consent: { agb: at, adult: at, waiver: at, version: LEGAL_VERSION, server: o.paid_at },
+      };
+      acc.cards.push(card);
+      added.push(card);
+    }
+    if (added.length) saveAccount();
+    return { added, orders: r.orders };
+  })().finally(() => { reconciling = null; });
+  return reconciling;
+}
+
+// Zurück von Stripe: warten, bis der Server die Zahlung bestätigt hat, dann die neue Card zeigen.
+function payPage() {
+  return {
+    html: `<section class="screen screen--dark screen--pay">
+      <div class="pay-box" data-box>
+        <div class="pay-spin" aria-hidden="true"></div>
+        <h1 class="headline">${t('Zahlung wird bestätigt …')}</h1>
+        <p class="sub">${t('Einen Moment. Sobald die Zahlung bestätigt ist, wird deine Card ausgestellt.')}</p>
+      </div>
+    </section>`,
+    mount(el) {
+      let stop = false;
+      const pending = store.get('pending');
+      const box = el.querySelector('[data-box]');
+      const finish = (title, text) => {
+        box.innerHTML = `<h1 class="headline">${title}</h1><p class="sub">${text}</p>
+          <div class="screen-foot"><button class="btn" type="button" data-go="">${t('Zur Startseite')}</button></div>`;
+      };
+      (async () => {
+        if (!state.user) { state.after = 'pay/ok'; go('login'); return; }
+        const until = Date.now() + 90_000;
+        while (!stop) {
+          const r = await reconcileOrders();
+          if (stop) return;
+          if (r.added?.length) {
+            store.remove('pending');
+            buzz([10, 40, 10]);
+            go('card');
+            return;
+          }
+          const mine = pending && r.orders?.find((o) => o.id === pending.order);
+          if (mine?.status === 'paid') { store.remove('pending'); go('card'); return; } // schon übernommen
+          if (mine && (mine.status === 'failed' || mine.status === 'expired')) {
+            store.remove('pending');
+            finish(t('Zahlung nicht abgeschlossen'), t('Es wurde nichts abgebucht und keine Card ausgestellt. Du kannst es jederzeit nochmal versuchen.'));
+            return;
+          }
+          if (Date.now() > until) {
+            finish(t('Bestätigung dauert noch'), t('Die Zahlung ist noch nicht bestätigt. Deine Card erscheint automatisch, sobald Stripe sie bestätigt hat – auch wenn du die App schließt.'));
+            return;
+          }
+          await new Promise((res) => setTimeout(res, 2500));
+        }
+      })();
+      return () => { stop = true; };
+    },
+  };
+}
+
+// Bezahlung bei Stripe abgebrochen: zurück zum Einzahlen
+function payCancel() {
+  store.remove('pending');
+  setTimeout(() => { toast(t('Zahlung abgebrochen. Es wurde nichts abgebucht.')); history.replaceState(null, '', '#/donate'); render(); }, 0);
+  return { html: '<section class="screen screen--dark"></section>' };
+}
+
 // ---- Sitzung -----------------------------------------------------------------------------------
 
 // Profil nach dem Anmelden laden. Neu angelegt wird es aus der Registrierung (E-Mail),
@@ -1581,37 +1674,25 @@ function donate() {
           return;
         }
         try { await window.DeviceOrientationEvent?.requestPermission?.(); } catch { /* abgelehnt */ }
-        // Prototyp: die Zahlung wird simuliert und direkt dem Konto gutgeschrieben.
-        const at = Date.now();
-        const total = acc.total + amount;
-        const serial = makeSerial(`${state.session?.id || state.user.name}|${state.user.insta}|${total}|${at}`);
-        // Kauf-Nachweis zuerst auf dem Server speichern. Der Server lehnt den Kauf ab, wenn ein
-        // Pflicht-Häkchen fehlt – dann wird auch keine Card ausgestellt.
+        // Bezahlen bei Stripe. Der Server legt Bestellung und Kauf-Nachweis an (lehnt ab, wenn ein
+        // Pflicht-Häkchen fehlt). Die Card gibt es erst, wenn Stripe die Zahlung bestätigt hat.
         btn.classList.add('is-busy');
-        const proof = await auth.recordPurchase({
-          serial, amount, legal_version: LEGAL_VERSION, client_at: new Date(at).toISOString(),
+        const r = await auth.startCheckout({
+          amount, legal_version: LEGAL_VERSION, client_at: new Date().toISOString(), lang: isEn ? 'en' : 'de',
+          return_url: location.origin + location.pathname,
           agb_accepted: accept.checked, adult_confirmed: adult.checked, waiver_accepted: waiver.checked,
         });
-        btn.classList.remove('is-busy');
-        if (proof.error) {
-          const why = String(proof.error);
-          console.warn('Kauf-Nachweis fehlgeschlagen:', why);
-          toast(why === 'login' ? t('Bitte melde dich neu an und versuch es nochmal.')
-            : /schema cache|does not exist|PGRST205|42P01/i.test(why) ? t('Kauf gerade nicht möglich: Der Server ist noch nicht fertig eingerichtet.')
-            : /fetch|network|load failed/i.test(why) ? t('Keine Verbindung zum Server. Bitte versuch es gleich nochmal.')
-            : t('Der Kauf konnte nicht gespeichert werden. Bitte versuch es gleich nochmal.'));
+        if (r.error) {
+          btn.classList.remove('is-busy');
+          console.warn('Kasse:', r.error);
+          toast(r.error === 'login' ? t('Bitte melde dich neu an und versuch es nochmal.')
+            : /fetch|network|load failed|FunctionsFetchError/i.test(r.error) ? t('Keine Verbindung zum Server. Bitte versuch es gleich nochmal.')
+            : /config|not found|404|FunctionsHttpError|schema cache|PGRST205|42P01/i.test(r.error) ? t('Kauf gerade nicht möglich: Der Server ist noch nicht fertig eingerichtet.')
+            : t('Die Bezahlung konnte nicht gestartet werden. Bitte versuch es gleich nochmal.'));
           return;
         }
-        acc.total = total;
-        acc.deposits.push({ amount, at });
-        const tier = tierFor(acc.total);
-        acc.cards.push({
-          tier: tier.id, stage: tier.stage, total: acc.total, at, revealed: false, serial,
-          // Nachweis: AGB, Alter und sofortige Ausstellung (Erlöschen des Widerrufsrechts); Zeitpunkt laut Server
-          consent: { agb: at, adult: at, waiver: at, version: LEGAL_VERSION, server: proof.at },
-        });
-        saveAccount();
-        go('card');
+        store.set('pending', { order: r.order, amount, at: Date.now() });
+        location.assign(r.url); // weiter zur Stripe-Bezahlseite
       });
 
       update(amount);
@@ -2457,6 +2538,11 @@ async function boot() {
     toast(urlReturn.type === 'signup' ? t('E-Mail bestätigt ✓ Willkommen bei Fam€!') : t('Angemeldet ✓'));
     afterAuth();
     return;
+  }
+  // Bezahlte Bestellungen, die noch keine Card sind (z. B. App während der Bezahlung geschlossen)
+  if (path !== 'pay/ok') {
+    const rec = await reconcileOrders();
+    if (rec.added?.length) { store.remove('pending'); toast(t('Zahlung bestätigt ✓ Deine neue Card ist da.')); if (path !== 'card') { go('card'); return; } }
   }
   // Neuer Stand vom Server: neu zeichnen, außer man tippt gerade in einem Formular
   if (JSON.stringify([state.user, state.account]) !== before && !['login', 'register', 'accounts', 'finish', 'reset'].includes(path)) render();
