@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '113';
+export const APP_VERSION = '114';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -1166,6 +1166,7 @@ const goOrRender = (path) => { if (location.hash.replace(/^#\/?/, '') === path) 
 // Jede bezahlte Bestellung (Tabelle "orders", vom Stripe-Webhook bestätigt) wird genau einmal zur Card.
 // Läuft nach dem Zurückkommen von Stripe und bei jedem App-Start, damit keine Card verloren geht.
 let reconciling = null;
+const FRESH_MS = 15 * 60 * 1000;
 function reconcileOrders() {
   reconciling ||= (async () => {
     const r = await auth.myOrders();
@@ -1176,22 +1177,26 @@ function reconcileOrders() {
     const paid = r.orders.filter((o) => o.status === 'paid' && o.serial && !have.has(o.serial))
       .sort((a, b) => Date.parse(a.paid_at) - Date.parse(b.paid_at));
     const added = [];
+    const news = []; // davon gerade eben bezahlt
+    const pending = store.get('pending');
     for (const o of paid) {
       const amount = Number(o.amount);
       const at = Date.parse(o.paid_at) || Date.now();
+      const fresh = pending?.order === o.id || Date.now() - at < FRESH_MS;
       acc.total += amount;
       acc.deposits.push({ amount, at, order: o.id });
       const tier = tierFor(acc.total);
       const card = {
-        tier: tier.id, stage: tier.stage, total: acc.total, at, revealed: false, serial: o.serial, order: o.id,
+        tier: tier.id, stage: tier.stage, total: acc.total, at, revealed: !fresh, serial: o.serial, order: o.id,
         // Zustimmungen liegen als Kauf-Nachweis auf dem Server (purchase_evidence, zur Bestellung)
         consent: { agb: at, adult: at, waiver: at, version: LEGAL_VERSION, server: o.paid_at },
       };
       acc.cards.push(card);
       added.push(card);
+      if (fresh) news.push(card);
     }
     if (added.length) saveAccount();
-    return { added, orders: r.orders };
+    return { added, news, orders: r.orders };
   })().finally(() => { reconciling = null; });
   return reconciling;
 }
@@ -1226,7 +1231,7 @@ function payPage() {
         while (!stop) {
           const r = await reconcileOrders();
           if (stop) return;
-          if (r.added?.length) {
+          if (r.news?.length) {
             store.remove('pending');
             buzz([10, 40, 10]);
             toCard();
@@ -2552,7 +2557,7 @@ async function boot() {
   // Bezahlte Bestellungen, die noch keine Card sind (z. B. App während der Bezahlung geschlossen)
   if (path !== 'pay/ok') {
     const rec = await reconcileOrders();
-    if (rec.added?.length) { store.remove('pending'); toast(t('Zahlung bestätigt ✓ Deine neue Card ist da.')); if (path !== 'card') { go('card'); return; } }
+    if (rec.news?.length) { store.remove('pending'); toast(t('Zahlung bestätigt ✓ Deine neue Card ist da.')); if (path !== 'card') { go('card'); return; } }
   }
   // Neuer Stand vom Server: neu zeichnen, außer man tippt gerade in einem Formular
   if (JSON.stringify([state.user, state.account]) !== before && !['login', 'register', 'accounts', 'finish', 'reset'].includes(path)) render();
