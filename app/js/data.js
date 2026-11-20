@@ -318,6 +318,7 @@ export function lookupSerial(input, { account = null, user = null } = {}) {
       tier: TIERS.find((t) => t.id === mine.tier) || tierFor(mine.total),
       owner: { handle: user?.insta || user?.name || 'du', verified: !!user?.verified?.[user?.main], country: user?.country || 'DE', region: user?.region || '' },
       revealed: mine.revealed !== false,
+      locked: !!mine.locked,
     };
   }
   const r = leaderboard().find((e) => e.serial === serial);

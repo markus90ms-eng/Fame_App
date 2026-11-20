@@ -200,19 +200,30 @@ export const myOrders = () => wrap(async () => {
   const { data: { session } } = await c.auth.getSession();
   if (!session) return { error: 'login' };
   const { data, error } = await c.from('orders')
-    .select('id,amount,status,serial,paid_at,created_at')
+    .select('id,amount,status,serial,paid_at,created_at,locked,lock_reason')
     .order('created_at', { ascending: true });
   return error ? { error: error.message || 'db' } : { orders: data || [] };
+});
+
+// App meldet dem Server: Card angekommen ('delivered') bzw. aufgedeckt ('revealed') – Beweis für Streitfälle.
+// Den Zeitpunkt setzt der Server (Funktion mark_card_event, siehe server/supabase.sql). Fehler sind unkritisch.
+export const markCardEvent = (order, event) => wrap(async () => {
+  if (!authReady() || !order) return { error: 'skip' };
+  const c = await sb();
+  const { error } = await c.rpc('mark_card_event', { p_order: order, p_event: event });
+  return error ? { error: error.message || 'db' } : { ok: true };
 });
 
 // ---- Online-Widerruf ----------------------------------------------------------------------------
 
 // Widerrufserklärung speichern (Tabelle "withdrawals", siehe server/supabase.sql). Geht auch ohne Login.
+// Über die Edge Function "withdraw": speichert die Erklärung und schickt sofort eine Eingangsbestätigung per E-Mail.
 export const sendWithdrawal = (row) => wrap(async () => {
   if (!authReady()) return { error: 'config' };
   const c = await sb();
-  const { error } = await c.from('withdrawals').insert(row);
-  return error ? { error: error.message || 'db' } : { ok: true };
+  const { data, error } = await c.functions.invoke('withdraw', { body: row });
+  if (error) return { error: error.message || 'server' };
+  return data?.ok ? { ok: true, at: data.at, mail: data.mail, expired: data.expired } : { error: data?.error || 'server' };
 });
 
 // Kurzinfo zur Anmeldung: { id, email, provider: 'email' | 'apple' | 'google' }

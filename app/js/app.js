@@ -84,7 +84,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '114';
+export const APP_VERSION = '115';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -547,7 +547,7 @@ function checkPage(initial) {
         const c = countryById(res.owner.country);
         classDrop(cls);
         out.style.setProperty('--c', CLASSES[cls].color);
-        out.innerHTML = `<div class="check-badge">✓</div><h2>${t('Echt – verifizierte Fame-Card')}</h2>
+        out.innerHTML = `<div class="check-badge">${res.locked ? '!' : '✓'}</div><h2>${res.locked ? t('Gesperrt – diese Card zählt nicht') : t('Echt – verifizierte Fame-Card')}</h2>
           <dl class="check-facts">
             <div><dt>${t('Gehört zu')}</dt><dd>@${esc(res.owner.handle)}${res.owner.verified ? ` <i class="verified" title="${t('Account bestätigt')}">✓</i>` : ''}${res.own ? ` <small>${t('(dein Account)')}</small>` : ''}</dd></div>
             <div><dt>${t('Edelstein')}</dt><dd class="gemline"><span><small>${t('Stufe {n}', { n: g.stage })}</small> ${res.revealed ? esc(g.name) : t('noch verdeckt')}</span><span class="gemline-price">${priceRange(g)}</span></dd></div>
@@ -1195,7 +1195,20 @@ function reconcileOrders() {
       added.push(card);
       if (fresh) news.push(card);
     }
-    if (added.length) saveAccount();
+    // Ausgeliefert: dem Server melden (Beweis für Streitfälle; zählt nur beim ersten Mal)
+    added.forEach((c) => auth.markCardEvent(c.order, 'delivered'));
+    // Sperren vom Server übernehmen (Rückbuchung/Erstattung): gesperrte Cards zählen nicht zum Fame-Wert
+    let changed = added.length > 0;
+    const lockedIds = new Set(r.orders.filter((o) => o.locked).map((o) => o.id));
+    for (const o of r.orders) {
+      const card = o.serial && acc.cards.find((c) => c.serial === o.serial);
+      if (card && !!card.locked !== !!o.locked) { card.locked = !!o.locked; card.lockReason = o.lock_reason || null; changed = true; }
+    }
+    for (const d of acc.deposits) {
+      const off = !!d.order && lockedIds.has(d.order);
+      if (!!d.excluded !== off) { acc.total += off ? -d.amount : d.amount; d.excluded = off; changed = true; }
+    }
+    if (changed) saveAccount();
     return { added, news, orders: r.orders };
   })().finally(() => { reconciling = null; });
   return reconciling;
@@ -1422,7 +1435,7 @@ function withdrawPage() {
         if (!d.name || !d.contract || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) { err.textContent = t('Bitte gib Name, Kauf und eine gültige E-Mail-Adresse an.'); return; }
         err.textContent = '';
         btn.disabled = true;
-        const r = await auth.sendWithdrawal({ name: d.name, contract: d.contract, email: d.email, note: d.note || null, user_id: state.session?.id || null });
+        const r = await auth.sendWithdrawal({ name: d.name, contract: d.contract, email: d.email, note: d.note || null, lang: isEn ? 'en' : 'de' });
         btn.disabled = false;
         if (r.error) { err.innerHTML = t('Das hat nicht geklappt. Bitte versuch es nochmal oder widerrufe per E-Mail (Adresse in der {link}).', { link: legalLink('widerruf.html', t('Widerrufsbelehrung')) }); return; }
         const at = new Date();
@@ -1697,6 +1710,7 @@ function donate() {
           btn.classList.remove('is-busy');
           console.warn('Kasse:', r.error);
           toast(r.error === 'login' ? t('Bitte melde dich neu an und versuch es nochmal.')
+            : r.error === 'blocked' ? t('Dein Konto ist für Käufe gesperrt. Bitte schreib uns: Fame.app.2026@gmail.com')
             : /fetch|network|load failed|FunctionsFetchError/i.test(r.error) ? t('Keine Verbindung zum Server. Bitte versuch es gleich nochmal.')
             : /config|not found|404|FunctionsHttpError|schema cache|PGRST205|42P01/i.test(r.error) ? t('Kauf gerade nicht möglich: Der Server ist noch nicht fertig eingerichtet.')
             : t('Die Bezahlung konnte nicht gestartet werden. Bitte versuch es gleich nochmal.'));
@@ -1734,7 +1748,7 @@ function card() {
   const prevCard = acc.cards.length > 1 ? acc.cards[acc.cards.length - 2] : null;
   const classUp = !!prevCard && classFor(prevCard.total || 0) < tier.cls;
   return {
-    html: `<section class="screen screen--dark screen--card lvl-${tier.level} cls-${tier.cls}${hidden ? ' is-hidden' : ' is-open'}" style="--rar:${clsColor}">
+    html: `<section class="screen screen--dark screen--card lvl-${tier.level} cls-${tier.cls}${hidden ? ' is-hidden' : ' is-open'}${c.locked ? ' is-locked' : ''}" style="--rar:${clsColor}">
       <div class="loot-bg" aria-hidden="true">
         <div class="loot-rays"></div>
         <svg class="loot-runes" viewBox="0 0 200 200"><defs><path id="runepath" d="M100 100m-80 0a80 80 0 1 1 160 0a80 80 0 1 1-160 0"/></defs>
@@ -1750,6 +1764,7 @@ function card() {
       ${hidden ? '' : backButton('back--dark')}
       ${hidden ? '' : `<button class="home-btn" type="button" data-go="" aria-label="${t('Zur Startseite')}">${icons.home}</button>`}
       <button class="sound-btn${isMuted() ? ' is-muted' : ''}" type="button" data-sound aria-label="${t('Ton an/aus')}" aria-pressed="${!isMuted()}">${icons.sound}</button>
+      ${c.locked ? `<div class="card-locked" role="status"><b>${t('Card gesperrt')}</b><span>${c.lockReason === 'refund' ? t('Der Kaufpreis wurde erstattet. Diese Card zählt nicht mehr zu deinem Fame-Wert.') : t('Die Zahlung wurde zurückgebucht. Diese Card zählt nicht zu deinem Fame-Wert, solange der Fall nicht geklärt ist.')}</span></div>` : ''}
       <div class="card-wrap" data-tiltwrap>
         <div class="flip" data-flip role="button" tabindex="0" aria-label="${hidden ? t('Karte aufdecken') : tier.name}">
           <article class="famecard metal-${tier.metal}${tier.legend ? ' is-legend' : ''} flip-front" data-card style="--gem:${tier.tone}">
@@ -1962,6 +1977,7 @@ function card() {
           c.revealed = true;
           c.stage = tier.stage;
           saveAccount();
+          if (c.order) auth.markCardEvent(c.order, 'revealed'); // Zeitpunkt für Streitfälle
           // Zurück und Home erst nach dem Aufdecken (vorher würde der Ablauf mittendrin abbrechen)
           if (!el.querySelector('[data-back]')) {
             el.querySelector('.sound-btn')?.insertAdjacentHTML('beforebegin', `${backButton('back--dark')}<button class="home-btn" type="button" data-go="" aria-label="${t('Zur Startseite')}">${icons.home}</button>`);

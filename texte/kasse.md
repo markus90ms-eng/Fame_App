@@ -89,3 +89,58 @@ Den Testmodus auf Live umstellen:
 2. Den Webhook dort neu anlegen.
 3. In Supabase die beiden Secrets auf `sk_live_…` und das neue `whsec_…` ändern.
 4. In `app/js/config.js` den veröffentlichbaren Schlüssel auf `pk_live_…` ändern.
+
+## Rückbuchung, Beweise, 3D Secure und E-Mails (V115)
+
+### Was passiert
+- **3D Secure:** Jede Kartenzahlung wird in der Banking-App bestätigt. Bei einer Rückbuchung wegen Betrug haftet dann in der Regel die Bank.
+- **Rückbuchung (Dispute):**
+  - Die Card wird gesperrt: Sie zählt nicht zum Fame-Wert und wird grau angezeigt, ohne Siegel und ohne Teilen.
+  - Das Konto kann nichts mehr kaufen.
+  - Gewinnst du den Streitfall, ist die Card wieder frei. Die **Konto-Sperre bleibt**, bis du sie selbst aufhebst.
+- **Volle Erstattung:** Die Card wird gesperrt. Teilerstattungen ändern nichts.
+- **Kaufbestätigung per E-Mail:**
+  - Sie geht sofort nach der Zahlung raus.
+  - Inhalt: Bestelldaten, Seriennummer, Zeitpunkte der Zustimmungen und der Hinweis, dass das Widerrufsrecht erloschen ist (§ 356 Abs. 5 BGB).
+  - AGB und Widerrufsbelehrung hängen an.
+- **Widerruf:**
+  - Die Erklärung kommt sofort mit einer Eingangsbestätigung per Mail.
+  - Gehört die Seriennummer zu einer bezahlten Card mit Verzicht, steht in der Mail auch, dass das Widerrufsrecht erloschen ist.
+- **Beweise:** Gespeichert werden:
+  - die IP-Adresse beim Kauf
+  - die Zahlart, die Karte und das Ergebnis von 3D Secure
+  - wann die Card in der App angekommen ist und wann sie aufgedeckt wurde
+  - wann die Bestätigungs-Mail verschickt wurde
+
+### Einrichten
+1. **SQL Editor:** den kompletten Inhalt von `server/supabase.sql` noch einmal ausführen. Den Modus oben rechts auf **Database** stellen, nicht auf Logs.
+2. **Secrets** (Edge Functions → Secrets):
+   - `BREVO_API_KEY`: der API-Schlüssel aus Brevo („SMTP & API“, beginnt mit `xkeysib-`)
+   - optional `MAIL_FROM` (Standard `noreply@fame-app.de`) und `MAIL_REPLY_TO` (Standard `fame.app.2026@gmail.com`)
+3. **Edge Functions neu einspielen** (jeweils Code ersetzen und **Deploy**):
+   - `checkout`
+   - `stripe-webhook`
+   - **neu:** `withdraw`. Bei dieser Funktion unter Settings **„Verify JWT“ ausschalten**, weil der Widerruf auch ohne Login gehen muss.
+4. **Stripe → Webhooks → dein Ziel → Ereignisse bearbeiten.** Diese drei ergänzen:
+   - `charge.dispute.created`
+   - `charge.dispute.closed`
+   - `charge.refunded`
+
+### Im Streitfall
+- In Supabase den **SQL Editor** öffnen und Folgendes ausführen, mit der Seriennummer der betroffenen Card:
+  ```sql
+  select * from admin.dispute_evidence where seriennummer = 'FM-XXXX-XXXX-X';
+  ```
+- Die Zeile enthält alles, was Stripe für digitale Güter sehen will:
+  - Kunden-E-Mail
+  - Zeitpunkte von Zustimmung, Zahlung, Bestätigungs-Mail, Auslieferung und Aufdecken
+  - Häkchen (AGB, ab 18, Verzicht) und AGB-Fassung
+  - IP-Adresse und Gerät
+  - Karte und Ergebnis von 3D Secure
+- Diese Angaben trägst du bei Stripe unter **Zahlungen → Streitfälle → Beweise einreichen** ein.
+- Zusätzlich hochladen:
+  - die Kaufbestätigungs-Mail (bei Brevo unter Transaktional → Logs)
+  - AGB und Widerrufsbelehrung
+
+### Konto-Sperre aufheben
+**Table Editor → account_flags:** die Zeile des Kunden löschen oder `blocked` auf `false` setzen.

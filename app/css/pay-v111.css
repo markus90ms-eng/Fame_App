@@ -9,3 +9,16 @@
 }
 @keyframes pay-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .pay-spin { animation-duration: 3s; } }
+
+/* Gesperrte Card (Rückbuchung/Erstattung) */
+.card-locked {
+  position: relative; z-index: 5; margin: 64px 20px -40px; padding: 12px 14px;
+  background: rgba(255, 70, 90, .14); border: 2px solid #ff465a; color: #fff;
+  display: grid; gap: 4px; font-size: 13px; line-height: 1.45; text-align: left;
+}
+.card-locked b { color: #ff7b89; letter-spacing: .08em; text-transform: uppercase; font-size: 12px; }
+/* Gesperrte Card: kein Echtheitssiegel, nicht teilen */
+.screen--card.is-locked .famecard .seal,
+.screen--card.is-locked .quick-share,
+.screen--card.is-locked [data-open-sheet] { display: none !important; }
+.screen--card.is-locked .famecard { filter: grayscale(.85) brightness(.8); }

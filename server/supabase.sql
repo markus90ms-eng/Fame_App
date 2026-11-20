@@ -115,3 +115,81 @@ grant select on public.orders to authenticated;
 
 -- Kauf-Nachweis gehört zur Bestellung (wird von der Funktion "checkout" angelegt)
 alter table public.purchase_evidence add column if not exists order_id uuid references public.orders (id) on delete set null;
+
+
+-- ===== Echte Zahlung: Rückbuchung (z5), Beweise (z12), E-Mails (z6) =====
+
+-- Bestellung: Sperre, Zahlungsdetails und Zeitpunkte für Streitfälle
+alter table public.orders add column if not exists locked boolean not null default false;      -- Card gesperrt (zählt nicht)
+alter table public.orders add column if not exists lock_reason text;                             -- 'dispute' | 'refund'
+alter table public.orders add column if not exists dispute_status text;                          -- Stand bei Stripe
+alter table public.orders add column if not exists charge text;                                  -- Stripe-Zahlung (ch_…)
+alter table public.orders add column if not exists payment_method text;                          -- card, klarna, …
+alter table public.orders add column if not exists card_info text;                               -- z. B. "visa •••• 4242"
+alter table public.orders add column if not exists three_d_secure text;                          -- Ergebnis 3D Secure
+alter table public.orders add column if not exists email text;                                   -- an diese Adresse ging die Bestätigung
+alter table public.orders add column if not exists delivered_at timestamptz;                     -- Card in der App angekommen
+alter table public.orders add column if not exists revealed_at timestamptz;                      -- Card aufgedeckt
+alter table public.orders add column if not exists mail_sent_at timestamptz;                     -- Kaufbestätigung verschickt
+alter table public.orders add column if not exists mail_id text;                                 -- Kennung beim Mail-Dienst
+
+-- Kauf-Nachweis: IP-Adresse beim Kauf (für Streitfälle)
+alter table public.purchase_evidence add column if not exists ip text check (ip is null or char_length(ip) <= 60);
+
+-- Konto-Sperre für Käufe (z. B. nach einer Rückbuchung). Aufheben: Zeile löschen oder blocked = false setzen.
+create table if not exists public.account_flags (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  blocked boolean not null default true,
+  reason text,
+  created_at timestamptz not null default now(),
+  note text
+);
+alter table public.account_flags enable row level security;
+drop policy if exists "Sperre lesen" on public.account_flags;
+create policy "Sperre lesen" on public.account_flags
+  for select to authenticated using (user_id = (select auth.uid()));
+revoke insert, update, delete on public.account_flags from anon, authenticated;
+grant select on public.account_flags to authenticated;
+
+-- App meldet: Card angekommen ('delivered') bzw. aufgedeckt ('revealed'). Zeitpunkt setzt der Server,
+-- nur für eigene, bezahlte Bestellungen und nur beim ersten Mal.
+create or replace function public.mark_card_event(p_order uuid, p_event text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if p_event = 'delivered' then
+    update orders set delivered_at = now() where id = p_order and user_id = auth.uid() and status = 'paid' and delivered_at is null;
+  elsif p_event = 'revealed' then
+    update orders set revealed_at = now(), delivered_at = coalesce(delivered_at, now())
+      where id = p_order and user_id = auth.uid() and status = 'paid' and revealed_at is null;
+  end if;
+end $$;
+revoke all on function public.mark_card_event(uuid, text) from public, anon;
+grant execute on function public.mark_card_event(uuid, text) to authenticated;
+
+-- Widerruf: Bestätigungs-Mail
+alter table public.withdrawals add column if not exists mail_sent_at timestamptz;
+alter table public.withdrawals add column if not exists expired boolean;   -- Widerrufsrecht war bereits erloschen
+alter table public.withdrawals add column if not exists order_id uuid references public.orders (id) on delete set null;
+
+-- Übersicht für Streitfälle (nur im Dashboard sichtbar, nicht über die App-Schnittstelle)
+create schema if not exists admin;
+revoke all on schema admin from public, anon, authenticated;
+create or replace view admin.dispute_evidence as
+select
+  o.serial                         as seriennummer,
+  o.amount                         as betrag_eur,
+  o.status, o.locked as gesperrt, o.lock_reason as sperrgrund, o.dispute_status as streitfall,
+  o.payment_intent, o.charge, o.payment_method as zahlart, o.card_info as karte, o.three_d_secure as "3d_secure",
+  o.email                          as kunden_email,
+  e.created_at                     as zustimmung_am,
+  e.agb_accepted as agb, e.adult_confirmed as ab_18, e.waiver_accepted as verzicht_widerrufsrecht,
+  e.legal_version                  as agb_fassung,
+  e.ip, e.user_agent                as geraet,
+  o.created_at                     as bestellt_am,
+  o.paid_at                        as bezahlt_am,
+  o.mail_sent_at                   as bestaetigung_gesendet_am,
+  o.delivered_at                   as card_ausgeliefert_am,
+  o.revealed_at                    as card_aufgedeckt_am,
+  o.id as order_id, o.user_id
+from public.orders o
+left join public.purchase_evidence e on e.order_id = o.id;

@@ -3,6 +3,8 @@
 //   → Bestellung (orders, status 'open') und Kauf-Nachweis (purchase_evidence) anlegen
 //   → Stripe-Checkout-Sitzung erstellen → App leitet zur Stripe-Bezahlseite weiter.
 // Die Card wird hier NICHT ausgestellt. Das macht erst "stripe-webhook", wenn Stripe die Zahlung bestätigt.
+// Gesperrte Konten (Tabelle account_flags, z. B. nach einer Rückbuchung) können nicht kaufen.
+// Jede Kartenzahlung läuft mit 3D Secure.
 //
 // Zahlarten: kommen aus den Stripe-Einstellungen (Dashboard → Zahlungsmethoden). Gewollt sind Karte
 // (inkl. Apple Pay und Google Pay) und Klarna; SEPA-Lastschrift ist dort ausgeschaltet.
@@ -52,6 +54,10 @@ Deno.serve(async (req) => {
   const user = await userRes.json().catch(() => null);
   if (!userRes.ok || !user?.id) return json({ error: 'login' }, 401);
 
+  // Konto gesperrt (z. B. nach einer Rückbuchung)? Dann keine neuen Käufe.
+  const flag = (await (await db(`account_flags?user_id=eq.${user.id}&select=blocked`)).json().catch(() => []))?.[0];
+  if (flag?.blocked) return json({ error: 'blocked' }, 403);
+
   let input: Input;
   try { input = await req.json(); } catch { return json({ error: 'bad_request' }, 400); }
   const amount = Math.round(Number(input?.amount));
@@ -79,6 +85,7 @@ Deno.serve(async (req) => {
       legal_version: input.legal_version, client_at: clientAt,
       agb_accepted: true, adult_confirmed: true, waiver_accepted: true,
       user_agent: (req.headers.get('user-agent') || '').slice(0, 300),
+      ip: (req.headers.get('x-forwarded-for') || '').split(',')[0].trim().slice(0, 60) || null,
     }),
   });
   if (!eRes.ok) return json({ error: 'db', detail: await eRes.text() }, 500);
@@ -98,6 +105,9 @@ Deno.serve(async (req) => {
     'metadata[order_id]': order.id,
     'metadata[user_id]': user.id,
     'payment_intent_data[metadata][order_id]': order.id,
+    'metadata[lang]': input.lang === 'en' ? 'en' : 'de',
+    // 3D Secure bei jeder Kartenzahlung: Bei Betrugs-Rückbuchungen haftet dann in der Regel die Bank
+    'payment_method_options[card][request_three_d_secure]': 'any',
     locale: input.lang === 'en' ? 'en' : 'de',
     expires_at: String(Math.floor(Date.now() / 1000) + 30 * 60),
     success_url: `${base}#/pay/ok`,
