@@ -199,9 +199,10 @@ export const myOrders = () => wrap(async () => {
   const c = await sb();
   const { data: { session } } = await c.auth.getSession();
   if (!session) return { error: 'login' };
-  const { data, error } = await c.from('orders')
-    .select('id,amount,status,serial,paid_at,created_at,locked,lock_reason')
-    .order('created_at', { ascending: true });
+  const ask = (cols) => c.from('orders').select(cols).order('created_at', { ascending: true });
+  let { data, error } = await ask('id,amount,status,serial,paid_at,created_at,locked,lock_reason');
+  // Übergang: solange die Spalten für Sperren noch nicht angelegt sind (server/supabase.sql), ohne sie lesen
+  if (error && /locked|lock_reason|column/i.test(error.message || '')) ({ data, error } = await ask('id,amount,status,serial,paid_at,created_at'));
   return error ? { error: error.message || 'db' } : { orders: data || [] };
 });
 
@@ -222,8 +223,13 @@ export const sendWithdrawal = (row) => wrap(async () => {
   if (!authReady()) return { error: 'config' };
   const c = await sb();
   const { data, error } = await c.functions.invoke('withdraw', { body: row });
-  if (error) return { error: error.message || 'server' };
-  return data?.ok ? { ok: true, at: data.at, mail: data.mail, expired: data.expired } : { error: data?.error || 'server' };
+  if (!error && data?.ok) return { ok: true, at: data.at, mail: data.mail, expired: data.expired };
+  // Rückfall (Funktion noch nicht eingerichtet oder nicht erreichbar): Erklärung direkt speichern, damit kein Widerruf verloren geht
+  const { data: { session } } = await c.auth.getSession();
+  const { error: e2 } = await c.from('withdrawals').insert({
+    name: row.name, contract: row.contract, email: row.email, note: row.note || null, user_id: session?.user?.id || null,
+  });
+  return e2 ? { error: e2.message || 'db' } : { ok: true, mail: 'none' };
 });
 
 // Kurzinfo zur Anmeldung: { id, email, provider: 'email' | 'apple' | 'google' }
