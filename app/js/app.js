@@ -85,7 +85,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '118';
+export const APP_VERSION = '119';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -1799,7 +1799,7 @@ function card() {
                 ${onCard.length
                   ? `<div class="famecard-accts${onCard.length > 1 ? ' is-multi' : ''}">${onCard.map((a) => `<span class="famecard-insta">${platformIcon(a.id)}<span>${esc(a.handle)}</span></span>`).join('')}</div>`
                   : `<div class="famecard-insta">${icons.insta}<input id="card-insta" data-insta placeholder="${t('dein Instagram')}" autocomplete="off" autocapitalize="off" aria-label="${t('Instagram-Name')}"></div>`}
-                <span class="seal" title="${t('Echtheitssiegel')}">${SEAL_TXT}${tier.cls >= 6 ? '<i class="seal-gem"></i>' : ''}</span>
+                <span class="seal" title="${t('Echtheitssiegel')}">${SEAL_TXT}</span>
               </div>
             </div>
           </article>
