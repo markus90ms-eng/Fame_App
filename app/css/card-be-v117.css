@@ -1,0 +1,169 @@
+/* Card „Black Edition“ (V117): mattes Schwarz, echtes Steinfoto, Metall und Ausstattung steigen mit der Klasse.
+   Kiesel Stahl · Mint–Saphir Silber · Amethyst–Rubin Roségold · Feuer/Gold Gold · Diamant-Holo Holo.
+   Ab Mint 2. Rahmen · ab Aquamarin Eckornamente · ab Saphir Lichtglanz · ab Amethyst Samt · ab Rubellit Gravur ·
+   ab Rubin Pavé im Rahmen und Stein am Siegel · ab Feuer Strahlen und Funkeln · Diamant-Holo Holofolie. */
+
+.famecard.be {
+  --m-steel: linear-gradient(135deg, #d9dce0, #7d838c 35%, #c9cdd2 55%, #5d636b 80%, #b4b9bf);
+  --m-silver: linear-gradient(135deg, #ffffff, #b9c0ca 30%, #f4f6f8 50%, #8f97a3 75%, #e6e9ee);
+  --m-rose: linear-gradient(135deg, #fff3ee, #e9a994 28%, #fff6f2 50%, #a9604c 76%, #f5cbbb);
+  --m-gold: linear-gradient(135deg, #fff7d6, #f0cd6e 28%, #fff3c4 50%, #a5761b 76%, #f3d98a);
+  --m-holo: linear-gradient(135deg, #ffe3f3, #ffe9a6 18%, #c8ffd9 36%, #b9e4ff 54%, #e0c9ff 72%, #ffd1ec 90%);
+  --metal: var(--m-steel);
+  --metal-line: #b4b9bf;
+  --bw: 1px;
+  --glow: color-mix(in srgb, var(--c) 18%, transparent);
+  padding: 0;
+  background: #050506;
+  border-radius: 18px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 24px 50px rgba(0, 0, 0, 0.65), 0 0 60px color-mix(in srgb, var(--c) 22%, transparent);
+}
+.famecard.be-lv1, .famecard.be-lv2, .famecard.be-lv3 { --metal: var(--m-silver); --metal-line: #dfe4ea; }
+.famecard.be-lv4, .famecard.be-lv5, .famecard.be-lv6 { --metal: var(--m-rose); --metal-line: #efb8a4; }
+.famecard.be-lv7, .famecard.be-lv8 { --metal: var(--m-gold); --metal-line: #f0cd6e; }
+.famecard.be-lv9 { --metal: var(--m-holo); --metal-line: #f5d2ea; }
+.famecard.be-lv1 { --bw: 1.3px; } .famecard.be-lv2 { --bw: 1.7px; } .famecard.be-lv3 { --bw: 2px; }
+.famecard.be-lv4 { --bw: 2.4px; } .famecard.be-lv5 { --bw: 2.7px; } .famecard.be-lv6 { --bw: 3px; }
+.famecard.be-lv7 { --bw: 3.4px; } .famecard.be-lv8 { --bw: 3.8px; } .famecard.be-lv9 { --bw: 4px; }
+.famecard.be { --glow: color-mix(in srgb, var(--c) calc(18% + var(--lvp, 0%)), transparent); }
+.famecard.be-lv4 { --lvp: 6%; } .famecard.be-lv5 { --lvp: 8%; } .famecard.be-lv6 { --lvp: 10%; }
+.famecard.be-lv7, .famecard.be-lv8, .famecard.be-lv9 { --lvp: 14%; }
+
+.famecard.be .famecard-inner { background: transparent; border-radius: 18px; overflow: hidden; isolation: isolate; }
+.famecard.be .famecard-inner > * { z-index: 6; }
+
+/* Grund: gebürstetes Schwarz mit Leuchten in Klassenfarbe */
+.be-bg, .be-velvet, .be-guil, .be-rays, .be-spark, .be-holo, .be-frame, .be-frame2, .be-corners, .be-pave {
+  position: absolute; inset: 0; pointer-events: none;
+}
+.famecard.be .be-bg {
+  z-index: 0;
+  background:
+    radial-gradient(85% 55% at 50% 30%, var(--glow), transparent 72%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #121214, #050506);
+}
+.famecard.be-lv7 .be-bg, .famecard.be-lv8 .be-bg {
+  background:
+    radial-gradient(85% 55% at 50% 30%, var(--glow), transparent 72%),
+    repeating-linear-gradient(90deg, rgba(255, 220, 150, 0.03) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #17130b, #050403);
+}
+.famecard.be .be-velvet { z-index: 0; background: radial-gradient(120% 90% at 50% 30%, color-mix(in srgb, var(--c) 16%, transparent), transparent 80%); }
+.famecard.be .be-velvet::after { content: ""; position: absolute; inset: 0; opacity: 0.35; background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px); background-size: 3px 3px; }
+.famecard.be .be-guil {
+  z-index: 0; opacity: 0.14;
+  background: repeating-radial-gradient(circle at 50% 120%, transparent 0 5px, rgba(255, 255, 255, 0.5) 5px 6px),
+    repeating-radial-gradient(circle at 50% -20%, transparent 0 5px, rgba(255, 255, 255, 0.35) 5px 6px);
+  -webkit-mask: linear-gradient(180deg, #000, transparent 28%, transparent 64%, #000);
+  mask: linear-gradient(180deg, #000, transparent 28%, transparent 64%, #000);
+}
+.famecard.be .be-rays {
+  z-index: 0; inset: auto; left: 50%; top: 125px; width: 660px; height: 660px; transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(from 0deg, transparent 0 6deg, color-mix(in srgb, var(--c) 30%, transparent) 6deg 8deg);
+  -webkit-mask: radial-gradient(circle, #000 8%, transparent 42%); mask: radial-gradient(circle, #000 8%, transparent 42%);
+  animation: be-rays 40s linear infinite;
+}
+@keyframes be-rays { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+/* Stein: echtes Foto, läuft weich ins Schwarz aus */
+.famecard.be .be-photo {
+  z-index: 1; height: 262px;
+  -webkit-mask-image: radial-gradient(52% 58% at 50% 50%, #000 58%, transparent 84%);
+  mask-image: radial-gradient(52% 58% at 50% 50%, #000 58%, transparent 84%);
+}
+.famecard.be .be-gem { position: absolute; inset: 22px 0 0; display: grid; place-items: center; }
+.famecard.be .gem-photo { width: 112%; max-width: none; height: auto; display: block; user-select: none; -webkit-user-drag: none; }
+.gem-photo.is-pulse { animation: gem-pulse 0.9s ease-out; }
+@keyframes gem-pulse { 0% { filter: brightness(1); transform: scale(1); } 30% { filter: brightness(1.7) saturate(1.2); transform: scale(1.04); } 100% { filter: brightness(1); transform: scale(1); } }
+
+/* Funkeln ab Feuer */
+.famecard.be .be-spark { z-index: 2; }
+.famecard.be .be-spark i { position: absolute; width: 14px; height: 14px; background: radial-gradient(circle, #fff 0 1.5px, transparent 2.5px), linear-gradient(#fff, #fff) center/1.5px 100% no-repeat, linear-gradient(#fff, #fff) center/100% 1.5px no-repeat; filter: drop-shadow(0 0 5px #fff); opacity: 0; animation: be-twinkle 3.2s ease-in-out infinite; }
+.famecard.be .be-spark i:nth-child(1) { left: 22%; top: 20%; }
+.famecard.be .be-spark i:nth-child(2) { left: 74%; top: 16%; animation-delay: 0.8s; }
+.famecard.be .be-spark i:nth-child(3) { left: 82%; top: 44%; animation-delay: 1.6s; transform: scale(0.7); }
+.famecard.be .be-spark i:nth-child(4) { left: 14%; top: 48%; animation-delay: 2.2s; transform: scale(0.8); }
+.famecard.be .be-spark i:nth-child(5) { left: 58%; top: 8%; animation-delay: 2.8s; transform: scale(0.6); }
+@keyframes be-twinkle { 0%, 100% { opacity: 0; } 40%, 60% { opacity: 1; } }
+
+/* Lichtglanz (wandert beim Kippen, data-shine) erst ab Saphir sichtbar */
+.famecard.be .famecard-shine { z-index: 3; opacity: 0; }
+.famecard.be-lv3 .famecard-shine, .famecard.be-lv4 .famecard-shine, .famecard.be-lv5 .famecard-shine,
+.famecard.be-lv6 .famecard-shine, .famecard.be-lv7 .famecard-shine, .famecard.be-lv8 .famecard-shine,
+.famecard.be-lv9 .famecard-shine { opacity: 1; }
+
+/* Holofolie über der ganzen Card bei Diamant-Holo */
+.famecard.be .be-holo {
+  z-index: 3; mix-blend-mode: color-dodge; opacity: 0.4;
+  background: linear-gradient(125deg, transparent 15%, rgba(255, 120, 200, 0.45) 28%, rgba(255, 230, 120, 0.45) 38%, rgba(120, 255, 180, 0.45) 48%, rgba(120, 200, 255, 0.45) 58%, rgba(200, 140, 255, 0.45) 68%, transparent 82%),
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.06) 0 2px, transparent 2px 7px);
+  background-size: 200% 200%, auto;
+  animation: be-holo 7s ease-in-out infinite alternate;
+}
+@keyframes be-holo { from { background-position: 0% 0%, 0 0; } to { background-position: 100% 100%, 0 0; } }
+
+/* Rahmen aus Metall, wird mit der Klasse kräftiger */
+.famecard.be .be-frame, .famecard.be .be-frame2 {
+  z-index: 7; border-style: solid; border-color: transparent; background: var(--metal) border-box;
+  -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0); mask-composite: exclude;
+}
+.famecard.be .be-frame { inset: 9px; border-radius: 12px; border-width: var(--bw); }
+.famecard.be .be-frame2 { inset: 15px; border-radius: 8px; border-width: 1px; opacity: 0.55; }
+.famecard.be .be-corners { z-index: 8; }
+.famecard.be .be-corners i { position: absolute; width: 32px; height: 32px; }
+.famecard.be .be-corners i:nth-child(1) { left: 12px; top: 12px; }
+.famecard.be .be-corners i:nth-child(2) { right: 12px; top: 12px; transform: scaleX(-1); }
+.famecard.be .be-corners i:nth-child(3) { left: 12px; bottom: 12px; transform: scaleY(-1); }
+.famecard.be .be-corners i:nth-child(4) { right: 12px; bottom: 12px; transform: scale(-1, -1); }
+.famecard.be .be-corners svg { width: 100%; height: 100%; overflow: visible; fill: none; stroke: var(--metal-line); stroke-width: 1.6; }
+.famecard.be .be-corners .t { stroke-width: 0.8; opacity: 0.7; }
+.famecard.be .be-corners circle { fill: var(--metal-line); stroke: none; }
+/* Pavé: kleine Brillanten oben und unten im Rahmen */
+.famecard.be .be-pave {
+  z-index: 8; inset: 6px 26px;
+  background-image: radial-gradient(circle, #fff 0 1.6px, color-mix(in srgb, var(--c) 70%, #fff) 2px, transparent 2.8px);
+  background-size: 13px 13px; background-repeat: repeat-x; background-position: 0 0, 0 100%;
+  -webkit-mask: linear-gradient(#000 0 0) top / 100% 7px no-repeat, linear-gradient(#000 0 0) bottom / 100% 7px no-repeat;
+  mask: linear-gradient(#000 0 0) top / 100% 7px no-repeat, linear-gradient(#000 0 0) bottom / 100% 7px no-repeat;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.6));
+}
+
+/* Schrift als Folienprägung im Metall der Klasse */
+.famecard.be .famecard-top { z-index: 9; padding: 10px 12px 0 14px; }
+.famecard.be .famecard-brand {
+  background: var(--metal); -webkit-background-clip: text; background-clip: text; color: transparent;
+  text-shadow: none; font-size: 18px;
+}
+.famecard.be .famecard-brand .dia { filter: none; }
+.famecard.be .famecard-brand .dia-fill { fill: var(--metal-line); }
+.famecard.be .famecard-brand .dia-line { stroke: #050506; }
+.famecard.be .famecard-serial {
+  background: transparent; border: 0; padding: 0; -webkit-backdrop-filter: none; backdrop-filter: none;
+  letter-spacing: 0.14em; font-size: 9.5px; color: var(--metal-line);
+}
+.famecard.be .famecard-plate { z-index: 9; margin-top: 214px; }
+.famecard.be .famecard-name { background: var(--metal); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 12px color-mix(in srgb, var(--c) 35%, transparent)); }
+.famecard.be .famecard-rule i { background: linear-gradient(90deg, transparent, var(--metal-line)); }
+.famecard.be .famecard-rule i:last-child { background: linear-gradient(90deg, var(--metal-line), transparent); }
+.famecard.be .famecard-rule .dia-fill { fill: #fff; }
+.famecard.be .famecard-flavor { color: rgba(255, 255, 255, 0.84); font-size: 15.5px; }
+.famecard.be .famecard-foot { z-index: 9; padding: 0 6px 4px; }
+.famecard.be .famecard-insta { color: rgba(255, 255, 255, 0.78); }
+/* Siegel: geprägte Metallmünze, ab Rubin mit Stein */
+.famecard.be .seal {
+  position: relative; width: 40px; height: 40px; animation: none; color: #1b1b1d;
+  background: var(--metal);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6), inset 0 -3px 6px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+.famecard.be .seal-gem { position: absolute; top: -4px; right: -3px; width: 11px; height: 11px; transform: rotate(45deg); background: var(--c); box-shadow: 0 0 6px var(--c), inset 0 0 0 1.5px rgba(255, 255, 255, 0.85); }
+
+/* Gold- und Holo-Seiten (lux) setzen eigene Card-Rahmen – für die Black Edition abschalten */
+.screen--card .famecard.be { animation: none !important; }
+.screen--card .famecard.be::before, .screen--card .famecard.be::after { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .famecard.be .be-rays, .famecard.be .be-holo, .famecard.be .be-spark i { animation: none; }
+  .famecard.be .be-spark i { opacity: 0.8; }
+}

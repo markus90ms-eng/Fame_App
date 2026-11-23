@@ -13,6 +13,7 @@ import {
 import { playMoonStory } from './story.js';
 import { tick, plink, stageTick, classDrop, buzz, unlockAudio, buildup, boost, startTension, revealMusic, startCelebration, themeReveal, themeLoop, themeJingle, isMuted, setMuted } from './fx.js';
 import { createDiamond } from './diamond3d.js';
+import { photoGem } from './gemphoto.js';
 import { homeGemTilt } from './home-gem-tilt.js';
 import { mineStage14Wall } from './cave-reveal.js';
 import { facetArt, facetMask, svgUrl, holoStrength } from './cardfx.js';
@@ -84,7 +85,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '116';
+export const APP_VERSION = '117';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -1767,14 +1768,20 @@ function card() {
       ${c.locked ? `<div class="card-locked" role="status"><b>${t('Card gesperrt')}</b><span>${c.lockReason === 'refund' ? t('Der Kaufpreis wurde erstattet. Diese Card zählt nicht mehr zu deinem Fame-Wert.') : t('Die Zahlung wurde zurückgebucht. Diese Card zählt nicht zu deinem Fame-Wert, solange der Fall nicht geklärt ist.')}</span></div>` : ''}
       <div class="card-wrap" data-tiltwrap>
         <div class="flip" data-flip role="button" tabindex="0" aria-label="${hidden ? t('Karte aufdecken') : tier.name}">
-          <article class="famecard metal-${tier.metal}${tier.legend ? ' is-legend' : ''} flip-front" data-card style="--gem:${tier.tone}">
-            <div class="famecard-ring" aria-hidden="true"></div>
-            <div class="famecard-inner" style="--holo:${holoStrength(tier.cls)}">
-              <div class="famecard-facets" aria-hidden="true">${facetArt(tier.cls, `fc${tier.cls}_`)}</div>
-              <div class="famecard-holo" aria-hidden="true" style="-webkit-mask-image:url('${svgUrl(facetMask(tier.cls))}');mask-image:url('${svgUrl(facetMask(tier.cls))}')"></div>
-              <div class="famecard-glint" aria-hidden="true" style="-webkit-mask-image:url('${svgUrl(facetMask(tier.cls))}');mask-image:url('${svgUrl(facetMask(tier.cls))}')"></div>
-              <div class="famecard-photo"><div class="stage3d" data-diamond></div></div>
+          <article class="famecard be be-lv${tier.cls}${tier.legend ? ' is-legend' : ''} flip-front" data-card style="--gem:${tier.tone};--c:${clsColor}">
+            <div class="famecard-inner">
+              <div class="be-bg" aria-hidden="true"></div>
+              ${tier.cls >= 4 ? '<div class="be-velvet" aria-hidden="true"></div>' : ''}
+              ${tier.cls >= 5 ? '<div class="be-guil" aria-hidden="true"></div>' : ''}
+              ${tier.cls >= 7 ? '<div class="be-rays" aria-hidden="true"></div>' : ''}
+              <div class="famecard-photo be-photo"><div class="be-gem" data-diamond></div></div>
+              ${tier.cls >= 7 ? '<div class="be-spark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>' : ''}
               <div class="famecard-shine" data-shine></div>
+              ${tier.cls >= 9 ? '<div class="be-holo" aria-hidden="true"></div>' : ''}
+              <div class="be-frame" aria-hidden="true"></div>
+              ${tier.cls >= 1 ? '<div class="be-frame2" aria-hidden="true"></div>' : ''}
+              ${tier.cls >= 2 ? `<div class="be-corners" aria-hidden="true">${'<i><svg viewBox="0 0 40 40"><path d="M2 38V14Q2 2 14 2h24"/><path class="t" d="M8 38V18Q8 8 18 8h20"/><circle cx="14" cy="14" r="2.4"/></svg></i>'.repeat(4)}</div>` : ''}
+              ${tier.cls >= 6 ? '<div class="be-pave" aria-hidden="true"></div>' : ''}
               <div class="famecard-top">
                 <span class="famecard-brand">${LOGO_TEXT}${diamondSvg({ filled: true, cls: 'dia-inline' })}</span>
                 <span class="famecard-serial" title="${t('Seriennummer')}">${t('Nr.')} ${c.serial}</span>
@@ -1788,7 +1795,7 @@ function card() {
                 ${onCard.length
                   ? `<div class="famecard-accts${onCard.length > 1 ? ' is-multi' : ''}">${onCard.map((a) => `<span class="famecard-insta">${platformIcon(a.id)}<span>${esc(a.handle)}</span></span>`).join('')}</div>`
                   : `<div class="famecard-insta">${icons.insta}<input id="card-insta" data-insta placeholder="${t('dein Instagram')}" autocomplete="off" autocapitalize="off" aria-label="${t('Instagram-Name')}"></div>`}
-                <span class="seal" title="${t('Echtheitssiegel')}">${SEAL_TXT}</span>
+                <span class="seal" title="${t('Echtheitssiegel')}">${SEAL_TXT}${tier.cls >= 6 ? '<i class="seal-gem"></i>' : ''}</span>
               </div>
             </div>
           </article>
@@ -1880,9 +1887,8 @@ function card() {
     </section>`,
     mount(el) {
       // Foto-Look: der Stein liegt auf einem dunklen Tisch, mit Spiegelung und Bokeh
-      const dia = createDiamond(el.querySelector('[data-diamond]'), {
-        gem: tier, rim: rarity.color, glow: 0.3, interactive: false, photo: true,
-      });
+      // Echtes Foto des Steins (assets/gems/NN.webp) statt des 3D-Steins
+      const dia = photoGem(el.querySelector('[data-diamond]'), tier);
       const canvas = el.querySelector('[data-fx]');
       const fx = particles(canvas, {
         color: clsColor,
@@ -2164,30 +2170,8 @@ function card() {
       // Eigener Stein fürs Abzeichen: einmal im Foto-Licht ohne Bühne rendern und freistellen
       const gemCutout = () => {
         if (avGem) return avGem;
-        const box = document.createElement('div');
-        box.style.cssText = 'position:fixed;left:-9999px;top:0;width:300px;height:300px;';
-        document.body.appendChild(box);
-        const d = createDiamond(box, { gem: tier, photo: true, bare: true, interactive: false, autoRotate: false, glow: 0 });
-        const shot = d.snapshot(640, 640);
-        d.dispose();
-        box.remove();
-        if (!shot) return null;
-        const px = shot.getContext('2d').getImageData(0, 0, shot.width, shot.height).data;
-        let x0 = shot.width, y0 = shot.height, x1 = 0, y1 = 0;
-        for (let y = 0; y < shot.height; y++) {
-          for (let x = 0; x < shot.width; x++) {
-            if (px[(y * shot.width + x) * 4 + 3] > 10) {
-              if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
-            }
-          }
-        }
-        if (x1 <= x0) return null;
-        const out = document.createElement('canvas');
-        out.width = x1 - x0 + 1;
-        out.height = y1 - y0 + 1;
-        out.getContext('2d').drawImage(shot, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
-        avGem = out;
-        return out;
+        avGem = dia.cutout(640);
+        return avGem;
       };
 
       // Erinnerung an den neuen Rahmen: bei einem Klassenaufstieg, oder solange der zuletzt

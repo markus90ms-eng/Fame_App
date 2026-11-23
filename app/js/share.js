@@ -117,7 +117,10 @@ function drawDiamondGlyph(g, x, y, s, line, fill) {
 
 export function drawCard(g, { x, y, w, h, tier, serial, accts = [], gem, facets }) {
   const c = tier.tone || tier.rarity.color;
-  const metal = tier.metal || 'platinum';
+  const cls = tier.cls ?? 0;
+  const top = CLASSES.length - 1;
+  const metal = cls >= top ? 'legend' : cls >= 7 ? 'gold' : cls >= 4 ? 'rose' : 'platinum';
+  const clsColor = CLASSES[cls]?.color || c;
   const line = METAL_LINE[metal];
   const s = w / 300; // Maßstab bezogen auf die 300px breite Card in der App
   const r = 18 * s;
@@ -148,8 +151,14 @@ export function drawCard(g, { x, y, w, h, tier, serial, accts = [], gem, facets 
   g.save();
   roundRect(g, ix, iy, iw, ih, r - b);
   g.clip();
-  if (facets?.art) g.drawImage(facets.art, ix, iy, iw, ih);
-  if (facets?.mask) {
+  const glow = g.createRadialGradient(ix + iw / 2, iy + ih * 0.3, 0, ix + iw / 2, iy + ih * 0.3, iw * 0.75);
+  glow.addColorStop(0, hexA(clsColor, 0.18 + Math.min(cls, 7) * 0.02));
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = glow;
+  g.fillRect(ix, iy, iw, ih);
+  g.fillStyle = 'rgba(255,255,255,0.018)';
+  for (let bx = ix; bx < ix + iw; bx += 3 * s) g.fillRect(bx, iy, 1 * s, ih);
+  if (cls >= top && facets?.mask) {
     const hv = document.createElement('canvas');
     hv.width = Math.round(iw);
     hv.height = Math.round(ih);
@@ -196,16 +205,10 @@ export function drawCard(g, { x, y, w, h, tier, serial, accts = [], gem, facets 
   g.textAlign = 'left';
   g.textBaseline = 'alphabetic';
   g.font = font(800, 19 * s);
-  g.save();
-  g.shadowColor = 'rgba(0,0,0,0.85)';
-  g.shadowBlur = 8 * s;
-  g.fillStyle = '#3dfa74';
-  g.fillText(LOGO_TEXT, ix + pad + 1 * s, iy + pad + 17.5 * s);
-  g.restore();
-  g.fillStyle = '#f8f8f6';
-  g.fillText(LOGO_TEXT, ix + pad, iy + pad + 16 * s);
   const lw = g.measureText(LOGO_TEXT).width;
-  drawDiamondGlyph(g, ix + pad + lw + 4 * s, iy + pad + 2 * s, 18 * s, '#f8f8f6', '#3dfa74');
+  g.fillStyle = metalFill(g, metal, ix + pad, iy + pad, lw, 18 * s);
+  g.fillText(LOGO_TEXT, ix + pad, iy + pad + 16 * s);
+  drawDiamondGlyph(g, ix + pad + lw + 4 * s, iy + pad + 2 * s, 18 * s, '#050506', line);
   g.textAlign = 'right';
   g.font = font(600, 9.5 * s);
   const serialText = `${t('Nr.')} ${serial}`;
@@ -278,8 +281,7 @@ export function drawCard(g, { x, y, w, h, tier, serial, accts = [], gem, facets 
     });
   }
   const sx = ix + iw - pad - 19 * s, sy = fy - 6 * s, sr = 19 * s;
-  const seal = g.createConicGradient ? g.createConicGradient(0.5, sx, sy) : '#e8e8f0';
-  if (seal.addColorStop) ['#ffd6ec', '#9fd8ff', '#fff4c2', '#b6fff0', '#ffd6ec'].forEach((col, i) => seal.addColorStop(i / 4, col));
+  const seal = metalFill(g, metal, sx - 20 * s, sy - 20 * s, 40 * s, 40 * s); // geprägte Münze im Metall der Klasse
   g.fillStyle = seal;
   g.beginPath(); g.arc(sx, sy, sr, 0, Math.PI * 2); g.fill();
   g.fillStyle = '#0b0b0c';
@@ -594,111 +596,109 @@ function logoBadge(g, x, y, r, color, holo, u) {
 // cls: Farbklasse (0..9), photo: geladenes Bild (wird mittig quadratisch zugeschnitten)
 // gemImg (optional): freigestelltes Bild des eigenen Steins fürs Abzeichen
 // view: Ausschnitt (siehe photoRect), size: Kantenlänge in Pixel (klein für die Live-Vorschau)
+// Profilbild-Rahmen „Pavé-Fassung“ (V117): polierter Metallrand, Brillanten in Klassenfarbe wachsen mit der
+// Klasse von unten nach oben (Mint: je 2 Steine links und rechts, Diamant-Holo: ganzer Ring), unten der eigene Stein
+// in einer Krappenfassung. Metall: Silber (bis Saphir) → Roségold (Amethyst–Rubin) → Gold (Feuer, Gold) → Platin (Holo).
+const AV_METALS = {
+  silver: ['#ffffff', '#c9ced6', '#8a909b', '#eef1f5', '#6f7580', '#d9dde3'],
+  rose: ['#fff0ea', '#f1b9a5', '#a0604f', '#ffd9cc', '#7d4436', '#e5a592'],
+  gold: ['#fff7d6', '#f0cd6e', '#a5761b', '#ffe9a8', '#7a5410', '#e2b84f'],
+  platinum: ['#ffffff', '#dfe3ea', '#9aa1ad', '#f7f8fb', '#7e8594', '#e9ecf2'],
+};
+const avMetal = (cls) => (cls >= CLASSES.length - 1 ? 'platinum' : cls >= 7 ? 'gold' : cls >= 4 ? 'rose' : 'silver');
+function avMetalFill(g, x, y, metal, rot = 0) {
+  const st = AV_METALS[metal];
+  if (!g.createConicGradient) { const lg = g.createLinearGradient(x - 50, y - 50, x + 50, y + 50); st.forEach((c, i) => lg.addColorStop(i / (st.length - 1), c)); return lg; }
+  const gr = g.createConicGradient(rot, x, y);
+  for (let i = 0; i <= 12; i++) gr.addColorStop(i / 12, st[i % st.length]);
+  return gr;
+}
+function avBrilliant(g, x, y, r, color, holo, seed) {
+  g.save();
+  g.translate(x, y);
+  const body = g.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.1, 0, 0, r);
+  if (holo) { body.addColorStop(0, '#ffffff'); body.addColorStop(0.5, `hsl(${(seed * 47) % 360},90%,85%)`); body.addColorStop(1, '#8b93b8'); }
+  else { body.addColorStop(0, '#ffffff'); body.addColorStop(0.45, color); body.addColorStop(1, hexA('#000000', 0.55)); }
+  g.fillStyle = holo ? body : color;
+  g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.fill();
+  if (!holo) { g.fillStyle = body; g.globalAlpha = 0.85; g.fill(); g.globalAlpha = 1; }
+  g.strokeStyle = 'rgba(255,255,255,0.55)';
+  g.lineWidth = Math.max(0.4, r * 0.08);
+  g.beginPath();
+  for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4 + seed; g.moveTo(Math.cos(a) * r * 0.45, Math.sin(a) * r * 0.45); g.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
+  g.stroke();
+  g.fillStyle = 'rgba(255,255,255,0.95)';
+  g.beginPath(); g.arc(-r * 0.35, -r * 0.35, r * 0.2, 0, Math.PI * 2); g.fill();
+  g.restore();
+}
+
 export function renderAvatar(photo, cls, gemImg = null, view = {}, size = AVATAR) {
-  const S = size, u = S / 200, C = S / 2;
+  const S = size, u = S / 300, C = S / 2;
   const holo = cls === CLASSES.length - 1;
-  const color = CLASSES[cls].color;
-  const deep = holo ? '#8f7fd6' : color;
+  const color = holo ? '#dfe6ff' : CLASSES[cls].color;
+  const metal = avMetal(cls);
   const cv = document.createElement('canvas');
   cv.width = cv.height = S;
   const g = cv.getContext('2d');
+  const ro = C - 1 * u, ri = C - 21 * u, rm = C - 11 * u;
 
-  // Foto rund zuschneiden
+  // Foto rund, bis unter den Rand
   g.save();
-  g.beginPath();
-  g.arc(C, C, C, 0, Math.PI * 2);
-  g.clip();
+  g.beginPath(); g.arc(C, C, ri + 1 * u, 0, Math.PI * 2); g.clip();
   g.fillStyle = '#d9dee6';
   g.fillRect(0, 0, S, S);
-  if (photo) {
-    const r = photoRect(photo, S, view);
-    g.drawImage(photo, r.x, r.y, r.w, r.h);
-  }
+  if (photo) { const r = photoRect(photo, S, view); g.drawImage(photo, r.x, r.y, r.w, r.h); }
   g.restore();
 
-  // Form des Bogens: links spitz auslaufend, rechts rund geschlossen
-  const aEnd = arcEnd(cls), aTail = Math.PI / 2 + TAIL;
-  const band = () => {
-    const ro = RO * u, ri = RI * u;
-    g.beginPath();
-    g.arc(C, C, ro, aEnd, aTail, false);
-    for (let i = 0; i <= 24; i++) {
-      const t = i / 24, th = aTail - TAIL * t, q = Math.min(1, t / 0.55), e = q * q * (3 - 2 * q);
-      const r = ro - (ro - ri) * e;
-      g.lineTo(C + r * Math.cos(th), C + r * Math.sin(th));
+  // Polierter Metallrand
+  g.beginPath(); g.arc(C, C, ro, 0, Math.PI * 2); g.arc(C, C, ri, 0, Math.PI * 2, true);
+  g.fillStyle = avMetalFill(g, C, C, metal, 0.4);
+  g.fill('evenodd');
+  g.lineWidth = 1 * u;
+  g.strokeStyle = 'rgba(0,0,0,0.35)';
+  g.beginPath(); g.arc(C, C, ro - 0.5 * u, 0, Math.PI * 2); g.stroke();
+  g.beginPath(); g.arc(C, C, ri + 0.5 * u, 0, Math.PI * 2); g.stroke();
+  g.strokeStyle = 'rgba(255,255,255,0.8)';
+  g.beginPath(); g.arc(C, C, ro - 2 * u, Math.PI * 1.05, Math.PI * 1.55); g.stroke();
+
+  // Brillanten: je Klasse mehr, symmetrisch vom Stein unten nach oben (16 Plätze je Seite)
+  const half = 16;
+  const count = Math.max(1, Math.round(half * Math.max(1, cls) / (CLASSES.length - 1)));
+  for (let j = 0; j < count; j++) {
+    for (const side of [1, -1]) {
+      const a = Math.PI / 2 + side * (0.42 + j * ((Math.PI - 0.42) / (half - 0.5)));
+      avBrilliant(g, C + rm * Math.cos(a), C + rm * Math.sin(a), 6.2 * u, color, holo, j);
     }
-    g.arc(C, C, ri, Math.PI / 2, aEnd, true);
-    g.arc(C + RM * u * Math.cos(aEnd), C + RM * u * Math.sin(aEnd), (BW / 2) * u, aEnd + Math.PI, aEnd + 2 * Math.PI, false);
-    g.closePath();
-  };
-
-  // Milchglas: Foto darunter weich, getönt, zu den Kanten hin satter
-  g.save();
-  band();
-  g.clip();
-  if (photo) g.drawImage(softPhoto(photo, S, view), 0, 0, S, S);
-  g.fillStyle = holo ? holoFill(g, C, C, C, 0.55) : hexA(color, 0.55);
-  g.fillRect(0, 0, S, S);
-  const rg = g.createRadialGradient(C, C, RI * u, C, C, RO * u);
-  rg.addColorStop(0, hexA(deep, 0.95));
-  rg.addColorStop(0.18, hexA(deep, 0.35));
-  rg.addColorStop(0.5, 'rgba(255,255,255,0.2)');
-  rg.addColorStop(0.8, hexA(deep, 0.3));
-  rg.addColorStop(1, hexA(deep, 0.95));
-  g.fillStyle = rg;
-  g.fillRect(0, 0, S, S);
-  g.lineCap = 'round';
-  g.lineWidth = 1.8 * u;
-  g.strokeStyle = 'rgba(255,255,255,0.75)';
-  g.beginPath();
-  g.arc(C, C, (RM + 2) * u, aEnd + 0.06, Math.PI / 2 + TAIL * 0.6);
-  g.stroke();
-  g.restore();
-  // Glaskante rundherum
-  band();
-  g.lineJoin = 'round';
-  g.lineWidth = 1.6 * u;
-  g.strokeStyle = 'rgba(0,0,0,0.22)';
-  g.stroke();
-  g.lineWidth = 0.9 * u;
-  g.strokeStyle = 'rgba(255,255,255,0.9)';
-  g.stroke();
-
-  // Abzeichen der erreichten Klassen (Mint … Holo) als Logo-Diamanten, mit festem Abstand auf dem Bogen
-  for (let i = 0; i < cls; i++) {
-    const a = Math.PI / 2 - 0.24 - i * STEP;
-    const holoBadge = i + 1 === CLASSES.length - 1;
-    logoBadge(g, C + RM * u * Math.cos(a), C + RM * u * Math.sin(a), 5.2 * u, holoBadge ? '#e9e4ff' : CLASSES[i + 1].color, holoBadge, u);
   }
 
-  // Abzeichen mit dem eigenen Stein: unten in der Mitte, auf dem Bogen
-  const br = 14 * u, bx = C, by = S - br - 0.5 * u;
+  // Eigener Stein unten in der Krappenfassung
+  const r = 22 * u, bx = C, by = S - 30 * u;
+  const mt = avMetalFill(g, bx, by, metal, 1);
+  g.fillStyle = mt;
+  g.strokeStyle = 'rgba(0,0,0,0.35)';
+  g.lineWidth = 1 * u;
+  for (const a of [-2.35, -0.8, 0.8, 2.35]) {
+    g.beginPath(); g.ellipse(bx + Math.cos(a) * r * 1.02, by + Math.sin(a) * r * 1.02, r * 0.2, r * 0.14, a, 0, Math.PI * 2); g.fill(); g.stroke();
+  }
   g.save();
   g.shadowColor = 'rgba(0,0,0,0.45)';
   g.shadowBlur = 4 * u;
-  g.fillStyle = '#0b0b0d';
-  g.beginPath(); g.arc(bx, by, br, 0, Math.PI * 2); g.fill();
+  g.beginPath(); g.arc(bx, by, r * 1.08, 0, Math.PI * 2); g.fillStyle = mt; g.fill();
   g.restore();
-  g.lineWidth = 2.4 * u;
-  g.strokeStyle = holo ? holoFill(g, bx, by, br) : hexA(color, 0.9);
-  g.beginPath(); g.arc(bx, by, br - 1.2 * u, 0, Math.PI * 2); g.stroke();
-  g.lineWidth = 0.7 * u;
-  g.strokeStyle = 'rgba(255,255,255,0.85)';
-  g.beginPath(); g.arc(bx, by, br - 0.3 * u, Math.PI * 1.05, Math.PI * 1.6); g.stroke();
   g.save();
-  g.beginPath(); g.arc(bx, by, br - 2.4 * u, 0, Math.PI * 2); g.clip();
-  const glow = g.createRadialGradient(bx, by, 0, bx, by, br);
-  glow.addColorStop(0, holo ? 'rgba(255,255,255,0.35)' : hexA(color, 0.45));
-  glow.addColorStop(1, 'rgba(0,0,0,0)');
-  g.fillStyle = glow;
-  g.fillRect(bx - br, by - br, br * 2, br * 2);
+  g.beginPath(); g.arc(bx, by, r * 0.94, 0, Math.PI * 2); g.clip();
+  g.fillStyle = '#050506';
+  g.fillRect(bx - r, by - r, r * 2, r * 2);
   if (gemImg) {
-    const box = (br - 2.4 * u) * 2 * 0.95, k = box / Math.max(gemImg.width, gemImg.height);
+    const box = r * 2 * 1.25, k = box / Math.max(gemImg.width, gemImg.height);
     g.drawImage(gemImg, bx - (gemImg.width * k) / 2, by - (gemImg.height * k) / 2, gemImg.width * k, gemImg.height * k);
   } else {
-    drawDiamondGlyph(g, bx - 9 * u, by - 7.5 * u, 18 * u, 'rgba(255,255,255,0.85)', color);
+    drawDiamondGlyph(g, bx - 12 * u, by - 10 * u, 24 * u, 'rgba(255,255,255,0.85)', color);
   }
   g.restore();
+  g.lineWidth = 1 * u;
+  g.strokeStyle = 'rgba(255,255,255,0.7)';
+  g.beginPath(); g.arc(bx, by, r * 0.94, Math.PI * 1.05, Math.PI * 1.6); g.stroke();
   return cv;
 }
 
