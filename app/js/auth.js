@@ -215,6 +215,14 @@ export const markCardEvent = (order, event) => wrap(async () => {
   return error ? { error: error.message || 'db' } : { ok: true };
 });
 
+// Entwicklung: eigene Testkäufe (Stripe-Testmodus) auf dem Server löschen – siehe reset_test_orders in server/supabase.sql
+export const resetTestOrders = () => wrap(async () => {
+  if (!authReady()) return { error: 'config' };
+  const c = await sb();
+  const { data, error } = await c.rpc('reset_test_orders');
+  return error ? { error: error.message || 'db' } : { ok: true, deleted: data };
+});
+
 // ---- Online-Widerruf ----------------------------------------------------------------------------
 
 // Widerrufserklärung speichern (Tabelle "withdrawals", siehe server/supabase.sql). Geht auch ohne Login.

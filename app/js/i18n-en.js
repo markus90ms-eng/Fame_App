@@ -359,6 +359,7 @@ export const EN = {
   "Gesperrt – diese Card zählt nicht": "Locked – this card doesn’t count",
   "Eintragen": "Add",
   "Eingetragen": "Added",
+  "Testkäufe auf dem Server konnten nicht gelöscht werden.": "Test purchases on the server couldn’t be deleted.",
   "Keine Verbindung zum Server. Bitte versuch es gleich nochmal.": "No connection to the server. Please try again in a moment.",
   "Ich verlange ausdrücklich, dass {app} meine Card sofort ausstellt. Mir ist bewusst, dass ich damit mein Widerrufsrecht verliere und kein Geld zurückbekomme.": "I expressly request that {app} issues my card immediately. I understand that I lose my right of withdrawal and won’t get my money back.",
   "Impressum": "Legal notice",

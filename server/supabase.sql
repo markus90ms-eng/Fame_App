@@ -193,3 +193,31 @@ select
   o.id as order_id, o.user_id
 from public.orders o
 left join public.purchase_evidence e on e.order_id = o.id;
+
+
+-- ===== Entwicklung: „Alles zurücksetzen“ löscht auch die eigenen TESTKÄUFE (V121) =====
+-- Gelöscht werden nur eigene Bestellungen aus dem Stripe-Testmodus (Sitzung beginnt mit cs_test_) und
+-- eigene offene Bestellungen ohne Stripe-Sitzung. Echte Käufe (cs_live_…) bleiben IMMER erhalten
+-- (Aufbewahrungspflicht für Kaufbelege, Beweise für Streitfälle). Eine Konto-Sperre wird nur aufgehoben,
+-- wenn das Konto keinen einzigen echten Kauf hat. Der Knopf wird vor dem Release entfernt (Startliste s3).
+create or replace function public.reset_test_orders()
+returns integer language plpgsql security definer set search_path = public as $$
+declare n integer;
+begin
+  if auth.uid() is null then return 0; end if;
+  delete from purchase_evidence e using orders o
+    where e.order_id = o.id and o.user_id = auth.uid()
+      and (left(o.stripe_session, 8) = 'cs_test_' or (o.stripe_session is null and o.status <> 'paid'));
+  with d as (
+    delete from orders
+      where user_id = auth.uid()
+        and (left(stripe_session, 8) = 'cs_test_' or (stripe_session is null and status <> 'paid'))
+      returning 1
+  ) select count(*) into n from d;
+  if not exists (select 1 from orders where user_id = auth.uid() and left(stripe_session, 8) = 'cs_live_') then
+    delete from account_flags where user_id = auth.uid();
+  end if;
+  return n;
+end $$;
+revoke all on function public.reset_test_orders() from public, anon;
+grant execute on function public.reset_test_orders() to authenticated;

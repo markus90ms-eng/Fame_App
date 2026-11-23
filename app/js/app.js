@@ -85,7 +85,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '120';
+export const APP_VERSION = '121';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -364,7 +364,7 @@ const resetLink = () => (hasData() ? `<button class="link welcome-reset" type="b
 function bindReset(el) {
   // Eigene Rückfrage statt confirm(): in eingebetteten Ansichten werden Browser-Dialoge oft blockiert
   let armed = 0;
-  el.querySelector('[data-reset]')?.addEventListener('click', (e) => {
+  el.querySelector('[data-reset]')?.addEventListener('click', async (e) => {
     const link = e.currentTarget;
     if (Date.now() - armed > 4000) {
       armed = Date.now();
@@ -376,13 +376,23 @@ function bindReset(el) {
       }, 4100);
       return;
     }
+    // Angemeldet: auch die eigenen TESTKÄUFE auf dem Server löschen (nur Stripe-Testmodus, echte Käufe nie),
+    // sonst stellt die App sie beim nächsten Laden wieder her
+    let serverNote = '';
+    if (state.session) {
+      link.classList.add('is-busy');
+      const r = await auth.resetTestOrders();
+      link.classList.remove('is-busy');
+      if (r.error) { console.warn('Testkäufe nicht gelöscht:', r.error); serverNote = ' ' + t('Testkäufe auf dem Server konnten nicht gelöscht werden.'); }
+    }
+    store.remove('pending');
     ['account', 'amount', 'donation'].forEach((k) => store.remove(k));
     if (!state.user) { store.remove('user'); store.remove('regdraft'); state.regDraft = { accounts: {}, verified: {}, onCard: [] }; }
     state.account = { total: 0, deposits: [], cards: [] };
     saveAccount();
     state.amount = 100;
     state.accepted = false;
-    toast(t('Alles zurückgesetzt – du startest wieder bei {x}.', { x: money(0) }));
+    toast(t('Alles zurückgesetzt – du startest wieder bei {x}.', { x: money(0) }) + serverNote);
     render();
   });
 }
