@@ -85,7 +85,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '117';
+export const APP_VERSION = '118';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -1229,9 +1229,12 @@ function payPage() {
       let stop = false;
       const pending = store.get('pending');
       // Seite ersetzen statt neu anhängen: so führt Zurück nicht wieder hierher oder zu Stripe
+      // Stripe liegt im Browser-Verlauf direkt davor. Deshalb die Bestätigungsseite durch „Einzahlen“ ersetzen und
+      // die Card darauf legen: Zurück (Knopf oder Wischgeste) führt so zur Seite zum Kaufen statt zu Stripe.
       const toCard = () => {
         const last = state.account.cards?.at(-1);
-        history.replaceState(null, '', last ? '#/card' : '#/');
+        history.replaceState(null, '', '#/donate');
+        if (last) history.pushState(null, '', '#/card');
         render();
       };
       const box = el.querySelector('[data-box]');
@@ -1273,7 +1276,8 @@ function payPage() {
 // Bezahlung bei Stripe abgebrochen: zurück zum Einzahlen
 function payCancel() {
   store.remove('pending');
-  setTimeout(() => { toast(t('Zahlung abgebrochen. Es wurde nichts abgebucht.')); history.replaceState(null, '', '#/donate'); render(); }, 0);
+  // Auch hier Stripe aus dem Zurück-Weg nehmen: Startseite darunter, Einzahlen obendrauf
+  setTimeout(() => { toast(t('Zahlung abgebrochen. Es wurde nichts abgebucht.')); history.replaceState(null, '', '#/'); history.pushState(null, '', '#/donate'); render(); }, 0);
   return { html: '<section class="screen screen--dark"></section>' };
 }
 
