@@ -85,7 +85,7 @@ function saveUser(u = state.user) {
 const saveDraft = () => store.set('regdraft', state.regDraft);
 
 // Version (gleich wie der Cache-Name in sw.js) – klein unten auf der Startseite, zum Prüfen von Updates
-export const APP_VERSION = '119';
+export const APP_VERSION = '120';
 // Fassung von AGB und Widerrufsbelehrung, der beim Kauf zugestimmt wird
 const LEGAL_VERSION = '2026-10';
 
@@ -746,9 +746,9 @@ function connectRows(u, { card, pickMode, picked, focus }) {
     const askSnap = p.id === 'sc' && on && ver && !ver.handleSet;
     const isPicked = pickMode && on && picked === p.id;
     const right = !on
-      ? `<button type="button" class="pf-go" data-link="${p.id}">${t('Verbinden')}</button>`
+      ? `<button type="button" class="pf-go" data-link="${p.id}">${isReady(p.id) ? t('Verbinden') : t('Eintragen')}</button>`
       : pickMode ? `<span class="pf-ok">${isPicked ? t('✓ Im Ranking') : t('Antippen')}</span>`
-        : `<span class="pf-ok">${t('✓ Verbunden')}</span><button type="button" class="pf-change" data-unlink="${p.id}" aria-label="${t('{n} entfernen', { n: p.name })}">${t('Entfernen')}</button>`;
+        : `<span class="pf-ok${ver ? '' : ' is-manual'}">${ver ? t('✓ Verbunden') : t('Eingetragen')}</span><button type="button" class="pf-change" data-unlink="${p.id}" aria-label="${t('{n} entfernen', { n: p.name })}">${t('Entfernen')}</button>`;
     return `<div class="pf${on ? ' is-on' : ''}${isPicked ? ' is-picked' : ''}${focus === p.id ? ' is-focus' : ''}" data-pf="${p.id}"${pickMode && on ? ' data-pick role="button" tabindex="0"' : ''}>
         <span class="pf-ic">${platformIcon(p.id)}</span>
         <span class="pf-nm">${p.name}<small>${sub}</small></span>
@@ -785,10 +785,10 @@ function mountConnect(host, { get, set, card = true, pickMode = false, pick = nu
       const id = b.dataset.link;
       b.addEventListener('click', () => {
         if (isReady(id)) { connectRedirect(id, get(), back); return; }
+        // Ohne Anmeldung (z. B. Instagram bis nach dem Start): Namen selbst eintragen, ohne grünen Haken
         const f = host.querySelector(`[data-manual="${id}"]`);
         f.hidden = false;
         f.querySelector('input').focus();
-        connectError(id, { error: 'setup' });
       });
     });
     // Selbst eintragen (kein eigenes <form>, die Liste steckt oft schon in einem Formular)

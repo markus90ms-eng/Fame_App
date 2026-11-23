@@ -22,3 +22,6 @@
 .screen--card.is-locked .quick-share,
 .screen--card.is-locked [data-open-sheet] { display: none !important; }
 .screen--card.is-locked .famecard { filter: grayscale(.85) brightness(.8); }
+
+/* Selbst eingetragener Account (ohne Anmeldung): kein grünes Häkchen */
+.pf-ok.is-manual { color: rgba(127, 127, 127, 0.95); }

@@ -357,6 +357,8 @@ export const EN = {
   "Die Zahlung wurde zurückgebucht. Diese Card zählt nicht zu deinem Fame-Wert, solange der Fall nicht geklärt ist.": "The payment was charged back. This card doesn’t count towards your Fame value until the case is resolved.",
   "Dein Konto ist für Käufe gesperrt. Bitte schreib uns: Fame.app.2026@gmail.com": "Your account is blocked from purchases. Please contact us: Fame.app.2026@gmail.com",
   "Gesperrt – diese Card zählt nicht": "Locked – this card doesn’t count",
+  "Eintragen": "Add",
+  "Eingetragen": "Added",
   "Keine Verbindung zum Server. Bitte versuch es gleich nochmal.": "No connection to the server. Please try again in a moment.",
   "Ich verlange ausdrücklich, dass {app} meine Card sofort ausstellt. Mir ist bewusst, dass ich damit mein Widerrufsrecht verliere und kein Geld zurückbekomme.": "I expressly request that {app} issues my card immediately. I understand that I lose my right of withdrawal and won’t get my money back.",
   "Impressum": "Legal notice",
